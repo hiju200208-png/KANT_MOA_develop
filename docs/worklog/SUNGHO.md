@@ -50,6 +50,39 @@
 ### 남은 일 / TODO
 - ORBIT:ON·DAYLOG Storage 히어로 이미지가 placeholder 상태 → 교체 필요
 
+## 2026-10-09 | 장바구니·주문서 디자인 개편 (Dribbble 레퍼런스)
+
+- 작업자: SUNGHO
+- 브랜치: dev/sungho
+- 관련 이슈 / PR: 없음 (PR #33 머지 후 올릴 예정)
+- 에이전트 사용: O (Claude Code)
+
+### 요청한 작업
+- Dribbble 레퍼런스 중 내 페이지 해당분 반영: 장바구니(Cuberto "One Shopping Cart for Everything"), 주문서(Virgil Pana "Shopify Checkout")
+
+### 한 일
+- `components/order/CheckoutSteps.tsx`: 장바구니 → 주문서 → 결제 완료 단계 표시 (장바구니·주문서·결제 완료 화면 상단)
+- 장바구니
+  - `components/cart/CartEmpty.tsx`: 쇼핑백 일러스트 + 소다 거품이 떠오르는 빈 화면
+  - `CartItemRow`: 상품마다 둥근 카드, 옵션 칩, X 아이콘 삭제 버튼(40px 터치 영역), 삭제 시 옆으로 밀리며 사라지는 애니메이션, 품절 상품은 흐리게
+  - `QuantityStepper`: 버튼 32px → 36px
+  - 합계를 크게, "다음 단계에서 배송지를 확인해요" 안내
+- 주문서
+  - 섹션 번호(1 배송지, 2 주문 상품, 3 결제 금액), 선택된 배송지 회색 박스, 주문 상품 썸네일
+  - 결제 버튼에 금액 표시("49,000원 결제하기"), 테스트 결제 안내를 민트 박스로
+  - 파일 분리: `components/address/AddressPickerModal.tsx`, `components/order/CheckoutItems.tsx`
+- 확인: 320px·1280px에서 비회원 장바구니(담기 → 목록 → 삭제 → 빈 화면) 확인, 320px 가로 넘침 없음. `tsc`, `eslint` 통과
+
+### 결정 사항 / 이유
+- 모서리는 디자인 토큰(`rounded-lg` 24px, `rounded-md` 16px)에 맞춤
+- 애니메이션은 새 패키지·globals.css 없이 Tailwind transition과 SVG `<animate>`로, 동작 줄이기 설정 존중
+
+### 멈춘 지점 / 보고한 내용
+- 없음
+
+### 남은 일 / TODO
+- 로그인 상태의 주문서·결제 완료 화면은 브라우저로 직접 확인하지 못함 → 로그인 후 확인 필요
+
 ## 2026-10-09 | 내 페이지 제목 h1 통일
 
 - 작업자: SUNGHO

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { CheckoutSteps } from "@/components/order/CheckoutSteps";
 import { LoginRequired } from "@/components/order/LoginRequired";
 import { OrderStatusBadge } from "@/components/order/OrderStatusBadge";
 import { PaymentSuccessMark } from "@/components/order/PaymentSuccessMark";
@@ -98,6 +99,11 @@ export function OrderDetail() {
 
   return (
     <div className="content-shell max-w-3xl py-8 md:py-12">
+      {order.status === "paid" && (
+        <div className="flex justify-center">
+          <CheckoutSteps current={2} />
+        </div>
+      )}
       <div className="mb-6 text-center">
         {order.status === "paid" && <PaymentSuccessMark />}
         <OrderStatusBadge status={order.status} />
