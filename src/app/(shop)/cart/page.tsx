@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { CartItemRow } from "@/components/cart/CartItemRow";
-import { Button, Card, EmptyState, SectionHeader, Skeleton } from "@/components/ui";
+import { PageTitle } from "@/components/order/PageTitle";
+import { Button, Card, EmptyState, Skeleton } from "@/components/ui";
 import { getErrorMessage } from "@/constants/error-messages";
 import { useCart } from "@/hooks/useCart";
 
@@ -28,7 +29,7 @@ export default function CartPage() {
 
   return (
     <div className="content-shell py-8 md:py-12">
-      <SectionHeader title="장바구니" description={loaded ? `${totalQuantity}개 상품` : undefined} />
+      <PageTitle title="장바구니" description={loaded ? `${totalQuantity}개 상품` : undefined} />
 
       {!loaded ? (
         <div className="space-y-4">

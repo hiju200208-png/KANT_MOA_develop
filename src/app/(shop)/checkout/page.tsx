@@ -16,8 +16,9 @@ import {
   type AddressDraftErrors,
 } from "@/components/address/addressDraft";
 import { LoginRequired } from "@/components/order/LoginRequired";
+import { PageTitle } from "@/components/order/PageTitle";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Button, Card, EmptyState, Modal, SectionHeader, Skeleton } from "@/components/ui";
+import { Button, Card, EmptyState, Modal, Skeleton } from "@/components/ui";
 import { getErrorCode, getErrorMessage } from "@/constants/error-messages";
 import { useCart } from "@/hooks/useCart";
 import { createAddress, getAddresses } from "@/services/addresses";
@@ -124,6 +125,7 @@ export default function CheckoutPage() {
   if (!profile) {
     return (
       <div className="content-shell py-8 md:py-12">
+        <PageTitle title="주문서" />
         <LoginRequired next="/checkout" description="로그인하면 담아둔 상품이 그대로 장바구니에 남아 있어요." />
       </div>
     );
@@ -143,7 +145,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="content-shell py-8 md:py-12">
-      <SectionHeader title="주문서" description="배송 정보를 확인하고 결제해주세요." />
+      <PageTitle title="주문서" description="배송 정보를 확인하고 결제해주세요." />
       <form onSubmit={handleSubmit} noValidate className="grid gap-6 lg:grid-cols-[1fr_360px] lg:items-start">
         <div className="space-y-6">
           <Card className="space-y-5 p-6">

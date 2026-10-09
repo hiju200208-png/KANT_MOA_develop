@@ -50,6 +50,31 @@
 ### 남은 일 / TODO
 - ORBIT:ON·DAYLOG Storage 히어로 이미지가 placeholder 상태 → 교체 필요
 
+## 2026-10-09 | 내 페이지 제목 h1 통일
+
+- 작업자: SUNGHO
+- 브랜치: dev/sungho
+- 관련 이슈 / PR: 없음
+- 에이전트 사용: O (Claude Code)
+
+### 요청한 작업
+- UI/UX 점검에서 나온 "장바구니·주문 페이지 제목이 h2 20px이고 h1이 없음" 수정
+
+### 한 일
+- `src/components/order/PageTitle.tsx` 생성: h1 24px → md 30px, 굵기 900 (상품 상세·카테고리 h1과 같은 크기), 설명 문구 선택
+- 장바구니, 주문서, 주문/취소 내역, 마이페이지, 배송 주소 관리, 내 정보 수정의 `SectionHeader`(h2) → `PageTitle`(h1)
+- 마이페이지, 내 정보 수정, 주문서의 "로그인이 필요해요" 화면에도 페이지 제목 표시
+- 확인: 375px에서 6개 페이지 모두 `h1 24px`로 카테고리 페이지와 같은 크기, 하위 제목은 h2 18px. `tsc`, `eslint` 통과
+
+### 결정 사항 / 이유
+- `SectionHeader`(jina 담당 `components/ui`)는 수정하지 않고 내 폴더에 제목 컴포넌트를 따로 만듦
+
+### 멈춘 지점 / 보고한 내용
+- 없음
+
+### 남은 일 / TODO
+- 한글 줄바꿈(`word-break: keep-all`), 한글 웹폰트, 입력창 16px은 jina에게, ARTIST 제목·히어로 여백·슬라이드 제목은 chungman에게 요청 예정
+
 ## 2026-10-09 | 과제 규격 Mock 데이터 + DB 장애 시 대체 데이터
 
 - 작업자: SUNGHO
