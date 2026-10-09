@@ -46,7 +46,7 @@ export function Modal({ open, onClose, title, description, children, footer }: M
             <h2 id="modal-title" className="text-xl font-black tracking-[-0.03em]">{title}</h2>
             {description && <p id="modal-description" className="mt-2 text-sm leading-6 text-muted">{description}</p>}
           </div>
-          <button type="button" onClick={onClose} aria-label="닫기" className="grid size-9 shrink-0 place-items-center rounded-full text-xl text-muted transition-colors hover:bg-neutral-100 hover:text-foreground">×</button>
+          <button type="button" onClick={onClose} aria-label="닫기" className="brand-gradient-soft-hover grid size-9 shrink-0 place-items-center rounded-full text-xl text-muted">×</button>
         </div>
         {children && <div className="mt-5">{children}</div>}
         {footer && <div className="mt-6 flex justify-end gap-2">{footer}</div>}

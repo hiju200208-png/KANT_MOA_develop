@@ -10,7 +10,7 @@ export function MobileBottomNav() {
   return (
     <nav aria-label="모바일 메뉴" className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg md:hidden">
       <div className="grid h-16 grid-cols-4">
-        {items.map(({ href, label, Icon }) => <Link key={href} href={href} className="flex flex-col items-center justify-center gap-1 text-[11px] font-semibold text-muted transition-colors hover:text-brand"><Icon className="size-5" />{label}</Link>)}
+        {items.map(({ href, label, Icon }) => <Link key={href} href={href} className="brand-gradient-soft-hover flex flex-col items-center justify-center gap-1 rounded-md text-[11px] font-semibold text-muted"><Icon className="size-5" />{label}</Link>)}
       </div>
     </nav>
   );

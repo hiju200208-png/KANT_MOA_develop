@@ -1,3 +1,39 @@
+## 2026-10-08 | 이미지 업로드 · 신규 상품 9종 · 파비콘 · 테마 색상 확정
+
+- 작업자: jin
+- 브랜치: dev/jin
+- 관련 이슈 / PR: 팀원 이미지 zip 3개, chungman 이미지 요청 / -
+- 에이전트 사용: O (Claude Code)
+
+### 요청한 작업
+- 팀원이 보낸 이미지 zip을 Storage에 업로드, DB에 없는 신규 상품 등록
+- 이미지 규격 확정 (위버스샵 기준)
+- KANT MOA 로고로 파비콘·사이트 아이콘 교체
+- DAYLOG·SODAFM 테마 색상 확정 반영
+
+### 한 일
+- Storage: 임시 이미지 21장 업로드 → 실제 이미지 16장으로 교체·추가 (DAYLOG 상품 4, SODAFM hero·logo·멤버십 카드, 신규 상품 9)
+- `supabase/migrations/20261007000010_add_daylog_sodafm_products.sql`: DAYLOG 3종·SODAFM 6종 상품·옵션 등록 → db push (jin 실행)
+- `next.config.ts`: next/image에 Supabase Storage 도메인 허용
+- DB_DESIGN 6-9: 이미지 규격표 (상품 main 1440², detail 가로 1200, logo·멤버 1080², hero 1920×720)
+- `src/app/favicon.ico`(16·32·48), `src/app/apple-icon.png`(180): 로고의 거품 + 보라 그라데이션 배경
+- `supabase/migrations/20261008000001_update_theme_colors.sql`: DAYLOG `#F4C2C2`(베이비핑크), SODAFM `#87CEEB`(스카이블루)
+
+### 결정 사항 / 이유
+- 이미지는 팀원이 폴더 구조(= Storage 경로)대로 zip 전달 → jin이 경로 검증·변환·업로드
+- 파비콘은 K 글자가 A와 붙어 있어 분리 불가 → 로고의 독립된 거품 사용, 16px 가독성 위해 보라 배경
+- Storage 교체 후 화면 반영 안 되는 원인: next/image 캐시(최소 4시간). `.next/dev/cache/images` 삭제 + 서버 재시작 필요 (Ctrl+Shift+R로는 안 됨)
+- 이미지 교체 시 CLI는 덮어쓰기 불가 → rm 후 cp. Windows에서는 cp 원본을 상대경로로 (드라이브 문자가 URL로 오인)
+
+### 멈춘 지점 / 보고한 내용
+- chungman `storage-upload` 폴더는 실제로 전달되지 않음 → 재요청 필요
+
+### 남은 일 / TODO
+- 남은 이미지 (2026-10-08 기준): ORBIT:ON 상품 7·logo·hero(1920×720)·멤버 5, DAYLOG logo·hero·멤버 4·인형 상세, SODAFM 멤버 4
+- SODAFM 슬로건 타올·볼캡·머그컵 유지/숨김 결정
+- 브라우저에서 비회원 장바구니·로그인 병합·주문 흐름 점검
+- Vercel 배포, Supabase Auth URL 등록
+
 ## 2026-10-07 | 아티스트 멤버 소개(artist_members) · 테마 색상
 
 - 작업자: jin
@@ -81,7 +117,7 @@
 
 ### 남은 일 / TODO
 - 브라우저에서 비회원 장바구니(localStorage)·로그인 병합 흐름 확인 (프론트 연동 시)
-- Storage 이미지 업로드, DAYLOG·SODAFM theme_color
+- ~~Storage 이미지 업로드~~ 일부 완료 (2026-10-08 기록 참고), ~~DAYLOG·SODAFM theme_color~~ ✅ 2026-10-08 반영
 
 ## 2026-10-07 | 초기 세팅 · API 명세 · 공용 타입(B0)
 
@@ -112,8 +148,6 @@
 - 없음
 
 ### 남은 일 / TODO
-- Supabase 대시보드에서 Confirm email 끄기
-- DAYLOG, SODAFM theme_color 전달받기
-- B1: 테이블·트리거 마이그레이션
-
-이거
+- ~~Supabase 대시보드에서 Confirm email 끄기~~ ✅ 완료
+- ~~DAYLOG, SODAFM theme_color 전달받기~~ ✅ 2026-10-08 반영
+- ~~B1: 테이블·트리거 마이그레이션~~ ✅ 완료

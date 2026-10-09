@@ -52,7 +52,7 @@ async function AboutContent({ params }: ArtistAboutPageProps) {
       <section aria-label="멤버 소개" className="mt-10 md:mt-14">
         <div className="mb-6 flex items-end justify-between gap-4">
           <h2 className="text-xl font-black md:text-2xl">멤버 소개</h2>
-          <Link href={`/artists/${artist.slug}`} className="shrink-0 text-sm font-bold text-muted hover:text-foreground">
+          <Link href={`/artists/${artist.slug}`} className="brand-gradient-text-hover shrink-0 text-sm font-bold text-muted">
             굿즈 보러가기 <span aria-hidden="true">›</span>
           </Link>
         </div>

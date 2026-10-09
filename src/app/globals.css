@@ -60,9 +60,12 @@ a { color: inherit; text-decoration: none; }
   transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 .brand-gradient-icon-hover:hover,
-.brand-gradient-soft-hover:hover {
+.brand-gradient-soft-hover:not(:disabled):hover {
   background: linear-gradient(135deg, #eafffa, #f1edff 52%, #fff0f8);
-  color: #655b88;
+  color: #6941c6;
+  box-shadow: inset 0 0 0 1px rgb(153 128 210 / 10%);
+}
+.brand-gradient-icon-hover:hover {
   box-shadow: inset 0 0 0 1px rgb(153 128 210 / 10%), 0 4px 12px rgb(170 144 230 / 10%);
   transform: translateY(-1px);
 }

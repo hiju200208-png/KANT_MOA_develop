@@ -40,7 +40,7 @@ export async function ProductListSection({ filter, basePath, searchParams }: Pro
           <Link
             href={buildListHref(basePath, sort, limit + PAGE_SIZE)}
             scroll={false}
-            className="inline-flex h-11 items-center rounded-full border border-line bg-white px-6 text-sm font-bold transition-colors hover:border-neutral-400"
+            className="brand-gradient-soft-hover inline-flex h-11 items-center rounded-full border border-line bg-white px-6 text-sm font-bold hover:border-violet-300"
           >
             더 보기
           </Link>

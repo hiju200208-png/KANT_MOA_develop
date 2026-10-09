@@ -17,7 +17,7 @@ export function CategoryTabs({ categories, current }: CategoryTabsProps) {
               <Link
                 href={`/category/${category.slug}`}
                 aria-current={active ? "page" : undefined}
-                className={`inline-flex h-10 items-center rounded-full border px-4 text-sm font-semibold transition-colors ${active ? "border-foreground bg-foreground" : "border-line bg-white hover:border-neutral-400"}`}
+                className={`inline-flex h-10 items-center rounded-full border px-4 text-sm font-semibold transition-all ${active ? "border-foreground bg-foreground" : "brand-gradient-soft-hover border-line bg-white hover:border-violet-300"}`}
               >
                 <span className={active ? "text-white" : "text-foreground"}>{category.name}</span>
               </Link>

@@ -19,7 +19,7 @@ export function SortTabs({ basePath, current }: SortTabsProps) {
             aria-current={active ? "true" : undefined}
             className={`rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${active ? "bg-foreground" : ""}`}
           >
-            <span className={active ? "text-white" : "text-muted hover:text-foreground"}>{option.label}</span>
+            <span className={active ? "text-white" : "brand-gradient-text-hover text-muted"}>{option.label}</span>
           </Link>
         );
       })}

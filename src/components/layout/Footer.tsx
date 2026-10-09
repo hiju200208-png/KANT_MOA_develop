@@ -11,7 +11,7 @@ export function Footer() {
           <p className="mt-6 text-xs text-neutral-400">© 2026 KANT MOA. All rights reserved.</p>
         </div>
         <div className="flex flex-wrap content-start gap-x-6 gap-y-3 text-sm font-medium text-neutral-600">
-          {policyLinks.map((label) => <Link key={label} href="/" className="hover:text-foreground">{label}</Link>)}
+          {policyLinks.map((label) => <Link key={label} href="/" className="brand-gradient-text-hover">{label}</Link>)}
         </div>
       </div>
     </footer>

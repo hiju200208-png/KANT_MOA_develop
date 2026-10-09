@@ -142,7 +142,7 @@ export default function AddressesPage() {
 
   return (
     <div className="content-shell max-w-3xl py-8 md:py-12">
-      <Link href="/mypage" className="mb-4 inline-flex min-h-11 items-center text-sm font-bold text-muted hover:text-foreground">
+      <Link href="/mypage" className="brand-gradient-text-hover mb-4 inline-flex min-h-11 items-center text-sm font-bold text-muted">
         <span aria-hidden="true">‹</span>&nbsp;마이페이지
       </Link>
       <SectionHeader title="배송 주소 관리" />

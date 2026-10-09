@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LoginRequired } from "@/components/order/LoginRequired";
 import { OrderStatusBadge } from "@/components/order/OrderStatusBadge";
+import { PaymentSuccessMark } from "@/components/order/PaymentSuccessMark";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Button, Card, EmptyState, Skeleton } from "@/components/ui";
 import { getErrorMessage } from "@/constants/error-messages";
@@ -98,6 +99,7 @@ export function OrderDetail() {
   return (
     <div className="content-shell max-w-3xl py-8 md:py-12">
       <div className="mb-6 text-center">
+        {order.status === "paid" && <PaymentSuccessMark />}
         <OrderStatusBadge status={order.status} />
         <h1 className="mt-3 text-2xl font-black tracking-[-0.035em]">{TITLES[order.status]}</h1>
         <p className="mt-2 text-xs text-muted">주문번호 {order.id}</p>

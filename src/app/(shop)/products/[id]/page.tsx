@@ -6,6 +6,7 @@ import { formatPrice } from "@/components/product/formatPrice";
 import { LoadError } from "@/components/product/LoadError";
 import { ProductImage } from "@/components/product/ProductImage";
 import { ProductPurchasePanel } from "@/components/product/ProductPurchasePanel";
+import { RecentlyViewedTracker } from "@/components/product/RecentlyViewedProducts";
 import { Badge, Skeleton } from "@/components/ui";
 import { getProduct } from "@/services/products";
 import type { ProductDetail } from "@/types/app";
@@ -40,17 +41,18 @@ async function ProductContent({ params }: ProductPageProps) {
   const altBase = `${product.artist.name} ${product.name}`;
   return (
     <>
+      <RecentlyViewedTracker product={product} />
       <nav aria-label="현재 위치" className="mb-5 flex items-center gap-1.5 text-xs font-semibold text-muted">
-        <Link href={`/artists/${product.artist.slug}`} className="hover:text-foreground">{product.artist.name}</Link>
+        <Link href={`/artists/${product.artist.slug}`} className="brand-gradient-text-hover">{product.artist.name}</Link>
         <span aria-hidden="true">›</span>
-        <Link href={`/category/${product.category.slug}`} className="hover:text-foreground">{product.category.name}</Link>
+        <Link href={`/category/${product.category.slug}`} className="brand-gradient-text-hover">{product.category.name}</Link>
       </nav>
 
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
         <ProductImage src={product.thumbnailUrl} alt={altBase} sizes="(min-width: 1024px) 50vw, 100vw" eager className="aspect-square rounded-lg" />
 
         <div>
-          <Link href={`/artists/${product.artist.slug}`} className="text-sm font-bold text-muted hover:text-foreground">
+          <Link href={`/artists/${product.artist.slug}`} className="brand-gradient-text-hover text-sm font-bold text-muted">
             {product.artist.name}
           </Link>
           <h1 className="mt-2 text-2xl font-black leading-snug md:text-3xl">{product.name}</h1>

@@ -229,7 +229,7 @@ export default function CheckoutPage() {
                           setSelectedId(address.id);
                           setPickerOpen(false);
                         }}
-                        className={`w-full rounded-md border p-4 text-left transition-colors ${isSelected ? "border-foreground bg-neutral-50" : "border-line hover:border-neutral-400"}`}
+                        className={`w-full rounded-md border p-4 text-left transition-all ${isSelected ? "border-foreground bg-neutral-50" : "brand-gradient-soft-hover border-line hover:border-violet-300"}`}
                       >
                         <AddressSummary address={address} />
                       </button>
