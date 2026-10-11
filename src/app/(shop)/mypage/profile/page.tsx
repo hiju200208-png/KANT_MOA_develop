@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { LoginRequired } from "@/components/order/LoginRequired";
+import { PageTitle } from "@/components/order/PageTitle";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Button, Card, Input, SectionHeader, Skeleton } from "@/components/ui";
+import { Button, Card, Input, Skeleton } from "@/components/ui";
 import { getErrorMessage } from "@/constants/error-messages";
 import { updateProfile } from "@/services/auth";
 import type { Profile } from "@/types/app";
@@ -50,6 +51,7 @@ export default function ProfileEditPage() {
   if (!profile) {
     return (
       <div className="content-shell py-8 md:py-12">
+        <PageTitle title="내 정보 수정" />
         <LoginRequired next="/mypage/profile" />
       </div>
     );
@@ -60,7 +62,7 @@ export default function ProfileEditPage() {
       <Link href="/mypage" className="brand-gradient-text-hover mb-4 inline-flex min-h-11 items-center text-sm font-bold text-muted">
         <span aria-hidden="true">‹</span>&nbsp;마이페이지
       </Link>
-      <SectionHeader title="내 정보 수정" />
+      <PageTitle title="내 정보 수정" />
       <Card className="p-6">
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
           <Input label="이메일" name="email" value={profile.email} disabled hint="이메일은 변경할 수 없어요." />

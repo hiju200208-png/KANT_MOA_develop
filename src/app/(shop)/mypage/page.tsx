@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LoginRequired } from "@/components/order/LoginRequired";
+import { PageTitle } from "@/components/order/PageTitle";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Badge, Button, Card, SectionHeader, Skeleton } from "@/components/ui";
+import { Badge, Button, Card, Skeleton } from "@/components/ui";
 import { getErrorMessage } from "@/constants/error-messages";
 import { signOut } from "@/services/auth";
 
@@ -57,6 +58,7 @@ export default function MyPage() {
   if (!profile) {
     return (
       <div className="content-shell py-8 md:py-12">
+        <PageTitle title="마이페이지" />
         <LoginRequired next="/mypage" />
       </div>
     );
@@ -64,7 +66,7 @@ export default function MyPage() {
 
   return (
     <div className="content-shell max-w-3xl py-8 md:py-12">
-      <SectionHeader title="마이페이지" />
+      <PageTitle title="마이페이지" />
       <div className="space-y-6">
         <Card className="flex items-center justify-between gap-4 p-6">
           <div className="min-w-0 space-y-1">

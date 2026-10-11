@@ -6,8 +6,9 @@ import { AddressForm } from "@/components/address/AddressForm";
 import { AddressSummary } from "@/components/address/AddressSummary";
 import { MAX_ADDRESSES, draftFromAddress, emptyDraft } from "@/components/address/addressDraft";
 import { LoginRequired } from "@/components/order/LoginRequired";
+import { PageTitle } from "@/components/order/PageTitle";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Button, Card, EmptyState, SectionHeader, Skeleton } from "@/components/ui";
+import { Button, Card, EmptyState, Skeleton } from "@/components/ui";
 import { getErrorMessage } from "@/constants/error-messages";
 import { createAddress, deleteAddress, getAddresses, setDefaultAddress, updateAddress } from "@/services/addresses";
 import type { Address, AddressInput } from "@/types/app";
@@ -145,7 +146,7 @@ export default function AddressesPage() {
       <Link href="/mypage" className="brand-gradient-text-hover mb-4 inline-flex min-h-11 items-center text-sm font-bold text-muted">
         <span aria-hidden="true">‹</span>&nbsp;마이페이지
       </Link>
-      <SectionHeader title="배송 주소 관리" />
+      <PageTitle title="배송 주소 관리" />
       {body}
     </div>
   );

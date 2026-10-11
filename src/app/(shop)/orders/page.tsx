@@ -1,12 +1,13 @@
 import { Suspense } from "react";
 import { OrderList } from "@/components/order/OrderList";
-import { SectionHeader, Skeleton } from "@/components/ui";
+import { PageTitle } from "@/components/order/PageTitle";
+import { Skeleton } from "@/components/ui";
 
 // cacheComponents 사용 중이라 검색 파라미터(?status=)를 읽는 클라이언트 컴포넌트는 Suspense로 감싼다.
 export default function OrdersPage() {
   return (
     <div className="content-shell py-8 md:py-12">
-      <SectionHeader title="주문/취소 내역" />
+      <PageTitle title="주문/취소 내역" />
       <Suspense
         fallback={
           <div className="space-y-4">
