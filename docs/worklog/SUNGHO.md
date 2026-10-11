@@ -50,6 +50,36 @@
 ### 남은 일 / TODO
 - ORBIT:ON·DAYLOG Storage 히어로 이미지가 placeholder 상태 → 교체 필요
 
+## 2026-10-09 | 과제 규격 Mock 데이터 + DB 장애 시 대체 데이터
+
+- 작업자: SUNGHO
+- 브랜치: dev/sungho
+- 관련 이슈 / PR: 없음
+- 에이전트 사용: O (Claude Code)
+
+### 요청한 작업
+- 과제 요구사항 "data/products.ts에 6개 이상 상품, types/product.ts의 Product 규격"을 충족
+- 정적 데이터는 DB 장애 시 대체 데이터로 사용
+
+### 한 일
+- `src/types/product.ts`: 과제 규격 `interface Product`(id·name·price·category·imageUrl·description·isNew?)와 화면 대체용 `StaticProduct`
+- `src/data/products.ts`(DB 상품 21개 사본, 옵션·재고 포함), `src/data/catalog.ts`(아티스트 3·카테고리 7)
+- `src/services/fallback.ts`: 정적 데이터로 services와 같은 반환 형태 생성 (정렬·필터·페이지 포함)
+- `src/services/products.ts`: `getArtists`·`getArtist`·`getCategories`·`getProducts`·`getProduct`가 DB 에러 시 throw 대신 대체 데이터 반환, `[fallback]` 경고 로그
+- README 7·8·9장에 정적 데이터와 DB 장애 대비 설명 추가
+- 확인: 잘못된 Supabase URL로 빌드·실행해 메인·상세·카테고리·아티스트 페이지가 정적 데이터로 그려지는 것 확인 (`[fallback]` 로그 35회), 이후 정상 환경으로 다시 빌드. `tsc`, `eslint`, `npm run build` 통과
+
+### 결정 사항 / 이유
+- DB를 걷어내지 않고 정적 데이터를 "장애 시 대체"로 둠: 과제 Mock 요구 충족 + 시연 당일 Supabase 일시정지·네트워크 문제 대비
+- 장바구니(로그인)·주문·결제는 DB가 필요해 대체하지 않음
+- `getArtistMembers`(멤버 소개)는 대체 데이터 없음 → 기존 에러 화면 유지
+
+### 멈춘 지점 / 보고한 내용
+- `src/services/`는 jin 담당 영역 → 사용자 판단으로 진행, PR에 이유를 적고 jin을 리뷰어로 지정
+
+### 남은 일 / TODO
+- DB 상품이 바뀌면 `src/data/products.ts`도 갱신 필요 (자동 동기화 없음)
+
 ## 2026-10-08 | 결제 완료 거품 애니메이션
 
 - 작업자: SUNGHO
