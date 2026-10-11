@@ -1,3 +1,20 @@
+## 2026-10-12 | ORBIT:ON 이미지 교체 · 아크릴 키링 숨김
+
+- 작업자: jin
+- 브랜치: dev/jin
+- 관련 이슈 / PR: chungman 이미지 수정본 / -
+- 에이전트 사용: O (Claude Code)
+
+### 한 일
+- 수정본 폴더 비교: 대표·로고·멤버는 동일, 상세 8장 교체(webp 1200px), hero 신규
+- Storage 업로드 9장 (hero 1920×720 webp 변환, 상세 8장은 원본 그대로), 바이트 일치 확인
+- `20261012000001_hide_orbit_on_acrylic_keyring.sql`: ORBIT:ON 아크릴 키링 숨김 (마스코트 인형 키링으로 대체, 팀 결정)
+- `src/data/products.ts` 재생성 (25개, 아크릴 키링 제외)
+
+### 남은 일 / TODO
+- PR 머지 후 db push (순서 지키기)
+- 남은 이미지: DAYLOG logo·hero·멤버 4·인형 상세, SODAFM 멤버 4·구 상품 3종
+
 ## 2026-10-11 | ORBIT:ON 이미지·상품 반영 · 보안 어드바이저 · PR #33 리뷰 · 정적 데이터 갱신
 
 - 작업자: jin
