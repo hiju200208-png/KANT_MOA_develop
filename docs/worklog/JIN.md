@@ -1,3 +1,42 @@
+## 2026-10-11 | ORBIT:ON 이미지·상품 반영 · 보안 어드바이저 · PR #33 리뷰 · 정적 데이터 갱신
+
+- 작업자: jin
+- 브랜치: dev/jin
+- 관련 이슈 / PR: #33(sungho, 리뷰), #36·#37 / -
+- 에이전트 사용: O (Claude Code)
+
+### 요청한 작업
+- 남은 백엔드 작업 점검
+- PR #33(과제 규격 정적 데이터 + DB 장애 대체) 리뷰
+- ORBIT:ON 이미지 폴더 업로드 및 상품 반영
+- 정적 상품 데이터(src/data/products.ts)를 DB 기준으로 갱신 (sungho 대신)
+
+### 한 일
+- `supabase db lint` 이상 없음, `supabase db advisors` 점검
+  - `20261008000002_revoke_trigger_functions.sql`: 트리거 전용 함수 4개(handle_new_user, addresses_*, rls_auto_enable) 외부 RPC 실행 권한 회수
+- PR #33 리뷰: 정적 상품 21개를 DB와 전 필드 대조(일치), tsc·lint 통과 → 승인
+- ORBIT:ON 이미지 22장 변환·업로드 (로고, 멤버 5명 얼굴 crop 1080², 상품 8종 대표·상세), 원본 바이트 일치 22/22
+- `20261011000001_update_orbit_on_products.sql`: 로고 후드티 → 유니폼 져지, 신규 5종(마스코트 인형 키링·멤버십 카드·볼캡·스티커 세트·팔찌), 상세 이미지 7장 연결, 앨범 detail-2 제거
+- `src/data/products.ts`: DB에서 자동 생성해 26개로 갱신 (isNew: 최신 6개)
+- 검증: 신규 상품·옵션·이미지, 권한 회수 후 회원가입·프로필 자동 생성, 트리거 함수 외부 호출 차단 (PGRST202)
+
+### 결정 사항 / 이유
+- 어드바이저의 auth_rls_initplan(성능) 경고는 현재 데이터 규모에서 영향 없어 보류
+- 주문·장바구니·주소 RPC의 authenticated 실행 경고는 의도된 설계 (함수 내부에서 본인 확인)
+- ORBIT:ON 아크릴 키링, SODAFM 슬로건 타올·볼캡·머그컵은 유지 (임시 이미지)
+- 멤버 사진은 프로필 카드(글씨 포함)에서 얼굴만 crop (멤버 정보는 DB에 있어 화면이 따로 표시)
+- 정적 데이터는 손으로 고치지 않고 DB에서 생성 (id·옵션 id 불일치 방지)
+
+### 멈춘 지점 / 보고한 내용
+- db push를 PR 머지 전에 실행함 → 직후 머지되어 리포·DB 일치 확인, 문제 없음
+- 회원가입 확인용 테스트 계정 추가: kantmoa-test-c-1791720936011@mailinator.com (주문 없음, 삭제 가능)
+
+### 남은 일 / TODO
+- 남은 이미지: ORBIT:ON hero(1920×720)·아크릴 키링, DAYLOG logo·hero·멤버 4·인형 상세, SODAFM 멤버 4·구 상품 3종
+- DB 상품이 바뀌면 src/data/products.ts 재생성
+- 시연 전 Supabase 프로젝트 일시정지 여부 확인 (무료 플랜 비활성 시 일시정지)
+- Vercel 배포, Supabase Auth URL 등록, 이메일 인증·유출 비밀번호 차단 운영 설정 결정
+
 ## 2026-10-08 | 이미지 업로드 · 신규 상품 9종 · 파비콘 · 테마 색상 확정
 
 - 작업자: jin
