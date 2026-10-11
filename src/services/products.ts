@@ -11,6 +11,14 @@ import type {
   ProductSummary,
 } from '@/types/app';
 import { toAppError } from './errors';
+import {
+  fallbackArtist,
+  fallbackArtists,
+  fallbackCategories,
+  fallbackProduct,
+  fallbackProducts,
+  warnFallback,
+} from './fallback';
 import { getImageUrl } from './storage';
 
 type ArtistRow = Database['public']['Tables']['artists']['Row'];
@@ -27,13 +35,19 @@ const toArtist = (a: ArtistRow): Artist => ({
 
 export async function getArtists(): Promise<Artist[]> {
   const { data, error } = await supabase.from('artists').select('*').order('sort_order');
-  if (error) throw toAppError(error);
+  if (error) {
+    warnFallback('getArtists', error);
+    return fallbackArtists();
+  }
   return data.map(toArtist);
 }
 
 export async function getArtist(slug: string): Promise<Artist | null> {
   const { data, error } = await supabase.from('artists').select('*').eq('slug', slug).maybeSingle();
-  if (error) throw toAppError(error);
+  if (error) {
+    warnFallback('getArtist', error);
+    return fallbackArtist(slug);
+  }
   return data && toArtist(data);
 }
 
@@ -65,7 +79,10 @@ export async function getCategories(): Promise<Category[]> {
     .from('categories')
     .select('id, name, slug')
     .order('sort_order');
-  if (error) throw toAppError(error);
+  if (error) {
+    warnFallback('getCategories', error);
+    return fallbackCategories();
+  }
   return data;
 }
 
@@ -111,7 +128,10 @@ export async function getProducts({
       : query.order('price', { ascending: sort === 'price_asc' }).order('id');
 
   const { data, count, error } = await query.range(offset, offset + limit - 1);
-  if (error) throw toAppError(error);
+  if (error) {
+    warnFallback('getProducts', error);
+    return fallbackProducts({ artistSlug, categorySlug, sort, limit, offset });
+  }
   return { items: (data as SummaryRow[]).map(toSummary), total: count ?? 0 };
 }
 
@@ -123,7 +143,10 @@ export async function getProduct(id: number): Promise<ProductDetail | null> {
     )
     .eq('id', id)
     .maybeSingle();
-  if (error) throw toAppError(error);
+  if (error) {
+    warnFallback('getProduct', error);
+    return fallbackProduct(id);
+  }
   if (!data) return null;
 
   const row = data as unknown as SummaryRow & {

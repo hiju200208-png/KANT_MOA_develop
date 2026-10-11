@@ -233,17 +233,23 @@ KANT_MOA/
    │  ├─ auth/              로그인 · 회원가입 폼
    │  └─ providers/         AuthProvider
    ├─ hooks/useCart.ts      장바구니 상태 공유 훅
-   ├─ services/             Supabase 호출 함수 (프론트는 여기만 사용)
+   ├─ services/             Supabase 호출 함수 (프론트는 여기만 사용), fallback.ts(DB 장애 시 대체)
+   ├─ data/                 products.ts(정적 상품 21개) · catalog.ts(아티스트·카테고리)
    ├─ lib/supabase/         Supabase 클라이언트
    ├─ constants/            에러 메시지
-   └─ types/                app.ts(화면용 타입), database.ts(DB 자동 생성 타입)
+   └─ types/                app.ts(화면용 타입), product.ts(과제 규격 Product), database.ts(DB 자동 생성 타입)
 ```
 
 ---
 
 ## 7. 데이터 구조 (ERD)
 
-과제의 정적 데이터(`data/products.ts`) 대신 **Supabase(Postgres)** 에 데이터를 저장합니다. 상품 타입은 `src/types/app.ts`의 `ProductSummary` / `ProductDetail`로 정의했습니다.
+상품 데이터는 **Supabase(Postgres)** 에 저장하고, 과제 규격의 정적 데이터도 함께 둡니다.
+
+- `src/types/product.ts`: 과제 규격 `interface Product` (`id`, `name`, `price`, `category`, `imageUrl`, `description`, `isNew?`)
+- `src/data/products.ts`: DB 상품 21개를 옮겨 적은 정적 배열 (옵션·재고 포함), `src/data/catalog.ts`: 아티스트·카테고리
+- 평소에는 DB를 쓰고, **DB 조회가 실패하면 정적 데이터로 같은 화면을 그립니다** (아래 8장).
+- 화면에서 쓰는 타입은 `src/types/app.ts`의 `ProductSummary` / `ProductDetail`입니다.
 
 ```mermaid
 erDiagram
@@ -352,6 +358,8 @@ erDiagram
                                  └─ 주문·결제·취소·기본 배송지: RPC (DB 함수)
 ```
 
+**DB 장애 대비**: 상품·아티스트·카테고리 조회(`getArtists`, `getArtist`, `getCategories`, `getProducts`, `getProduct`)가 실패하면 `services/fallback.ts`가 `src/data/`의 정적 데이터로 같은 반환 형태를 만들어 줍니다. 서버 로그에 `[fallback]` 경고가 남습니다. 둘러보기(메인·목록·상세)는 계속 동작하고, 장바구니(로그인)·주문·결제처럼 DB가 꼭 필요한 기능은 대체하지 않습니다. DB 상품이 바뀌면 `src/data/products.ts`도 함께 갱신합니다.
+
 | 파일 | 주요 함수 |
 |---|---|
 | `products.ts` | `getArtists`, `getArtist`, `getArtistMembers`, `getCategories`, `getProducts`, `getProduct` |
@@ -374,7 +382,7 @@ erDiagram
 |---|---|---|
 | 1 | 기획 및 범위 정의 | 아이돌 굿즈샵, 메인·목록·상세 + 장바구니·주문 흐름 |
 | 2 | 개발 환경 | Next.js(App Router) + TypeScript + Tailwind CSS |
-| 3 | 데이터 모델링 | 정적 `data/products.ts` 대신 Supabase DB(12개 테이블), 타입은 `src/types/app.ts` |
+| 3 | 데이터 모델링 | `src/types/product.ts`(과제 규격 `Product`) + `src/data/products.ts`(상품 21개, DB 장애 시 대체 데이터). 실제 저장은 Supabase DB(12개 테이블) |
 | 4 | 공통 컴포넌트 | `Header`, `Footer`, `ProductCard` + 공용 UI 8종 |
 | 5 | 목록 동적 렌더링 | `ProductGrid`에서 `.map()`으로 카드 출력 (`/category/[slug]`, `/artists/[slug]`, 메인) |
 | 6 | 상세 동적 라우팅 | `app/(shop)/products/[id]/page.tsx` |
