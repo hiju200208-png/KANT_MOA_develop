@@ -9,10 +9,12 @@ const DRAG_CLICK_TOLERANCE = 6;
 interface UseSwipeOptions {
   enabled: boolean;
   onSwipe: (step: 1 | -1) => void;
+  onCancel?: () => void; // 끌었지만 넘길 만큼은 아닐 때
+  mouseOnly?: boolean; // 터치는 브라우저 기본 스크롤에 맡길 때
 }
 
 // 마우스로 끌거나 손가락으로 밀어서 슬라이드를 넘기는 훅. 세로로 더 많이 움직이면 페이지 스크롤로 둔다.
-export function useSwipe({ enabled, onSwipe }: UseSwipeOptions) {
+export function useSwipe({ enabled, onSwipe, onCancel, mouseOnly = false }: UseSwipeOptions) {
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
   const start = useRef<{ x: number; y: number } | null>(null);
@@ -22,6 +24,7 @@ export function useSwipe({ enabled, onSwipe }: UseSwipeOptions) {
     if (dragging) {
       if (dragX <= -SWIPE_THRESHOLD) onSwipe(1);
       else if (dragX >= SWIPE_THRESHOLD) onSwipe(-1);
+      else onCancel?.();
     }
     start.current = null;
     setDragging(false);
@@ -30,7 +33,8 @@ export function useSwipe({ enabled, onSwipe }: UseSwipeOptions) {
 
   const handlers = {
     onPointerDown(event: PointerEvent<HTMLElement>) {
-      if (!enabled || (event.pointerType === "mouse" && event.button !== 0)) return;
+      if (!enabled || (mouseOnly && event.pointerType !== "mouse")) return;
+      if (event.pointerType === "mouse" && event.button !== 0) return;
       start.current = { x: event.clientX, y: event.clientY };
       moved.current = false;
     },
