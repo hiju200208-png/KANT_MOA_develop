@@ -70,8 +70,16 @@ function BannerCard({ banner }: { banner: ArtistBanner }) {
         <Image src={banner.imageUrl} alt={banner.imageAlt} fill sizes="(min-width: 768px) 50vw, 100vw" loading="eager" className="-z-10 object-cover" />
       )}
       {banner.imageUrl && banner.variant === "product" && (
-        <div className="absolute inset-y-6 right-6 -z-10 aspect-square overflow-hidden rounded-md bg-white shadow-card md:inset-y-8 md:right-8">
-          <Image src={banner.imageUrl} alt={banner.imageAlt} fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" />
+        // 정사각형 상품 이미지는 메인 배너처럼 띄우고 아래에 옅은 반사를 둔다 (위버스샵 배너 참고)
+        <div className="absolute top-[12%] right-[10%] -z-10 aspect-square h-[60%] transition-transform duration-500 group-hover:scale-[1.03]">
+          <div className="relative size-full overflow-hidden rounded-sm shadow-[0_12px_28px_rgb(0_0_0/0.35)]">
+            <Image src={banner.imageUrl} alt={banner.imageAlt} fill sizes="(min-width: 768px) 15vw, 40vw" className="object-cover" />
+          </div>
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-full mt-1 h-2/5 overflow-hidden opacity-30 [mask-image:linear-gradient(to_bottom,black,transparent)]">
+            <div className="relative aspect-square w-full -scale-y-100">
+              <Image src={banner.imageUrl} alt="" fill sizes="(min-width: 768px) 15vw, 40vw" loading="lazy" className="object-cover" />
+            </div>
+          </div>
         </div>
       )}
       <div className="absolute inset-0 -z-10 bg-linear-to-t from-black/60 via-black/10 to-transparent" aria-hidden="true" />
