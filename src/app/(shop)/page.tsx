@@ -17,13 +17,13 @@ export default function HomePage() {
   return (
     <>
       <h1 className="sr-only">KANT MOA 공식 굿즈샵</h1>
-      <Suspense fallback={<Skeleton className="h-96 w-full rounded-none md:h-80" />}>
+      <Suspense fallback={<Skeleton className="h-96 w-full rounded-none md:h-68" />}>
         <MainHero />
       </Suspense>
 
-      {/* 간격 규칙(8px 단위): 섹션 사이는 넓게(56/80px), 섹션 안 요소는 가깝게 */}
-      <div className="content-shell space-y-14 pt-12 pb-16 md:space-y-20 md:pt-16 md:pb-24">
-        <Suspense fallback={<Skeleton className="h-[30rem] w-full rounded-2xl md:h-72" />}>
+      {/* 위버스샵 메인 참고: 카드형 섹션을 16px 간격으로 쌓는다 */}
+      <div className="content-shell space-y-4 pt-4 pb-12 md:pb-16">
+        <Suspense fallback={<Skeleton className="h-48 w-full rounded-[16px] md:h-52" />}>
           <RecommendedArtists />
         </Suspense>
 
@@ -95,7 +95,7 @@ async function ArtistShowcases() {
   }
   if (artists.length === 0) return <EmptyState title="등록된 아티스트가 없어요" />;
   return (
-    <div className="space-y-6 md:space-y-10">
+    <div className="space-y-4">
       {artists.map((artist) => (
         <Suspense key={artist.id} fallback={<ArtistShowcaseSkeleton />}>
           <ArtistShowcase artist={artist} />

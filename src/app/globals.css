@@ -16,7 +16,7 @@
   --radius-md: 16px;
   --radius-lg: 24px;
   --shadow-card: 0 6px 24px rgb(17 18 20 / 7%);
-  --content-width: 1200px;
+  --content-width: 1080px; /* 위버스샵 --layout-max-width 108rem */
 }
 
 @theme inline {

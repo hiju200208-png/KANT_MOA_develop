@@ -48,32 +48,35 @@ export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {product.hasOptions && (
         <OptionSelector variants={product.variants} selectedId={selectedId} onSelect={handleSelect} disabled={product.isSoldOut} />
       )}
 
       {selected && !selected.isSoldOut && (
-        <div className="flex items-center justify-between rounded-md bg-neutral-50 px-4 py-3">
-          <div>
-            <p className="text-sm font-semibold">{product.hasOptions ? selected.optionName : "수량"}</p>
-            {selected.maxPerUser !== null && <p className="mt-0.5 text-xs text-muted">1인 최대 {selected.maxPerUser}개</p>}
+        <div className="rounded-[8px] border border-[#ebedf2] p-3">
+          <p className="text-[13px] leading-[17px] break-all text-[#666]">{product.hasOptions ? `${product.name} / ${selected.optionName}` : product.name}</p>
+          <div className="mt-3.5 flex items-center justify-between">
+            <QuantityStepper compact quantity={quantity} max={maxQuantity(selected)} disabled={busy} onChange={setQuantity} />
+            <span className="text-sm leading-[18px] font-bold whitespace-nowrap">{formatPrice(unitPrice * quantity)}</span>
           </div>
-          <QuantityStepper quantity={quantity} max={maxQuantity(selected)} disabled={busy} onChange={setQuantity} />
         </div>
       )}
 
-      <div className="flex items-baseline justify-between border-t border-line pt-4">
-        <span className="text-sm font-semibold text-muted">총 상품 금액</span>
-        <span className="text-2xl font-black">{formatPrice(unitPrice * (selected ? quantity : 1))}</span>
+      <div className="flex items-start justify-between pt-1">
+        <div>
+          <p className="text-sm leading-[18px] font-medium text-[#111]">{selected ? `${quantity}개 선택` : "총 상품 금액"}</p>
+          {selected?.maxPerUser != null && <p className="mt-1 text-[13px] leading-[17px] text-[#8e8e8e]">계정당 최대 {selected.maxPerUser}개까지 구매할 수 있어요.</p>}
+        </div>
+        <span className="text-lg leading-[23px] font-extrabold whitespace-nowrap">{formatPrice(unitPrice * (selected ? quantity : 1))}</span>
       </div>
 
-      <Button size="lg" fullWidth loading={busy} disabled={!canBuy} onClick={handleAddToCart}>
+      <Button size="md" fullWidth className="rounded-[8px]! text-[15px]!" loading={busy} disabled={!canBuy} onClick={handleAddToCart}>
         {product.isSoldOut ? "품절" : selected ? "장바구니 담기" : "옵션을 선택해주세요"}
       </Button>
 
       {feedback && (
-        <p role="status" className={`text-sm font-semibold ${feedback.type === "error" ? "text-danger" : "text-brand-strong"}`}>
+        <p role="status" className={`text-[13px] font-semibold ${feedback.type === "error" ? "text-danger" : "text-brand-strong"}`}>
           {feedback.text}{" "}
           {feedback.type === "success" && <Link href="/cart" className="underline underline-offset-2">장바구니 보기</Link>}
         </p>

@@ -18,12 +18,15 @@ export function ProductCard({ product }: { product: ProductSummary }) {
           className="aspect-square rounded-md [&_img]:transition-[scale] [&_img]:duration-500 [&_img]:ease-out group-hover:[&_img]:scale-[1.07] group-focus-visible:[&_img]:scale-[1.07] motion-reduce:[&_img]:transition-none"
         />
         {product.isSoldOut && (
-          <span className="absolute inset-0 grid place-items-center rounded-md bg-black/45 text-sm font-black text-white">품절</span>
+          <span className="absolute inset-0 grid place-items-center rounded-md bg-[rgb(247_247_247/0.78)] text-base font-bold text-[#666]">품절</span>
         )}
       </div>
-      <p className="mt-3 text-xs font-bold text-muted">{product.artist.name}</p>
-      <h3 className="mt-1 line-clamp-2 text-sm font-semibold leading-5">{product.name}</h3>
-      <p className="mt-1.5 text-base font-black">{formatPrice(product.price)}</p>
+      {/* 캡션: 위버스샵 상품 카드 figcaption 기준 (여백 8px 4px 0, 13px/17px, 이름 굵게 검정 · 보조 텍스트 #484848) */}
+      <div className="px-1 pt-2">
+        <h3 className="mb-0.5 line-clamp-2 text-[13px] leading-[17px] font-bold text-black">{product.name}</h3>
+        <p className="truncate text-[13px] leading-[17px] text-[#484848]">{product.artist.name}</p>
+        <p className="mt-1 text-sm font-bold text-black">{formatPrice(product.price)}</p>
+      </div>
     </Link>
   );
 }

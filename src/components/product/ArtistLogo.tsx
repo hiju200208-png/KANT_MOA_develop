@@ -3,8 +3,14 @@ import type { Artist } from "@/types/app";
 import { artistThemeStyle } from "./artistTheme";
 
 // 아티스트 로고 타일. 로고 이미지가 없으면 테마 색 바탕에 이름 첫 글자를 보여줍니다.
-export function ArtistLogo({ artist, size = "md" }: { artist: Artist; size?: "sm" | "md" }) {
-  const box = size === "md" ? "size-16 rounded-2xl text-xl md:size-18" : "size-10 rounded-xl text-sm";
+const BOX = {
+  sm: "size-10 rounded-xl text-sm",
+  md: "size-16 rounded-2xl text-xl md:size-18",
+  lg: "size-16 rounded-[38%] text-xl md:size-18 md:text-2xl", // 메인 Recommended Artist
+};
+
+export function ArtistLogo({ artist, size = "md" }: { artist: Artist; size?: keyof typeof BOX }) {
+  const box = BOX[size];
   return (
     <span style={artistThemeStyle(artist.themeColor)} className={`relative grid shrink-0 place-items-center overflow-hidden border border-line bg-(--artist-color) font-black ${box}`}>
       {artist.logoUrl ? (
