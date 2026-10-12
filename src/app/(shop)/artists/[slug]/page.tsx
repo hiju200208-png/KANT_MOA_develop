@@ -53,8 +53,8 @@ async function ArtistContent({ params, searchParams }: ArtistPageProps) {
         <ArtistBanners artist={artist} />
       </Suspense>
       {/* 위버스샵 아티스트 페이지처럼 왼쪽 상품(카테고리 탭), 오른쪽 공지 */}
-      <div className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-        <section id="artist-products" aria-labelledby="artist-products-title" className="scroll-mt-24 rounded-2xl border border-line bg-white p-5 md:p-6">
+      <div className="mt-8 grid grid-cols-1 gap-6 md:mt-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+        <section id="artist-products" aria-labelledby="artist-products-title" className="scroll-mt-24 rounded-2xl border border-line bg-white px-4 py-5 md:p-6">
           <h2 id="artist-products-title" className="text-xl font-black">
             Products
           </h2>
