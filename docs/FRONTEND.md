@@ -15,16 +15,16 @@
 - `src/mocks/` : 백엔드 준비 전 임시 목 데이터
 - `public/` : 로고, 배너, 아이콘 등 디자인 고정 이미지
 
-### 사람별 담당 (프론트엔드 3명, 팀에서 이름 채우기)
+### 사람별 담당 (프론트엔드 3명)
 
 | 담당자 | 개인 브랜치 | 담당 페이지 / 폴더 |
 |---|---|---|
-| [이름A] | `dev/[이름A]` | 공통 레이아웃(헤더·푸터·네비), `src/components/ui/`, 전역 스타일·디자인 토큰, 로그인·회원가입 |
-| [이름B] | `dev/[이름B]` | 메인, 아티스트 페이지, 카테고리·상품 목록, 상품 상세 |
-| [이름C] | `dev/[이름C]` | 장바구니, 주문서, 결제 완료, 주문 내역, 마이페이지 |
+| jina | `dev/jina` | 공통 레이아웃(헤더·푸터·네비), `src/components/ui/`, 전역 스타일·디자인 토큰, 로그인·회원가입 |
+| chungman | `dev/chungman` | 메인, 아티스트 페이지, 카테고리·상품 목록, 상품 상세 |
+| sungho | `dev/sungho` | 장바구니, 주문서, 결제 완료, 주문 내역, 마이페이지 |
 
-- [이름A]는 초반에 공용 UI 컴포넌트(버튼, 입력, 모달, 스켈레톤)와 레이아웃을 먼저 만들어 develop에 올려야 B, C가 막히지 않습니다. 그 전까지 B, C는 자기 폴더 안에서 임시 마크업으로 작업하고 나중에 공용 컴포넌트로 교체합니다.
-- 상품 상세의 "장바구니 담기" 버튼은 [이름B]가 화면을 만들고, 장바구니 로직은 `src/hooks/useCart.ts`([이름C] 담당)를 가져다 씁니다.
+- jina는 초반에 공용 UI 컴포넌트(버튼, 입력, 모달, 스켈레톤)와 레이아웃을 먼저 만들어 develop에 올려야 chungman, sungho가 막히지 않습니다. 그 전까지 두 사람은 자기 폴더 안에서 임시 마크업으로 작업하고 나중에 공용 컴포넌트로 교체합니다.
+- 상품 상세의 "장바구니 담기" 버튼은 chungman이 화면을 만들고, 장바구니 로직은 `src/hooks/useCart.ts`(sungho 담당)를 가져다 씁니다.
 
 - 자기 담당 폴더 밖의 파일은 수정하지 않습니다.
 - 담당이 겹치는 작업이 생기면 먼저 팀 채널에서 누가 할지 정하고 이 표를 갱신합니다.
@@ -36,10 +36,10 @@
 | 파일 | 수정 권한 |
 |---|---|
 | `package.json`, `package-lock.json` | 누구나 가능하나 **의존성 추가는 PR 하나에 단독으로**, 팀 공지 후 |
-| `src/app/layout.tsx`, `src/app/globals.css` | [이름A] |
-| `tailwind.config.*`, `next.config.*` | [이름A] |
-| `middleware.ts` / `proxy.ts` | 백엔드 |
-| `src/services/`, `src/lib/supabase/`, `src/types/database.ts` | 백엔드 |
+| `src/app/layout.tsx`, `src/app/globals.css` | jina |
+| `tailwind.config.*`, `next.config.*` | jina |
+| `src/proxy.ts` | 백엔드 |
+| `src/services/`, `src/lib/supabase/`, `src/types/database.ts`, `src/types/app.ts` | 백엔드 |
 | `docs/SETUP.md` | 팀 합의 후 누구나 |
 
 ## 2. 브랜치 규칙 (이름별 브랜치)
@@ -119,7 +119,7 @@ src/
 │  │  └─ orders/...
 │  └─ (auth)/login, signup
 ├─ components/
-│  ├─ ui/          # 버튼, 입력, 모달 등 공용 (담당: [이름A])
+│  ├─ ui/          # 버튼, 입력, 모달 등 공용 (담당: jina)
 │  ├─ layout/      # 헤더, 푸터
 │  ├─ product/     # 상품 카드, 옵션 선택 등
 │  ├─ cart/

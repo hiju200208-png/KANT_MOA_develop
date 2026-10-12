@@ -20,12 +20,12 @@
 | 회원 | Supabase Auth(`auth.users`) + `profiles` 1:1, 가입 시 트리거로 자동 생성 |
 | 관리자 | **없음.** 아티스트·카테고리·상품·재고는 Supabase 대시보드 또는 seed SQL로 관리 (service role은 RLS를 우회) |
 | 카테고리 | 7개 고정: 앨범, 응원용품, 인형, 액세서리, 의류, 생활용품, 멤버십. 고정이지만 표시 순서·URL slug·FK 무결성을 위해 `categories` 테이블로 관리 |
-| 멤버별 굿즈 | 멤버 테이블 없이 variant `option_name`에 멤버 이름. 옵션 선택 시 메인 이미지는 바뀌지 않음 (variant 이미지 없음) |
+| 멤버별 굿즈 | 굿즈 옵션은 variant `option_name`에 멤버 이름 (멤버 테이블과 FK 없음). 멤버 소개는 `artist_members` 테이블 (6-12). 옵션 선택 시 메인 이미지는 바뀌지 않음 (variant 이미지 없음) |
 | 이미지 | 상품·아티스트 이미지는 Supabase Storage(public 버킷). DB에는 전체 URL이 아닌 **버킷 내 경로**만 저장, URL은 services에서 `getPublicUrl()`로 생성. 로고·배너 등 디자인 고정 이미지는 프론트 `public/` |
 | 멤버십 카드 | 일반 상품과 동일하게 처리. 아티스트별 상품 + variant `max_per_user = 1`. 멤버십 혜택(회원 전용 구매 등)은 범위 밖 |
 | 옵션 | 사이즈·앨범 버전·멤버 모두 `product_variants`로 처리. 옵션 없는 상품도 '기본' variant 1개 보유 |
 | 재고 | variant 단위로 관리 |
-| 1인 구매 제한 | **옵션(variant)당 최대 개수** (`product_variants.max_per_user`, null이면 무제한) |
+| 1인 구매 제한 | **옵션(variant)당 최대 개수** (`product_variants.max_per_user`, 기본 4개. null이면 무제한이지만 현재 무제한 옵션 없음, 2026-10-12) |
 | 장바구니 | 비회원은 localStorage, 로그인 시 `merge_cart` RPC로 서버 장바구니에 병합 |
 | 주문 | `create_order` 시 pending 생성, 재고 차감 없음 |
 | 결제 | `pay_order` 시 구매 제한 검증 + 재고 차감 + paid 처리 + 장바구니에서 제거 |
@@ -39,12 +39,14 @@
 erDiagram
     auth_users ||--|| profiles : "1:1"
     artists ||--o{ products : "보유"
+    artists ||--o{ artist_members : "멤버 소개"
     categories ||--o{ products : "분류"
     products ||--o{ product_images : "이미지"
     products ||--|{ product_variants : "옵션"
     profiles ||--o{ cart_items : "장바구니"
     product_variants ||--o{ cart_items : "담김"
     profiles ||--o{ orders : "주문"
+    profiles ||--o{ addresses : "배송지"
     orders ||--|{ order_items : "포함"
     product_variants ||--o{ order_items : "주문됨"
 
@@ -60,6 +62,7 @@ erDiagram
         text name_ko "오르빗온"
         text slug UK
         text logo_path
+        text hero_image_path "nullable"
         text theme_color
         int sort_order
     }
@@ -124,6 +127,18 @@ erDiagram
         int unit_price "스냅샷"
         int quantity
     }
+    addresses {
+        bigint id PK
+        uuid user_id FK
+        text label "nullable"
+        text recipient_name
+        text recipient_phone
+        text postal_code
+        text address1
+        text address2 "nullable"
+        boolean is_default "사용자당 1개"
+        timestamptz created_at
+    }
 ```
 
 ### 주요 제약
@@ -182,6 +197,7 @@ create table public.artists (
   name_ko text not null,
   slug text not null unique,
   logo_path text,          -- artists 버킷 내 경로
+  hero_image_path text,    -- artists 버킷 내 경로 (아티스트 페이지 배경)
   theme_color text,
   sort_order int not null default 0,
   created_at timestamptz not null default now()
@@ -654,21 +670,33 @@ products/
    ├─ main.webp        # products.thumbnail_path
    └─ detail-1.webp    # product_images.image_path (sort_order 순)
 artists/
-└─ <artist-slug>/logo.webp
+└─ <artist-slug>/
+   ├─ logo.webp        # artists.logo_path
+   └─ hero.webp        # artists.hero_image_path (아티스트 페이지 배경)
 ```
 
 - 파일명은 영문 소문자·숫자·하이픈만 사용, 확장자는 `.webp` 권장
-- 업로드 전 가로 1200px 이하로 리사이즈
+- 이미지 규격 (위버스샵 기준)
+
+| 파일 | 규격 | 최소 |
+|---|---|---|
+| 상품 대표 `main.webp` | 정사각형 1:1, 1440×1440 | 720×720 |
+| 상품 상세 `detail-N.webp` | 가로 1200px, 세로 자유 | 가로 720 |
+| 아티스트 로고 `logo.webp` | 정사각형 1:1, 1080×1080 (원형으로 잘려 표시) | 500×500 |
+| 아티스트 배경 `hero.webp` | 1920×720 (8:3) | - |
+
+- 팀원은 jpg/png 원본을 폴더 구조대로 zip으로 전달 → 백엔드가 webp 변환·리사이즈 후 업로드
 
 ### 6-10. 초기 데이터 (seed 예시)
 
 관리자 기능이 없으므로 상품 등록·재고 수정은 SQL Editor에서 직접 실행합니다.
 
 ```sql
-insert into public.artists (name, name_ko, slug, logo_path, sort_order) values
-  ('ORBIT:ON', '오르빗온',   'orbit-on', 'orbit-on/logo.webp', 1),
-  ('DAYLOG',   '데이로그',   'daylog',   'daylog/logo.webp',   2),
-  ('SODAFM',   '소다에프엠', 'sodafm',   'sodafm/logo.webp',   3);
+-- theme_color: 각 그룹 담당 프론트가 정해서 전달 (미정이면 null)
+insert into public.artists (name, name_ko, slug, logo_path, hero_image_path, theme_color, sort_order) values
+  ('ORBIT:ON', '오르빗온',   'orbit-on', 'orbit-on/logo.webp', 'orbit-on/hero.webp', '#B8A4FF', 1),
+  ('DAYLOG',   '데이로그',   'daylog',   'daylog/logo.webp',   'daylog/hero.webp',   null,      2),  -- TODO: 색상
+  ('SODAFM',   '소다에프엠', 'sodafm',   'sodafm/logo.webp',   'sodafm/hero.webp',   null,      3);  -- TODO: 색상
 
 -- 카테고리는 고정 7개
 insert into public.categories (name, slug, sort_order) values
@@ -710,6 +738,31 @@ insert into public.product_variants (product_id, option_name, stock, max_per_use
 select p.id, '기본', 500, 1 from p;
 ```
 
+### 6-11. 배송지 (addresses)
+
+SQL 원본: `supabase/migrations/20261007000008_add_addresses.sql`
+
+| 항목 | 규칙 |
+|---|---|
+| 기본 배송지 | 사용자당 1개 (`unique (user_id) where is_default` 부분 유니크 인덱스) |
+| 첫 주소 | `before insert` 트리거가 자동으로 `is_default = true` |
+| 기본 배송지 삭제 | `after delete` 트리거가 남은 주소 중 최신을 기본으로 지정 |
+| 기본 변경 | `set_default_address(p_address_id)` RPC만 가능. 기존 해제 → 새로 지정 순서 (유니크 인덱스가 행 단위로 즉시 검사되므로) |
+| RLS | `addresses_own`: 본인 것만 CRUD. `is_default` 컬럼은 update 권한 회수 (RPC·트리거는 SECURITY DEFINER) |
+| 주문과의 관계 | FK 없음. 주문은 주소 문자열을 스냅샷으로 저장 |
+
+### 6-12. 아티스트 멤버 (artist_members)
+
+SQL 원본: `supabase/migrations/20261007000009_add_artist_members.sql` (테이블 + 13명 데이터)
+
+| 항목 | 규칙 |
+|---|---|
+| 용도 | 아티스트 페이지 멤버 소개 전용. 상품·옵션·주문과 FK 없음 |
+| 컬럼 | name, name_en, position, color, mascot, birthday, mbti, description(한 줄 소개), tags(text[]), image_path, sort_order |
+| 이미지 | artists 버킷 `<artist-slug>/members/<name_en 소문자>.webp`, 정사각형 1080×1080 |
+| RLS | 누구나 조회만. 쓰기 정책 없음 (대시보드/마이그레이션으로 관리) |
+| 이름 | `name`은 굿즈 옵션명(`product_variants.option_name`)과 동일하게 유지 |
+
 ---
 
 ## 7. 프론트 연동 참고
@@ -747,6 +800,11 @@ await supabase.rpc('cancel_order', { p_order_id: orderId });
 | `OUT_OF_STOCK` | pay_order | 결제 시점에 품절됨 (detail = variant_id) |
 | `INVALID_ORDER` | pay_order, cancel_order | 본인 주문이 아니거나 결제 불가 상태 |
 | `ALREADY_CANCELLED` | cancel_order | 이미 취소된 주문 |
+| `INVALID_CREDENTIALS` | signIn (Auth) | 이메일 또는 비밀번호 오류 |
+| `EMAIL_ALREADY_EXISTS` | signUp (Auth) | 이미 가입된 이메일 |
+| `WEAK_PASSWORD` | signUp (Auth) | 비밀번호 규칙 미달 |
+
+전체 에러 처리와 services 함수별 에러는 `docs/API_SPEC.md` 참고.
 
 ### DB 타입 생성
 
@@ -764,4 +822,4 @@ supabase gen types typescript --project-id <PROJECT_ID> > src/types/database.ts
 - 방치된 pending 주문 정리: 필요 시 pg_cron으로 일정 시간 지난 pending을 cancelled 처리
 - 실제 PG 연동 시: 결제 승인·웹훅을 Supabase Edge Function 또는 Next.js Route Handler로 추가하고, 그 안에서 `pay_order` 로직 호출
 - 관리자 기능이 필요해지면: `profiles.role` 컬럼 + `is_admin()` 함수를 추가하고 카탈로그 테이블에 관리자 쓰기 정책 추가
-- 확장 후보: 배송지(addresses), 찜(wishlist), 리뷰(reviews), 예약 판매 기간(`sale_start_at`, `sale_end_at`)
+- 확장 후보: 찜(wishlist), 리뷰(reviews), 예약 판매 기간(`sale_start_at`, `sale_end_at`)

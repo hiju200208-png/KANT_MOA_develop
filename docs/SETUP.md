@@ -23,22 +23,24 @@
 
 별도 API 서버와 Next.js API Route는 사용하지 않습니다. 주문·결제·재고처럼 신뢰가 필요한 로직은 전부 Supabase RPC(Postgres 함수)로 처리합니다.
 
+**예외: AI 챗봇(칸트봇)** — Gemini API 키를 브라우저에 노출하지 않기 위해 `src/app/api/chat/route.ts` 하나만 Route Handler로 둡니다. 키는 `GEMINI_API_KEY`(서버 전용, `NEXT_PUBLIC_` 아님)로 `.env.local`·Vercel 환경 변수에 등록합니다.
+
 ## 3. 역할 분담
 
-팀 구성: 백엔드 1명, 프론트엔드 3명 (총 4명)
+팀 구성: 백엔드 1명(jin), 프론트엔드 3명(jina, chungman, sungho) — 총 4명
 
 | 담당 | 소유 영역 |
 |---|---|
-| 백엔드 | `supabase/` 전체, `src/lib/supabase/`, `src/services/`, `src/types/database.ts`, `docs/DB_DESIGN.md`, `docs/BACKEND.md` |
+| 백엔드 | `supabase/` 전체, `src/lib/supabase/`, `src/services/`, `src/proxy.ts`, `src/types/database.ts`, `src/types/app.ts`, `docs/DB_DESIGN.md`, `docs/BACKEND.md` |
 | 프론트엔드 | `src/app/`, `src/components/`, `src/hooks/`, `src/constants/`, `src/mocks/`, `public/`, 스타일 (사람별 세부 담당은 `docs/FRONTEND.md` 1장) |
-| 공동 | `docs/SETUP.md`, `src/types/` 중 database.ts 외 공용 타입 |
+| 공동 | `docs/SETUP.md`, `src/types/` 중 database.ts·app.ts 외 공용 타입 |
 
 다른 담당 영역의 파일은 수정하지 않습니다. 꼭 필요하면 먼저 담당자와 합의하고, PR 설명에 이유를 적고 해당 담당자를 리뷰어로 지정합니다.
 
 ## 4. 폴더 구조
 
 ```
-goods-shop/
+KANT_MOA/
 ├─ docs/
 │  ├─ SETUP.md            # 이 문서
 │  ├─ FRONTEND.md         # 프론트엔드 작업 규칙 (에이전트용)
@@ -60,16 +62,18 @@ goods-shop/
 │  │  └─ supabase/
 │  │     ├─ client.ts     # 브라우저용 클라이언트
 │  │     ├─ server.ts     # 서버 컴포넌트용 클라이언트 (cookies 사용)
-│  │     └─ middleware.ts # 세션 갱신 헬퍼
-│  ├─ services/           # Supabase 호출 래퍼 (프론트는 여기만 import)
+│  │     └─ proxy.ts      # 세션 갱신 헬퍼
+│  ├─ services/           # Supabase 호출 래퍼 (프론트는 여기만 import, 명세: docs/API_SPEC.md)
 │  │  ├─ storage.ts       # Storage 경로 → 공개 URL 변환
-│  │  ├─ products.ts
+│  │  ├─ products.ts      # 아티스트·카테고리·상품 조회
+│  │  ├─ auth.ts          # 회원가입·로그인·프로필
 │  │  ├─ cart.ts          # 서버 장바구니 + 비회원 장바구니 + 병합
 │  │  ├─ orders.ts
-│  │  └─ errors.ts        # RPC 에러 코드 → 앱 에러 변환
-│  └─ types/
-│     └─ database.ts      # supabase gen types 결과 (직접 수정 금지)
-├─ middleware.ts          # 세션 갱신 (Next.js 버전에 따라 proxy.ts)
+│  │  └─ errors.ts        # RPC·Auth 에러 코드 → 앱 에러 변환
+│  ├─ types/
+│  │  ├─ database.ts      # supabase gen types 결과 (직접 수정 금지)
+│  │  └─ app.ts           # services 반환 타입 (백엔드 작성, 프론트는 import만)
+│  └─ proxy.ts            # 세션 갱신 (Next.js 16부터 middleware → proxy)
 ├─ .env.example
 └─ .github/
    └─ pull_request_template.md
@@ -110,13 +114,13 @@ git push -u origin develop
 
 이미지 정책: 상품·아티스트 이미지는 Supabase Storage에서 불러오고, 로고·배너·아이콘 등 디자인 고정 이미지만 `public/`에 둡니다. `next/image`를 쓰려면 `next.config`의 `images.remotePatterns`에 `<PROJECT_REF>.supabase.co`의 `/storage/v1/object/public/**` 경로를 등록합니다.
 
-Supabase 클라이언트(`client.ts`, `server.ts`, `middleware.ts`) 코드는 Supabase 공식 문서의 "Next.js Server-Side Auth" 가이드를 기준으로 작성합니다. 패키지 버전에 따라 API가 달라질 수 있으므로 블로그 예제보다 공식 문서를 우선합니다.
+Supabase 클라이언트(`client.ts`, `server.ts`, `proxy.ts`) 코드는 Supabase 공식 문서의 "Next.js Server-Side Auth" 가이드를 기준으로 작성합니다. 패키지 버전에 따라 API가 달라질 수 있으므로 블로그 예제보다 공식 문서를 우선합니다.
 
 ## 6. 팀원 로컬 세팅
 
 ```bash
-git clone <REPO_URL>
-cd goods-shop
+git clone https://github.com/jin-park0115/KANT_MOA.git
+cd KANT_MOA
 git checkout develop
 npm install
 cp .env.example .env.local   # 값은 팀 채널에서 공유받기
@@ -156,7 +160,7 @@ develop       ← 통합 브랜치 (개인 브랜치 PR 대상)
 dev/<이름>    ← 개인 작업 브랜치 (본인만 커밋)
 ```
 
-브랜치 이름 예시: `dev/minsu`, `dev/jiwoo` (영문 소문자)
+팀 브랜치: `dev/jin`(백엔드), `dev/jina`, `dev/chungman`, `dev/sungho` (영문 소문자, worklog 파일은 `docs/worklog/<대문자 이름>.md`)
 
 ### 작업 흐름
 
