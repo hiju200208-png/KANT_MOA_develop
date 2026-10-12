@@ -11,6 +11,7 @@ import { useSwipe } from "./useSwipe";
 export type SpotlightArtist = Pick<Artist, "id" | "slug" | "name" | "nameKo" | "tagline" | "themeColor"> & { products: BestProduct[] };
 
 const AUTO_SLIDE_MS = 4000;
+const SLIDE_MS = 700; // 슬라이드 넘김 애니메이션 길이 (아래 duration-700과 맞춤)
 const STACK_COUNT = 3; // 오른쪽에 겹쳐 놓는 상품 수
 
 // 아티스트 테마 색으로 만든 파스텔 배경 (흰색을 많이 섞어 글자 대비 유지)
@@ -71,19 +72,43 @@ function Slide({ artist, active }: { artist: SpotlightArtist; active: boolean })
 // 메인 배너 (시안 C · 파스텔 스포트라이트) 슬라이드: 아티스트마다 한 장 (문구 + 겹친 인기 상품 3개).
 // 4초마다 자동으로 넘어가고, 마우스로 끌거나 손가락으로 밀어서·위 버튼으로 넘김. 배경 톤도 아티스트 색으로 바뀜
 export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
-  const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
   const count = artists.length;
-  const move = (step: number) => setIndex((current) => (current + step + count) % count);
-  const { dragX, dragging, handlers } = useSwipe({ enabled: count > 1, onSwipe: move });
+  const loop = count > 1;
+  // 무한 루프: 앞에 마지막 복제, 뒤에 첫 번째 복제를 붙여 [마지막', 1..N, 1'] 로 그림.
+  // 복제 칸에 도착하면 애니메이션 없이 진짜 칸으로 순간 이동해서, 마지막 → 1번이 한 칸만 넘어가는 것처럼 보임
+  const slides = loop ? [artists[count - 1], ...artists, artists[0]] : artists;
+  const [pos, setPos] = useState(loop ? 1 : 0);
+  const [instant, setInstant] = useState(false); // 복제 칸 → 진짜 칸 순간 이동 중
+  const [paused, setPaused] = useState(false);
+  const index = loop ? (pos - 1 + count) % count : 0;
+  const move = (step: number) => setPos((current) => Math.min(Math.max(current + step, 0), count + 1));
+  const { dragX, dragging, handlers } = useSwipe({ enabled: loop, onSwipe: move });
 
   useEffect(() => {
-    if (count < 2 || paused || dragging) return;
+    if (!loop || paused || dragging) return;
     const timer = window.setTimeout(() => {
-      if (!document.hidden) setIndex((current) => (current + 1) % count);
+      if (!document.hidden) move(1);
     }, AUTO_SLIDE_MS);
     return () => window.clearTimeout(timer);
-  }, [index, count, paused, dragging]);
+  }, [pos, loop, paused, dragging]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 순간 이동이 그려진 다음 프레임에 다시 애니메이션 켜기
+  useEffect(() => {
+    if (!instant) return;
+    const frame = requestAnimationFrame(() => requestAnimationFrame(() => setInstant(false)));
+    return () => cancelAnimationFrame(frame);
+  }, [instant]);
+
+  // 복제 칸에 도착하면 넘어가는 애니메이션(700ms)이 끝난 뒤 진짜 칸으로 순간 이동.
+  // transitionend 대신 타이머: 모션 줄이기 설정이라 애니메이션이 없어도 멈추지 않게
+  useEffect(() => {
+    if (!loop || dragging || (pos !== 0 && pos !== count + 1)) return;
+    const timer = window.setTimeout(() => {
+      setInstant(true);
+      setPos(pos === 0 ? count : 1);
+    }, SLIDE_MS);
+    return () => window.clearTimeout(timer);
+  }, [pos, loop, count, dragging]);
 
   const artist = artists[index];
   return (
@@ -101,12 +126,12 @@ export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
 
       <div className="overflow-hidden">
         <ul
-          className={`flex touch-pan-y select-none ${dragging ? "cursor-grabbing" : "transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"}`}
-          style={{ transform: `translateX(calc(-${index * 100}% + ${dragX}px))` }}
+          className={`flex touch-pan-y select-none ${dragging ? "cursor-grabbing" : instant ? "" : "transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"}`}
+          style={{ transform: `translateX(calc(-${pos * 100}% + ${dragX}px))` }}
           {...handlers}
         >
-          {artists.map((item, i) => (
-            <Slide key={item.id} artist={item} active={i === index} />
+          {slides.map((item, i) => (
+            <Slide key={`${i}-${item.id}`} artist={item} active={i === pos} />
           ))}
         </ul>
       </div>
@@ -122,7 +147,7 @@ export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
             />
             <div className="absolute inset-x-0 -inset-y-2 flex">
               {artists.map((item, i) => (
-                <button key={item.id} type="button" aria-label={item.name} aria-current={i === index} onClick={() => setIndex(i)} className="h-full flex-1" />
+                <button key={item.id} type="button" aria-label={item.name} aria-current={i === index} onClick={() => setPos(i + 1)} className="h-full flex-1" />
               ))}
             </div>
           </div>
