@@ -26,7 +26,7 @@ export function ProductCarousel({ products, label }: { products: ProductSummary[
   const { dragX, dragging, handlers } = useSwipe({ enabled: pageCount > 1, onSwipe: move });
   const atEdge = (page === 0 && dragX > 0) || (page === pageCount - 1 && dragX < 0);
   const offset = atEdge ? dragX / EDGE_RESISTANCE : dragX;
-  const arrowClass = "brand-gradient-soft-hover grid size-9 place-items-center rounded-full border border-line bg-white transition-all hover:border-violet-300 disabled:cursor-not-allowed disabled:text-neutral-300 disabled:hover:border-line";
+  const arrowClass = "brand-gradient-soft-hover grid size-7 place-items-center rounded-full border text-sm border-line bg-white transition-all hover:border-violet-300 disabled:cursor-not-allowed disabled:text-neutral-300 disabled:hover:border-line";
 
   return (
     <div>
@@ -54,13 +54,13 @@ export function ProductCarousel({ products, label }: { products: ProductSummary[
         </div>
       </div>
       {pageCount > 1 && (
-        <div className="mt-6 flex items-center justify-center gap-4">
+        <div className="mt-4 flex items-center justify-center gap-3">
           <button type="button" className={arrowClass} aria-label="이전 상품" disabled={page === 0} onClick={() => move(-1)}>
             <span aria-hidden="true">‹</span>
           </button>
-          <p className="text-sm tabular-nums" aria-live="polite">
+          <p className="text-xs tabular-nums" aria-live="polite">
             <span className="font-bold">{pad(page + 1)}</span>
-            <span className="mx-1.5 text-line" aria-hidden="true">|</span>
+            <span className="mx-1 text-line" aria-hidden="true">|</span>
             <span className="text-muted">{pad(pageCount)}</span>
           </p>
           <button type="button" className={arrowClass} aria-label="다음 상품" disabled={page >= pageCount - 1} onClick={() => move(1)}>
