@@ -182,7 +182,6 @@ export type Database = {
       }
       artists: {
         Row: {
-          tagline: string | null
           created_at: string
           hero_image_path: string | null
           id: number
@@ -191,10 +190,10 @@ export type Database = {
           name_ko: string
           slug: string
           sort_order: number
+          tagline: string | null
           theme_color: string | null
         }
         Insert: {
-          tagline?: string | null
           created_at?: string
           hero_image_path?: string | null
           id?: never
@@ -203,10 +202,10 @@ export type Database = {
           name_ko: string
           slug: string
           sort_order?: number
+          tagline?: string | null
           theme_color?: string | null
         }
         Update: {
-          tagline?: string | null
           created_at?: string
           hero_image_path?: string | null
           id?: never
@@ -215,6 +214,7 @@ export type Database = {
           name_ko?: string
           slug?: string
           sort_order?: number
+          tagline?: string | null
           theme_color?: string | null
         }
         Relationships: []
@@ -422,7 +422,6 @@ export type Database = {
       }
       orders: {
         Row: {
-          shipping_fee: number
           address: string
           cancelled_at: string | null
           created_at: string
@@ -430,12 +429,12 @@ export type Database = {
           paid_at: string | null
           recipient_name: string
           recipient_phone: string
+          shipping_fee: number
           status: string
           total_price: number
           user_id: string
         }
         Insert: {
-          shipping_fee?: number
           address: string
           cancelled_at?: string | null
           created_at?: string
@@ -443,12 +442,12 @@ export type Database = {
           paid_at?: string | null
           recipient_name: string
           recipient_phone: string
+          shipping_fee?: number
           status?: string
           total_price: number
           user_id: string
         }
         Update: {
-          shipping_fee?: number
           address?: string
           cancelled_at?: string | null
           created_at?: string
@@ -456,6 +455,7 @@ export type Database = {
           paid_at?: string | null
           recipient_name?: string
           recipient_phone?: string
+          shipping_fee?: number
           status?: string
           total_price?: number
           user_id?: string
@@ -472,23 +472,23 @@ export type Database = {
       }
       product_images: {
         Row: {
-          kind: string
           id: number
           image_path: string
+          kind: string
           product_id: number
           sort_order: number
         }
         Insert: {
-          kind?: string
           id?: never
           image_path: string
+          kind?: string
           product_id: number
           sort_order?: number
         }
         Update: {
-          kind?: string
           id?: never
           image_path?: string
+          kind?: string
           product_id?: number
           sort_order?: number
         }
@@ -542,44 +542,44 @@ export type Database = {
       }
       products: {
         Row: {
-          is_limited: boolean
-          is_preorder: boolean
-          release_date: string | null
           artist_id: number
           category_id: number
           created_at: string
           description: string | null
           id: number
+          is_limited: boolean
+          is_preorder: boolean
           name: string
           price: number
+          release_date: string | null
           status: string
           thumbnail_path: string | null
         }
         Insert: {
-          is_limited?: boolean
-          is_preorder?: boolean
-          release_date?: string | null
           artist_id: number
           category_id: number
           created_at?: string
           description?: string | null
           id?: never
+          is_limited?: boolean
+          is_preorder?: boolean
           name: string
           price: number
+          release_date?: string | null
           status?: string
           thumbnail_path?: string | null
         }
         Update: {
-          is_limited?: boolean
-          is_preorder?: boolean
-          release_date?: string | null
           artist_id?: number
           category_id?: number
           created_at?: string
           description?: string | null
           id?: never
+          is_limited?: boolean
+          is_preorder?: boolean
           name?: string
           price?: number
+          release_date?: string | null
           status?: string
           thumbnail_path?: string | null
         }
