@@ -45,7 +45,7 @@ async function ProductContent({ params }: ProductPageProps) {
       {/* 위버스샵 판매 페이지 기준: 이미지 58% · 정보 영역, 아티스트 14px 굵게 › 상품명 15px 회색 › 가격 20px */}
       <div className="-mx-4 grid md:mx-0 md:grid-cols-[58fr_42fr] md:gap-5">
         {/* 회색 박스 가운데에 상품 이미지를 띄움 (위버스샵 판매 페이지 참고) */}
-        <div className="grid aspect-square place-items-center bg-[#f6f6f6] md:rounded-[8px]">
+        <div className="grid aspect-square place-items-center bg-[#ededed] md:rounded-[8px]">
           <ProductImage src={product.thumbnailUrl} alt={altBase} sizes="(min-width: 768px) 35vw, 60vw" eager className="aspect-square w-[60%] rounded-[16px] shadow-[0_8px_24px_rgb(0_0_0/0.08)]" />
         </div>
 
