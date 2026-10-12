@@ -25,7 +25,7 @@ export async function ArtistShowcase({ artist }: { artist: Artist }) {
           ...artistThemeStyle(artist.themeColor),
           background: "linear-gradient(110deg, var(--artist-color), color-mix(in srgb, var(--artist-color) 65%, white))",
         }}
-        className="group relative isolate flex h-14 items-center px-5 md:h-16 md:px-6"
+        className="group relative isolate flex h-14 items-center px-5 md:h-16 md:px-10"
       >
         <div className="absolute inset-0 -z-10 bg-linear-to-r from-black/35 via-black/10 to-transparent" aria-hidden="true" />
         <div className="text-white">
@@ -35,7 +35,8 @@ export async function ArtistShowcase({ artist }: { artist: Artist }) {
           </h2>
         </div>
       </Link>
-      <div className="p-4">
+      {/* 좌우 여백을 넓혀 상품 이미지를 조금 작게 (위버스샵 아티스트 섹션 느낌) */}
+      <div className="p-4 md:px-10 md:py-6">
         {products.length > 0 ? (
           <ProductCarousel products={products} label={artist.name} />
         ) : (
@@ -50,7 +51,7 @@ export function ArtistShowcaseSkeleton() {
   return (
     <div className="overflow-hidden rounded-[16px] bg-white shadow-[0_4px_28px_rgb(0_0_0/0.12)]" aria-busy="true" aria-label="아티스트 굿즈를 불러오는 중">
       <Skeleton className="h-14 w-full rounded-none md:h-16" />
-      <div className="grid grid-cols-2 gap-3 p-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 p-4 md:grid-cols-4 md:gap-6 md:px-10 md:py-6">
         {Array.from({ length: 4 }, (_, i) => (
           <Skeleton key={i} className="aspect-square w-full" />
         ))}
