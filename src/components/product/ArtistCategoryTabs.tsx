@@ -19,7 +19,7 @@ export function ArtistCategoryTabs({ basePath, categories, current }: ArtistCate
   ];
 
   return (
-    <nav aria-label="카테고리" className="-mx-5 overflow-x-auto px-5 md:-mx-6 md:px-6">
+    <nav aria-label="카테고리" className="-mx-4 overflow-x-auto px-4 scrollbar-none md:-mx-6 md:px-6">
       <ul className="flex w-max gap-2">
         {tabs.map((tab) => {
           const active = tab.slug === current;
