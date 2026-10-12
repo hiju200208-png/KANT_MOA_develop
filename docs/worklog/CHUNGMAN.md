@@ -1,3 +1,29 @@
+## 2026-10-12 | dev/chunga: 메인 배너를 파스텔 스포트라이트 슬라이드로 · 상단 줄(헤더) 가운데 로고
+
+- 작업자: chungman
+- 브랜치: dev/chunga (develop `bcbc3cf` 반영, 원격 미푸시). dev/chunga-redesign·dev/chunga-banner-c는 그대로 둠
+- 관련 이슈 / PR: - / (검증 후 PR 예정)
+- 에이전트 사용: O (Claude, Cowork)
+
+### 요청한 작업
+- 스크린샷(시안 C)대로 메인 배너 수정, 헤더도 함께 수정, 배너는 슬라이드 방식 유지
+
+### 한 일
+- `HomeSpotlight.tsx`(banner-c에서 가져와 슬라이드로 변경): 아티스트마다 한 장(문구·겹친 인기 상품 3개·아래 상품 카드 3개), 7초 자동 넘김, 마우스 끌기·손가락 밀기(`useSwipe`), 위 아티스트 버튼으로 이동, 배경 톤이 아티스트 색으로 전환
+- `page.tsx`: 기존 `MainHeroCarousel` 배너 → `HomeSpotlight` (아티스트별 `getBestProducts` 3개). 아래 Recommended Artist·아티스트별 굿즈·최근 본 상품은 그대로
+- `TopBar.tsx`·`Header.tsx`: 버블 로고 칸 → 왼쪽 바로가기 · 가운데 "KANT·MOA"(Fredoka) · 오른쪽 장바구니·로그인. 메인은 배너 안에 같은 줄이 있어 헤더를 CSS(`:has`)로 숨김
+- 카테고리 "인기 굿즈"(`/category/best`, 상단 줄 "카테고리" 연결): `popularCategory.ts`, `PopularProductList.tsx`, 카테고리 탭 맨 앞
+- `badgeRules.ts` 가져옴 (아래 카드 배지)
+- 확인: 1440×900·390×844 배너 표시, 아티스트 버튼으로 슬라이드 이동, 상세 등 다른 페이지 상단 줄, `/category/best`, `npx tsc --noEmit`·eslint 통과
+
+### 멈춘 지점 / 보고한 내용
+- [STOP 2] `Header.tsx`·`TopBar.tsx`는 jina 영역 → 사용자 요청으로 수정, jina 공유 필요
+
+### 남은 일 / TODO
+- 메인은 헤더를 숨겨서 스크롤을 내리면 상단 줄이 없음 (모바일은 하단 메뉴 있음) → 필요하면 고정 방식 검토
+- 쓰지 않게 된 `MainHeroCarousel.tsx`·`heroSlides.ts` 정리 여부
+- 로컬 `npm run build` 확인 후 푸시·PR
+
 ## 2026-10-12 | 메인 아티스트 굿즈 패널·아티스트 페이지 배너 마우스 드래그
 
 - 작업자: chungman
