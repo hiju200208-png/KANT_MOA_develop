@@ -3,6 +3,7 @@ import type { Database } from '@/types/database';
 import type {
   Artist,
   ArtistMember,
+  ArtistPromoBanner,
   Category,
   ProductDetail,
   ProductList,
@@ -49,6 +50,23 @@ export async function getArtist(slug: string): Promise<Artist | null> {
     return fallbackArtist(slug);
   }
   return data && toArtist(data);
+}
+
+// 등록된 배너가 없거나 없는 slug면 빈 배열
+export async function getArtistBanners(slug: string): Promise<ArtistPromoBanner[]> {
+  const { data, error } = await supabase
+    .from('artist_banners')
+    .select('id, title, subtitle, image_path, link_path, artists!inner(slug)')
+    .eq('artists.slug', slug)
+    .order('sort_order');
+  if (error) throw toAppError(error);
+  return data.map((b) => ({
+    id: b.id,
+    title: b.title,
+    subtitle: b.subtitle,
+    imageUrl: getImageUrl('artists', b.image_path)!,
+    href: b.link_path,
+  }));
 }
 
 // 없는 slug면 빈 배열

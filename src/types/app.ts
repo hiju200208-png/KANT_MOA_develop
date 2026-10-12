@@ -13,6 +13,15 @@ export type Artist = {
   themeColor: string | null;
 };
 
+// 아티스트 페이지 상단 배너 (DB에 등록된 경우만. 없으면 화면이 hero + 최신 상품으로 구성)
+export type ArtistPromoBanner = {
+  id: number;
+  title: string;
+  subtitle: string | null;
+  imageUrl: string; // 16:9, 글씨 없는 배경 이미지
+  href: string; // 사이트 내부 경로
+};
+
 export type ArtistMember = {
   id: number;
   name: string; // '선우' (상품 옵션명과 동일)
