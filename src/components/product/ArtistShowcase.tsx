@@ -18,7 +18,7 @@ export async function ArtistShowcase({ artist }: { artist: Artist }) {
   }
 
   return (
-    <article className="overflow-hidden rounded-lg bg-white shadow-card">
+    <article className="reveal overflow-hidden rounded-lg bg-white shadow-card">
       <Link
         href={`/artists/${artist.slug}`}
         style={{

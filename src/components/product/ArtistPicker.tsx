@@ -67,7 +67,7 @@ export function ArtistPicker({ artists }: { artists: Artist[] }) {
 
       <ul className="grid gap-4 md:grid-cols-3 md:gap-6">
         {artists.map((artist) => (
-          <li key={artist.id}>
+          <li key={artist.id} className="reveal">
             <ArtistCard artist={artist} />
           </li>
         ))}

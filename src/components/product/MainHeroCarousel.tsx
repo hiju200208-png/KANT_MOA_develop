@@ -150,7 +150,8 @@ export function MainHeroCarousel({ products, themeColors }: MainHeroCarouselProp
           return (
             <li
               key={product.id}
-              className="w-full shrink-0 [--edge:10%] md:[--edge:22%] xl:[--edge:28%]"
+              className="hero-slide w-full shrink-0 [--edge:10%] md:[--edge:22%] xl:[--edge:28%]"
+              data-active={active}
               style={slideBackground(color)}
               aria-roledescription="slide"
               aria-label={`${i + 1} / ${count}`}
@@ -186,7 +187,7 @@ export function MainHeroCarousel({ products, themeColors }: MainHeroCarouselProp
                       </div>
                     )}
                   </div>
-                  <div className="text-white">
+                  <div className="hero-copy text-white">
                     <p className="text-sm font-bold opacity-80">{product.artist.name}</p>
                     <h2 className="mt-1 text-2xl font-black leading-snug md:text-4xl">{product.name}</h2>
                     <p className="mt-2 text-sm opacity-80">
