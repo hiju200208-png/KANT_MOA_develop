@@ -14,6 +14,7 @@
 - `TopBar.tsx`·`Header.tsx`: 버블 로고 칸 → 왼쪽 바로가기 · 가운데 "KANT·MOA"(Fredoka) · 오른쪽 장바구니·로그인. 메인은 배너 안에 같은 줄이 있어 헤더를 CSS(`:has`)로 숨김
 - 카테고리 "인기 굿즈"(`/category/best`, 상단 줄 "카테고리" 연결): `popularCategory.ts`, `PopularProductList.tsx`, 카테고리 탭 맨 앞
 - `badgeRules.ts` 가져옴 (아래 카드 배지)
+- 수정(두 번째 스크린샷 기준): 상단 줄 왼쪽 바로가기(아티스트·카테고리) 제거, 배너의 버튼 2개(컬렉션 보러 가기·전체 아티스트)와 아래 상품 카드 3개 제거 → 문구 + 겹친 상품만
 - 확인: 1440×900·390×844 배너 표시, 아티스트 버튼으로 슬라이드 이동, 상세 등 다른 페이지 상단 줄, `/category/best`, `npx tsc --noEmit`·eslint 통과
 
 ### 멈춘 지점 / 보고한 내용
