@@ -10,12 +10,11 @@ export function ProductCard({ product }: { product: ProductSummary }) {
       href={`/products/${product.id}`}
       className="group block transition-transform duration-300 ease-out hover:-translate-y-1 focus-visible:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
-      <div className="relative overflow-hidden rounded-md transition-shadow duration-300 group-hover:shadow-[0_18px_36px_-14px_rgb(17_18_20/0.35)] group-focus-visible:shadow-[0_18px_36px_-14px_rgb(17_18_20/0.35)]">
+      <div className="relative overflow-hidden rounded-md">
         <ProductImage
           src={product.thumbnailUrl}
           alt={`${product.artist.name} ${product.name}`}
           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-          inset="10%"
           className="aspect-square rounded-md [&_img]:transition-[scale] [&_img]:duration-500 [&_img]:ease-out group-hover:[&_img]:scale-[1.07] group-focus-visible:[&_img]:scale-[1.07] motion-reduce:[&_img]:transition-none"
         />
         {product.isSoldOut && (
