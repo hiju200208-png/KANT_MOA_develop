@@ -1,12 +1,9 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export function BackButton() {
-  const pathname = usePathname();
   const router = useRouter();
-
-  if (pathname === "/") return null;
 
   return (
     <button
