@@ -85,7 +85,7 @@ export function OrderList() {
                   scroll={false}
                   aria-current={selected ? "page" : undefined}
                   className={`inline-flex h-11 items-center gap-1.5 rounded-full border px-4 text-sm font-bold transition-colors ${
-                    selected ? "border-foreground bg-foreground text-white" : "brand-gradient-soft-hover border-line bg-white text-neutral-700 hover:border-violet-300"
+                    selected ? "border-foreground bg-foreground text-white" : "brand-gradient-soft-hover border-line bg-white text-neutral-700 hover:border-neutral-400"
                   }`}
                 >
                   <span className={selected ? "text-white" : undefined}>{item.label}</span>

@@ -77,7 +77,7 @@ async function NoticeContent({ params }: NoticePageProps) {
           <ul className="divide-y divide-line rounded-2xl border border-line bg-white">
             {others.map((item) => (
               <li key={item.id}>
-                <Link href={`${artistPath}/notices/${item.id}`} className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-violet-50/40">
+                <Link href={`${artistPath}/notices/${item.id}`} className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-neutral-100">
                   <span className="min-w-0 truncate text-sm font-semibold">{item.title}</span>
                   <time dateTime={item.publishedAt} className="shrink-0 text-xs text-muted">{item.publishedAt.replaceAll("-", ".")}</time>
                 </Link>

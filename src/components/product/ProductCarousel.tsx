@@ -17,7 +17,7 @@ export function ProductCarousel({ products, label }: { products: ProductSummary[
   const { dragX, dragging, handlers } = useSwipe({ enabled: pageCount > 1, onSwipe: move });
   const atEdge = (page === 0 && dragX > 0) || (page === pageCount - 1 && dragX < 0);
   const offset = atEdge ? dragX / EDGE_RESISTANCE : dragX;
-  const arrowClass = "brand-gradient-soft-hover grid size-7 place-items-center rounded-full border text-sm border-line bg-white transition-all hover:border-violet-300 disabled:cursor-not-allowed disabled:text-neutral-300 disabled:hover:border-line";
+  const arrowClass = "brand-gradient-soft-hover grid size-7 place-items-center rounded-full border text-sm border-line bg-white transition-all hover:border-neutral-400 disabled:cursor-not-allowed disabled:text-neutral-300 disabled:hover:border-line";
 
   return (
     <div>

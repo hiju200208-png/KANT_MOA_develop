@@ -98,7 +98,7 @@ export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
     >
-      <TopBar />
+      <TopBar showBack={false} />
 
       {count > 1 && (
         <div className="content-shell flex items-center gap-1 overflow-x-auto pt-1 [scrollbar-width:none]" role="group" aria-label="아티스트 선택">

@@ -19,7 +19,7 @@ export function OptionSelector({ variants, selectedId, onSelect, disabled = fals
           return (
             <label
               key={variant.id}
-              className={`inline-flex min-h-9 cursor-pointer items-center gap-1 rounded-[8px] border px-3 text-[13px] font-medium transition-all has-focus-visible:outline-2 has-focus-visible:outline-brand ${checked ? "border-foreground bg-foreground text-white" : "brand-gradient-soft-hover border-line bg-white hover:border-violet-300"} ${unavailable ? "cursor-not-allowed opacity-40" : ""}`}
+              className={`inline-flex min-h-9 cursor-pointer items-center gap-1 rounded-[8px] border px-3 text-[13px] font-medium transition-all has-focus-visible:outline-2 has-focus-visible:outline-brand ${checked ? "border-foreground bg-foreground text-white" : "brand-gradient-soft-hover border-line bg-white hover:border-neutral-400"} ${unavailable ? "cursor-not-allowed opacity-40" : ""}`}
             >
               <input
                 type="radio"

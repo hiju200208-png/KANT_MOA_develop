@@ -12,7 +12,8 @@ export default function HomePage() {
   return (
     <>
       <h1 className="sr-only">KANT MOA 공식 굿즈샵</h1>
-      <Suspense fallback={<Skeleton className="h-[640px] w-full rounded-none md:h-[600px]" />}>
+      {/* data-home: 메인 배너 안에 TopBar가 있어 전역 헤더를 CSS로 숨김 (layout/Header.tsx). 로딩 중에도 숨겨 깜빡임 방지 */}
+      <Suspense fallback={<Skeleton data-home="" className="h-[640px] w-full rounded-none md:h-[600px]" />}>
         <MainHero />
       </Suspense>
 
