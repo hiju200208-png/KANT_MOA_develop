@@ -773,7 +773,23 @@ SQL 원본: `supabase/migrations/20261012000006_add_artist_banners.sql`
 | 컬럼 | image_path, title, subtitle, link_path(사이트 내부 경로), sort_order |
 | 이미지 | artists 버킷 `<artist-slug>/banners/<이름>.webp`, 16:9 (예: 1600×900), **글씨 없는 배경** (제목·부제는 화면이 위에 그림) |
 | RLS | 누구나 조회만. 쓰기 정책 없음 (대시보드/마이그레이션으로 관리) |
-| 현재 | SODAFM 3종 (멤버 소개, 1st 미니앨범, 응원봉) |
+| 현재 | SODAFM 5종 (멤버 소개, 1st 미니앨범, 응원봉, 영상통화 팬사인회, 멤버십 & 키트) |
+
+### 6-14. 리디자인 요청 반영 (chungman, 2026-10-12)
+
+SQL 원본: `supabase/migrations/20261012000010` ~ `20261012000013`
+
+| 대상 | 내용 | RLS |
+|---|---|---|
+| `products` | `is_limited`, `is_preorder` (boolean, 기본 false), `release_date` (date) 추가 | 기존과 같음 |
+| `artists` | `tagline` (한 줄 소개) 추가 | 기존과 같음 |
+| `product_images` | `kind` ('gallery' \| 'detail', 기본 'detail') 추가. 갤러리 이미지 경로: `<artist>/<product>/gallery-2.webp`~ (1440×1440) | 기존과 같음 |
+| `home_banners` | 메인 기획전 배너. slot('main' \| 'side'), eyebrow, title, subtitle, badge, image_path(artists 버킷 `home/`), link_path, sort_order, starts_at/ends_at, is_active | 누구나 조회만 |
+| `notices` | 공지. artist_id(비우면 전체 공지), title, body(줄 단위 텍스트), product_id, is_pinned, show_in_topbar, published_at. 목 데이터 10건 + 맨 위 띠 1건 이전 | 누구나 조회만 |
+| `shop_settings` | 한 줄짜리 설정 (id는 항상 true). 무료배송 기준 50,000 / 배송비 3,000 / 출고 안내 / 사업자 정보(과제용 예시 값) | 누구나 조회만 |
+| `wishlists` | (user_id, product_id) 기본키, created_at | 본인 것만 조회·추가·삭제 |
+| `get_best_products(days, limit_count, artist_slug)` | security definer. 최근 days일 paid 수량 합계 순, 동률·무판매는 최신순. 상품 id와 순위만 반환 (개인 정보 없음) | anon·authenticated 실행 |
+| `orders.shipping_fee` + `create_order` | 상품 금액 < 무료배송 기준이면 배송비 추가. total_price = 상품 + 배송비 | 기존과 같음 |
 
 ---
 

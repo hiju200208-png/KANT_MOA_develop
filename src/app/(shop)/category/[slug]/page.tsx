@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import { CategoryTabs } from "@/components/product/CategoryTabs";
 import type { SearchParams } from "@/components/product/listParams";
 import { LoadError } from "@/components/product/LoadError";
+import { PopularProductList } from "@/components/product/PopularProductList";
+import { POPULAR_CATEGORY } from "@/components/product/popularCategory";
 import { ProductGridSkeleton } from "@/components/product/ProductGrid";
 import { ProductListSection } from "@/components/product/ProductListSection";
 import { Skeleton } from "@/components/ui";
@@ -33,17 +35,24 @@ async function CategoryContent({ params, searchParams }: CategoryPageProps) {
   } catch (error) {
     return <LoadError error={error} retryHref={`/category/${slug}`} />;
   }
-  const category = categories.find((item) => item.slug === slug);
+  // 탭 맨 앞에 "인기 굿즈"(판매량 순위)를 둠
+  const tabs = [POPULAR_CATEGORY, ...categories];
+  const isPopular = slug === POPULAR_CATEGORY.slug;
+  const category = isPopular ? POPULAR_CATEGORY : categories.find((item) => item.slug === slug);
   if (!category) notFound();
 
   return (
     <>
       <h1 className="text-2xl font-black md:text-3xl">{category.name}</h1>
       <div className="mt-5 mb-8">
-        <CategoryTabs categories={categories} current={category.slug} />
+        <CategoryTabs categories={tabs} current={category.slug} />
       </div>
       <Suspense fallback={<ProductGridSkeleton />}>
-        <ProductListSection filter={{ categorySlug: category.slug }} basePath={`/category/${category.slug}`} searchParams={searchParams} />
+        {isPopular ? (
+          <PopularProductList />
+        ) : (
+          <ProductListSection filter={{ categorySlug: category.slug }} basePath={`/category/${category.slug}`} searchParams={searchParams} />
+        )}
       </Suspense>
     </>
   );

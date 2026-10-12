@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Category } from "@/types/app";
 
 interface CategoryTabsProps {
-  categories: Category[];
+  categories: Pick<Category, "slug" | "name">[];
   current: string;
 }
 
@@ -13,7 +13,7 @@ export function CategoryTabs({ categories, current }: CategoryTabsProps) {
         {categories.map((category) => {
           const active = category.slug === current;
           return (
-            <li key={category.id}>
+            <li key={category.slug}>
               <Link
                 href={`/category/${category.slug}`}
                 aria-current={active ? "page" : undefined}

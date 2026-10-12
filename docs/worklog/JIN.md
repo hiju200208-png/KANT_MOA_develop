@@ -1,3 +1,32 @@
+## 2026-10-12 (2) | 리디자인 백엔드 · 배송비 · DAYLOG 전달본 · 이미지 교체
+
+- 작업자: jin
+- 브랜치: dev/jin, ui/polish
+- 관련 이슈 / PR: chungman 백엔드 요청서 / -
+- 에이전트 사용: O (Claude Code)
+
+### 한 일
+- 리디자인 요청 9건 반영 (`20261012000010`~`000013`): 상품 배지 칸, tagline, product_images.kind, home_banners, notices(목 10건 이전), shop_settings, wishlists, get_best_products RPC
+- 서비스: searchProducts, getBestProducts, getHomeBanners, excludeId, wishlist.ts, notices.ts, settings.ts
+- 배송비 실제 부과: orders.shipping_fee, create_order 수정, 장바구니·주문서·주문 상세에 배송비 표시 (useShippingFee)
+- DAYLOG 전달본 반영 (`000009`): 가격·이름·카테고리, 옵션 정리, 상세 이미지 재등록, 로고·히어로. 이미지 116개 업로드
+- SODAFM 배너 2종 추가 (`000008`), 기존 3종 이미지 교체
+- 이미지 교체: ORBIT:ON 대표 8, SODAFM 텀블러·인형, SODAFM 누끼 10 (기존 사진은 main-photo.webp로 백업)
+- ui/polish: 메인·상품 상세 위버스샵 수치로 축소, Recommended Artist 로고 타일, 카드 캡션
+
+### 결정 사항 / 이유
+- 배송비는 표시만이 아니라 create_order에서 계산 (표시 금액 = 결제 금액). 설정이 없으면 0
+- 인기 순위는 security definer로 집계하되 상품 id·순위만 반환 (주문 정보 비노출)
+- 마스코트 이름은 상품 이미지 표기(지야·주야) 유지, 단일 옵션은 '기본' 유지
+- 마이그레이션은 전부 롤백 트랜잭션으로 사전 검증 (배송비: 6,000원 주문 → 9,000원, 59,000원 → 무료)
+
+### 남은 일 / TODO
+- db push (000008~000013) 후 database.ts 재생성·비교, 정적 데이터 재생성
+- home_banners 내용·이미지, 갤러리 이미지 (chungman)
+- 이미지 스타일: 회색 배경으로 통일 결정 → SODAFM·DAYLOG 회색 배경 버전 필요
+
+---
+
 ## 2026-10-12 | SODAFM 이미지·볼캡 판매 · 구매 제한 기본 4 · 배포 · SODAFM 배너
 
 - 작업자: jin
