@@ -66,7 +66,7 @@ export async function getOrder(orderId: string): Promise<Order | null> {
   const { data, error } = await supabase
     .from('orders')
     .select(
-      'id, status, total_price, created_at, recipient_name, recipient_phone, address, paid_at, cancelled_at, order_items(variant_id, product_name, option_name, unit_price, quantity)',
+      'id, status, total_price, shipping_fee, created_at, recipient_name, recipient_phone, address, paid_at, cancelled_at, order_items(variant_id, product_name, option_name, unit_price, quantity)',
     )
     .eq('id', orderId)
     .order('id', { referencedTable: 'order_items' })
@@ -77,6 +77,8 @@ export async function getOrder(orderId: string): Promise<Order | null> {
 
   return {
     ...toSummary(data),
+    itemsPrice: data.total_price - data.shipping_fee,
+    shippingFee: data.shipping_fee,
     recipientName: data.recipient_name,
     recipientPhone: data.recipient_phone,
     address: data.address,
