@@ -1,14 +1,21 @@
 import Link from "next/link";
-import { getArtistNotices } from "@/mocks/notices";
-import type { Artist } from "@/types/app";
+import { formatNoticeDate, getNotices } from "@/services/notices";
+import type { Artist, Notice } from "@/types/app";
+
+const NOTICE_LIMIT = 4;
 
 interface ArtistNoticesProps {
   artist: Pick<Artist, "slug" | "name">;
 }
 
-// 아티스트 페이지 오른쪽 Notice 영역 (위버스샵 아티스트 페이지 참고)
-export function ArtistNotices({ artist }: ArtistNoticesProps) {
-  const notices = getArtistNotices(artist.slug);
+// 아티스트 페이지 오른쪽 Notice 영역 (위버스샵 아티스트 페이지 참고). DB notices에서 최신 4개
+export async function ArtistNotices({ artist }: ArtistNoticesProps) {
+  let notices: Notice[] = [];
+  try {
+    notices = await getNotices({ artistSlug: artist.slug, limit: NOTICE_LIMIT });
+  } catch {
+    // 공지를 못 불러와도 상품 영역은 그대로 보여 줍니다.
+  }
 
   return (
     <section aria-labelledby="artist-notice-title" className="rounded-2xl border border-line bg-white p-5 md:p-6 lg:sticky lg:top-24">
@@ -36,7 +43,7 @@ export function ArtistNotices({ artist }: ArtistNoticesProps) {
                   )}
                 </p>
                 <time dateTime={notice.publishedAt} className="mt-1.5 block text-xs text-muted">
-                  {notice.publishedAt.replaceAll("-", ".")}
+                  {formatNoticeDate(notice.publishedAt)}
                 </time>
               </Link>
             </li>

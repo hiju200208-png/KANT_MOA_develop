@@ -28,6 +28,11 @@ const toNotice = (n: NoticeRow): Notice => ({
   isNew: Date.now() - Date.parse(n.published_at) < NEW_DAYS * 24 * 60 * 60 * 1000,
 });
 
+// 화면 표시용 게시일 (한국 시간 기준 YYYY.MM.DD)
+export function formatNoticeDate(iso: string): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date(iso)).replaceAll('-', '.');
+}
+
 // 상단 고정 먼저, 그다음 최신순. artistSlug가 있으면 그 아티스트 공지만 (전체 공지 제외)
 export async function getNotices({ artistSlug, limit = 20 }: { artistSlug?: string; limit?: number } = {}): Promise<Notice[]> {
   let query = supabase
