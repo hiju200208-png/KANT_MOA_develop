@@ -43,7 +43,8 @@ export function MemberGallery({ members, artistName }: { members: ArtistMember[]
                     src={member.imageUrl}
                     alt=""
                     fill
-                    sizes="(min-width: 640px) 250px, 150px"
+                    // 정사각형 사진이 1:2 세로 칸을 덮으면 칸 높이(=폭×2)만큼 넓게 그려지므로 그 폭으로 요청 (작게 받으면 흐려짐)
+                    sizes="(min-width: 640px) 500px, 300px"
                     className="object-cover object-[center_30%] transition-transform duration-700 ease-out group-hover:scale-[1.06] group-focus-visible:scale-[1.06] motion-reduce:transition-none"
                   />
                 ) : (
