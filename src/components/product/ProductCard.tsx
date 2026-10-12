@@ -10,7 +10,7 @@ export function ProductCard({ product }: { product: ProductSummary }) {
       href={`/products/${product.id}`}
       className="group block transition-transform duration-300 ease-out hover:-translate-y-1 focus-visible:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
-      <div className="relative overflow-hidden rounded-md transition-shadow duration-300 group-hover:shadow-[0_18px_36px_-14px_rgb(17_18_20/0.35)] group-focus-visible:shadow-[0_18px_36px_-14px_rgb(17_18_20/0.35)]">
+      <div className="relative overflow-hidden rounded-md">
         <ProductImage
           src={product.thumbnailUrl}
           alt={`${product.artist.name} ${product.name}`}
