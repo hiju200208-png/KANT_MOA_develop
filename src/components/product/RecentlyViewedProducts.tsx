@@ -56,13 +56,13 @@ export function RecentlyViewedProducts() {
   if (products.length === 0) return null;
 
   return (
-    <section aria-labelledby="recently-viewed-products" className="reveal rounded-3xl border-2 border-violet-200 bg-linear-to-br from-white via-violet-50/60 to-teal-50/60 p-4 shadow-lg shadow-violet-100/60 md:p-6">
+    <section aria-labelledby="recently-viewed-products" className="reveal rounded-3xl border-2 border-violet-200 bg-linear-to-br from-white via-violet-50/60 to-teal-50/60 p-4 shadow-lg shadow-violet-100/60 md:p-5">
       <div className="mb-4">
-        <h2 id="recently-viewed-products" className="text-xl font-black md:text-2xl">최근 본 상품</h2>
+        <h2 id="recently-viewed-products" className="text-lg font-black md:text-xl">최근 본 상품</h2>
         <p className="mt-1 text-sm text-muted">방금 둘러본 굿즈를 다시 확인해보세요.</p>
       </div>
-      <ul className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 lg:grid-cols-4">
-        {products.slice(0, 4).map((product) => (
+      <ul className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
+        {products.slice(0, 5).map((product) => (
           <li key={product.id}>
             <ProductCard product={product} />
           </li>

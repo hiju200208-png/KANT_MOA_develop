@@ -6,7 +6,7 @@ import { artistThemeStyle } from "./artistTheme";
 import { LoadError } from "./LoadError";
 import { ProductCarousel } from "./ProductCarousel";
 
-const SHOWCASE_LIMIT = 12; // 4개씩 최대 3페이지
+const SHOWCASE_LIMIT = 15; // PC 5개씩 최대 3페이지
 
 // 메인 페이지 아티스트별 굿즈 패널 (위버스샵 아티스트 섹션 참고)
 export async function ArtistShowcase({ artist }: { artist: Artist }) {
@@ -25,14 +25,14 @@ export async function ArtistShowcase({ artist }: { artist: Artist }) {
           ...artistThemeStyle(artist.themeColor),
           background: "linear-gradient(110deg, var(--artist-color), color-mix(in srgb, var(--artist-color) 65%, white))",
         }}
-        className="group relative isolate flex h-20 items-end px-5 pb-3 md:h-24 md:px-6 md:pb-4"
+        className="group relative isolate flex h-16 items-end px-5 pb-2.5 md:h-[72px] md:px-6 md:pb-3"
       >
         <div className="absolute inset-0 -z-10 bg-linear-to-r from-black/35 via-black/10 to-transparent" aria-hidden="true" />
         <div className="text-white">
           <span className="rounded bg-black/60 px-1.5 py-0.5 text-xs font-bold">Now</span>
-          <h2 className="mt-1.5 flex items-center gap-1 text-2xl font-black tracking-tight md:text-3xl">
+          <h2 className="mt-1.5 flex items-center gap-1 text-xl font-black tracking-tight md:text-2xl">
             {artist.name}
-            <span aria-hidden="true" className="text-xl font-normal transition-transform group-hover:translate-x-1">›</span>
+            <span aria-hidden="true" className="text-lg font-normal transition-transform group-hover:translate-x-1">›</span>
           </h2>
         </div>
       </Link>
@@ -50,9 +50,9 @@ export async function ArtistShowcase({ artist }: { artist: Artist }) {
 export function ArtistShowcaseSkeleton() {
   return (
     <div className="overflow-hidden rounded-lg bg-white shadow-card" aria-busy="true" aria-label="아티스트 굿즈를 불러오는 중">
-      <Skeleton className="h-20 w-full rounded-none md:h-24" />
-      <div className="grid grid-cols-2 gap-4 p-4 md:grid-cols-4 md:p-5">
-        {Array.from({ length: 4 }, (_, i) => (
+      <Skeleton className="h-16 w-full rounded-none md:h-[72px]" />
+      <div className="grid grid-cols-2 gap-4 p-4 md:grid-cols-4 md:p-5 lg:grid-cols-5">
+        {Array.from({ length: 5 }, (_, i) => (
           <Skeleton key={i} className="aspect-square w-full" />
         ))}
       </div>

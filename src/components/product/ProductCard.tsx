@@ -21,9 +21,9 @@ export function ProductCard({ product }: { product: ProductSummary }) {
           <span className="absolute inset-0 grid place-items-center rounded-md bg-black/45 text-sm font-black text-white">품절</span>
         )}
       </div>
-      <p className="mt-3 text-xs font-bold text-muted">{product.artist.name}</p>
-      <h3 className="mt-1 line-clamp-2 text-sm font-semibold leading-5">{product.name}</h3>
-      <p className="mt-1.5 text-base font-black">{formatPrice(product.price)}</p>
+      <p className="mt-2.5 text-xs font-bold text-muted">{product.artist.name}</p>
+      <h3 className="mt-0.5 line-clamp-2 text-sm font-semibold leading-5">{product.name}</h3>
+      <p className="mt-1 text-[15px] font-black">{formatPrice(product.price)}</p>
     </Link>
   );
 }

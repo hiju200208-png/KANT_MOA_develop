@@ -23,14 +23,14 @@ function ArtistCard({ artist }: { artist: Artist }) {
     <Link
       href={`/artists/${artist.slug}`}
       style={glow}
-      className="group flex items-end justify-between gap-4 rounded-2xl bg-white p-6 shadow-card transition-[translate,box-shadow] md:p-7 duration-300 hover:-translate-y-1 hover:shadow-[0_16px_44px_-6px_var(--glow)] focus-visible:-translate-y-1 focus-visible:shadow-[0_16px_44px_-6px_var(--glow)] motion-reduce:transition-none"
+      className="group flex items-end justify-between gap-4 rounded-2xl bg-white p-5 shadow-card transition-[translate,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_16px_44px_-6px_var(--glow)] focus-visible:-translate-y-1 focus-visible:shadow-[0_16px_44px_-6px_var(--glow)] motion-reduce:transition-none"
     >
       <div className="min-w-0">
         <p className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.12em] text-muted">
           <span aria-hidden="true" className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
           {ARTIST_TAGLINE[artist.slug] ?? artist.nameKo}
         </p>
-        <h3 className="mt-3 text-2xl font-black tracking-tight">{artist.name}</h3>
+        <h3 className="mt-2 text-xl font-black tracking-tight">{artist.name}</h3>
       </div>
       <span aria-hidden="true" className="shrink-0 text-muted transition-transform group-hover:translate-x-1 group-hover:text-foreground">
         <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -58,14 +58,14 @@ export function ArtistPicker({ artists }: { artists: Artist[] }) {
 
   return (
     <section aria-labelledby="our-artists">
-      <div className="mb-5 flex flex-col gap-1.5 md:mb-6 md:flex-row md:items-end md:justify-between">
+      <div className="mb-4 flex flex-col gap-1.5 md:mb-5 md:flex-row md:items-end md:justify-between">
         <h2 id="our-artists" className="text-base font-semibold tracking-wide text-muted md:text-lg">
           ARTIST
         </h2>
         <p className="text-sm text-muted">각기 다른 빛으로, 더 특별한 이야기를 만들어가는 아티스트들을 만나보세요.</p>
       </div>
 
-      <ul className="grid gap-4 md:grid-cols-3 md:gap-6">
+      <ul className="grid gap-3 md:grid-cols-3 md:gap-5">
         {artists.map((artist) => (
           <li key={artist.id} className="reveal">
             <ArtistCard artist={artist} />
