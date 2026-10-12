@@ -29,7 +29,7 @@ export function AccountActions() {
 
   if (!profile) {
     return (
-      <Link href="/login" className="brand-gradient-soft-hover hidden h-10 items-center gap-1.5 rounded-full border border-line px-4 text-sm font-semibold hover:border-violet-300 sm:flex">
+      <Link href="/login" className="brand-gradient-soft-hover hidden h-10 items-center gap-1.5 rounded-full border border-line px-4 text-sm font-semibold hover:border-neutral-400 sm:flex">
         <UserIcon className="size-[19px]" />
         로그인
       </Link>

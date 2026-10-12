@@ -3,7 +3,7 @@
 > 프론트가 호출하는 유일한 데이터 인터페이스는 `src/services/`입니다. 이 문서는 그 함수들의 입력·출력·에러를 정의합니다.
 > 별도 REST API는 없습니다. 내부적으로는 Supabase(`from().select()`, `rpc()`)를 호출합니다.
 > 스키마·RPC 원본은 `docs/DB_DESIGN.md`, 백엔드 규칙은 `docs/BACKEND.md`를 따릅니다.
-> 상태: **확정 (v1.1, 배송지 추가)** — 프론트 3명 리뷰 완료. 변경 시 이 문서를 먼저 고치고 PR에서 프론트 담당자를 리뷰어로 지정합니다.
+> 상태: **확정 (v1.2, 리디자인 요청 반영: 배지·검색·인기·찜·메인 배너·공지·쇼핑몰 설정·배송비)** — 프론트 3명 리뷰 완료. 변경 시 이 문서를 먼저 고치고 PR에서 프론트 담당자를 리뷰어로 지정합니다.
 
 ## 0. 공통 규칙
 
@@ -137,10 +137,14 @@ type Profile = {
 |---|---|---|---|---|
 | `getArtists()` | - | `Artist[]` (sort_order 순) | 서버 | - |
 | `getArtist(slug)` | `string` | `Artist \| null` | 서버 | - |
+| `getArtistBanners(slug)` | `string` | `ArtistPromoBanner[]` (sort_order 순, 등록된 배너 없으면 빈 배열 → 화면은 hero + 최신 상품으로 구성) | 서버 | - |
 | `getArtistMembers(slug)` | `string` | `ArtistMember[]` (sort_order 순, 없는 slug면 빈 배열) | 서버 | - |
 | `getCategories()` | - | `Category[]` (sort_order 순, 7개) | 서버 | - |
 | `getProducts(params?)` | `ProductQuery` | `{ items: ProductSummary[]; total: number }` | 서버 | - |
-| `getProduct(id)` | `number` | `ProductDetail \| null` | 서버 | - |
+| `getProduct(id)` | `number` | `ProductDetail \| null` (`galleryUrls` 상단 갤러리, `detailUrls` 아래 상세. `imageUrls` = `detailUrls`) | 서버 | - |
+| `searchProducts(params)` | `{ q; limit?; offset? }` | `ProductList` (상품명·아티스트명 영문/한글 부분 일치, 최신순. 빈 검색어는 빈 결과) | 서버/클라이언트 | - |
+| `getBestProducts(params?)` | `{ days? = 7; limit? = 8; artistSlug? }` | `BestProduct[]` (= `ProductSummary & { rank }`. 최근 days일 결제 수량 순, 판매 없으면 최신순으로 채움) | 서버 | - |
+| `getHomeBanners()` | - | `{ main: HomeBanner[]; side: HomeBanner[] }` (활성 + 노출 기간 안, sort_order 순. 없으면 빈 배열) | 서버 | - |
 
 ```ts
 type ProductQuery = {
@@ -149,8 +153,12 @@ type ProductQuery = {
   sort?: 'latest' | 'price_asc' | 'price_desc';   // 기본 'latest'
   limit?: number;                                 // 기본 20
   offset?: number;                                // 기본 0
+  excludeId?: number;                             // 이 상품 제외 (상세의 '함께 보면 좋은 굿즈')
 };
 ```
+
+- `ProductSummary`에 배지 값 포함: `isLimited`(한정), `isPreorder`(예약 판매), `releaseDate`('YYYY-MM-DD' | null), `createdAt`(NEW 배지는 프론트에서 계산).
+- `Artist`에 `tagline`(섹션 한 줄 소개, 없으면 null).
 
 - 화면 매핑: 메인(`getArtists`, `getProducts({ limit: 8 })`), 아티스트 페이지(`getArtist` + `getProducts({ artistSlug })`), 카테고리 페이지(`getProducts({ categorySlug })`), 상품 상세(`getProduct`).
 - hidden 상품, 없는 id → `null` (상세 페이지는 `notFound()` 처리).
@@ -203,6 +211,33 @@ type ProductQuery = {
 - `payOrder`가 실패하면 주문은 `pending`으로 남고, 장바구니도 그대로 유지됩니다. 주문 상세에서 "다시 결제" 또는 "취소"를 할 수 있습니다.
 - 결제 성공 시 결제된 옵션만 장바구니에서 빠집니다.
 - 취소: `pending` → 상태만 변경, `paid` → 재고 복구. 버튼 노출 조건은 `status !== 'cancelled'`.
+- **배송비**: 상품 금액이 `shop_settings.free_shipping_threshold`(5만 원) 미만이면 `shipping_fee`(3,000원)를 더해 주문합니다 (DB `create_order`에서 계산). `Order.totalPrice` = 실제 결제 금액(상품 + 배송비), `itemsPrice`·`shippingFee`는 따로 제공. 장바구니·주문서 표시는 `getShopSettings()` + `calcShippingFee(itemsPrice, settings)`로 같은 규칙을 계산합니다.
+
+## 5-0. 찜 — `services/wishlist.ts`
+
+| 함수 | 입력 | 반환 | 호출 위치 | 에러 |
+|---|---|---|---|---|
+| `getWishlist()` | - | `ProductSummary[]` (최근 찜한 순, 판매 종료 상품 제외) | 클라이언트 | `NOT_AUTHENTICATED` |
+| `getWishedIds()` | - | `number[]` (카드 여러 개의 하트 상태를 한 번에. 비로그인은 빈 배열) | 클라이언트 | - |
+| `isWished(productId)` | `number` | `boolean` (비로그인은 false) | 클라이언트 | - |
+| `toggleWishlist(productId)` | `number` | `boolean` (바뀐 뒤 상태, true = 찜함) | 클라이언트 | `NOT_AUTHENTICATED` |
+
+## 5-3. 공지 — `services/notices.ts`
+
+| 함수 | 입력 | 반환 | 호출 위치 | 에러 |
+|---|---|---|---|---|
+| `getNotices(params?)` | `{ artistSlug?; limit? = 20 }` | `Notice[]` (상단 고정 먼저, 최신순. artistSlug가 있으면 그 아티스트 공지만) | 서버 | - |
+| `getNotice(id, artistSlug?)` | `number, string?` | `Notice \| null` (다른 아티스트 공지면 null) | 서버 | - |
+| `getTopbarNotice()` | - | `Notice \| null` (맨 위 공지 띠) | 서버 | - |
+
+- `Notice.body`는 줄 배열 (`src/mocks/notices.ts`와 같은 규칙: `## ` 섹션, `- ` 목록, `※ ` 주의, `< >` 소제목). `isNew`는 게시 7일 이내.
+
+## 5-4. 쇼핑몰 설정 — `services/settings.ts`
+
+| 함수 | 입력 | 반환 | 호출 위치 | 에러 |
+|---|---|---|---|---|
+| `getShopSettings()` | - | `ShopSettings` (배송비 기준·금액, 출고 안내, 사업자 정보) | 서버 | - |
+| `calcShippingFee(itemsPrice, settings)` | `number, ShopSettings` | `number` (표시용. 0원 장바구니는 0) | 어디서나 | - |
 
 ## 5-1. 배송지 — `services/addresses.ts`
 

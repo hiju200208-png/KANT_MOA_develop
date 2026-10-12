@@ -1,14 +1,34 @@
 import { Skeleton } from "@/components/ui";
-import { getProducts } from "@/services/products";
-import type { Artist, ProductSummary } from "@/types/app";
+import { getArtistBanners, getProducts } from "@/services/products";
+import type { Artist, ArtistPromoBanner, ProductSummary } from "@/types/app";
 import { ArtistBannerCarousel, type ArtistBanner } from "./ArtistBannerCarousel";
 import { artistThemeStyle } from "./artistTheme";
 import { formatPrice } from "./formatPrice";
 
 const FEATURED_LIMIT = 3;
 
-// 배너 1: 아티스트 단체 사진(클릭 시 멤버 소개 페이지), 배너 2~: 최신 상품 (별도 배너 테이블 없이 기존 데이터로 구성)
+// DB(artist_banners)에 등록된 배너가 있으면 그대로 사용.
+// 없으면 배너 1: 아티스트 단체 사진(클릭 시 멤버 소개 페이지), 배너 2~: 최신 상품으로 구성
 export async function ArtistBanners({ artist }: { artist: Artist }) {
+  let promos: ArtistPromoBanner[] = [];
+  try {
+    promos = await getArtistBanners(artist.slug);
+  } catch {
+    // 배너를 못 불러오면 기본 구성으로 보여줍니다.
+  }
+  if (promos.length > 0) {
+    const banners = promos.map<ArtistBanner>((promo) => ({
+      key: `promo-${promo.id}`,
+      href: promo.href,
+      title: promo.title,
+      subtitle: promo.subtitle ?? "",
+      imageUrl: promo.imageUrl,
+      imageAlt: promo.title,
+      variant: "cover",
+    }));
+    return <ArtistBannerCarousel banners={banners} themeStyle={artistThemeStyle(artist.themeColor)} />;
+  }
+
   let featured: ProductSummary[] = [];
   try {
     featured = (await getProducts({ artistSlug: artist.slug, limit: FEATURED_LIMIT })).items;

@@ -1,3 +1,61 @@
+## 2026-10-12 (2) | 리디자인 백엔드 · 배송비 · DAYLOG 전달본 · 이미지 교체
+
+- 작업자: jin
+- 브랜치: dev/jin, ui/polish
+- 관련 이슈 / PR: chungman 백엔드 요청서 / -
+- 에이전트 사용: O (Claude Code)
+
+### 한 일
+- 리디자인 요청 9건 반영 (`20261012000010`~`000013`): 상품 배지 칸, tagline, product_images.kind, home_banners, notices(목 10건 이전), shop_settings, wishlists, get_best_products RPC
+- 서비스: searchProducts, getBestProducts, getHomeBanners, excludeId, wishlist.ts, notices.ts, settings.ts
+- 배송비 실제 부과: orders.shipping_fee, create_order 수정, 장바구니·주문서·주문 상세에 배송비 표시 (useShippingFee)
+- DAYLOG 전달본 반영 (`000009`): 가격·이름·카테고리, 옵션 정리, 상세 이미지 재등록, 로고·히어로. 이미지 116개 업로드
+- SODAFM 배너 2종 추가 (`000008`), 기존 3종 이미지 교체
+- 이미지 교체: ORBIT:ON 대표 8, SODAFM 텀블러·인형, SODAFM 누끼 10 (기존 사진은 main-photo.webp로 백업)
+- ui/polish: 메인·상품 상세 위버스샵 수치로 축소, Recommended Artist 로고 타일, 카드 캡션
+
+### 결정 사항 / 이유
+- 배송비는 표시만이 아니라 create_order에서 계산 (표시 금액 = 결제 금액). 설정이 없으면 0
+- 인기 순위는 security definer로 집계하되 상품 id·순위만 반환 (주문 정보 비노출)
+- 마스코트 이름은 상품 이미지 표기(지야·주야) 유지, 단일 옵션은 '기본' 유지
+- 마이그레이션은 전부 롤백 트랜잭션으로 사전 검증 (배송비: 6,000원 주문 → 9,000원, 59,000원 → 무료)
+
+### 남은 일 / TODO
+- db push (000008~000013) 후 database.ts 재생성·비교, 정적 데이터 재생성
+- home_banners 내용·이미지, 갤러리 이미지 (chungman)
+- 이미지 스타일: 회색 배경으로 통일 결정 → SODAFM·DAYLOG 회색 배경 버전 필요
+
+---
+
+## 2026-10-12 | SODAFM 이미지·볼캡 판매 · 구매 제한 기본 4 · 배포 · SODAFM 배너
+
+- 작업자: jin
+- 브랜치: dev/jin
+- 관련 이슈 / PR: #102 등 / -
+- 에이전트 사용: O (Claude Code)
+
+### 한 일
+- SODAFM 상품 대표·상세 20장, 멤버 사진 4장 업로드. 상세 이미지 9종 DB 연결 (`20261012000002`)
+- SODAFM 볼캡 판매 시작, 재고 80 (`20261012000003`)
+- ORBIT:ON 마스코트 인형 키링 → 인형 카테고리 (`20261012000004`)
+- 구매 제한 없던 옵션 28개 → 1인 4개, 컬럼 기본값 4 (`20261012000005`). 5개 주문 차단 검증
+- 정적 상품 데이터 DB 기준 갱신
+- Vercel 배포 (https://kant-moa.vercel.app) 점검: 페이지 20개, 이미지 최적화, 칸트봇, 브라우저 번들 Supabase 주소 포함·Gemini 키 미노출
+- 스켈레톤 로딩 펄스 → 쉬머 (`motion.css`, `ui/Skeleton.tsx`), Vercel 함수 리전 서울(icn1) 고정
+- DAYLOG 이미지 94장 업로드. 신규 상품 22종, 후드 → 데일리 후드 집업(색상×사이즈), 하트 리본 키링 → 인형 키링(마스코트 4종), 상세 이미지 62장 (`20261012000007`). 가격은 이미지에 없어 다른 그룹 기준으로 임의 책정
+- 정적 상품 데이터 47개로 재생성
+- 아티스트 배너: `artist_banners` 테이블 + SODAFM 3종 (`20261012000006`), `getArtistBanners`, `ArtistBanners.tsx`에서 등록 배너 우선 사용
+
+### 결정 사항 / 이유
+- 배너는 hero 교체 대신 별도 테이블 (hero는 멤버 소개 페이지 상단에도 쓰임, 다른 그룹은 기존 방식 유지)
+- 배너 이미지는 글씨 없는 버전 사용 (화면이 제목·부제를 겹쳐 그려 글씨 중복 방지)
+- DAYLOG 기존 옵션 행은 주문 이력이 참조해 삭제하지 않고 이름만 변경
+- 배너 조회 실패 시 기본 구성으로 대체 → PR 머지와 db push 순서와 무관하게 안전
+
+### 남은 일 / TODO
+- Supabase Auth URL Configuration에 배포 주소 등록
+- DAYLOG 로고 (팀원 전달 예정)
+
 ## 2026-10-12 | AI 챗봇(칸트봇) 백엔드 · Gemini 연동
 
 - 작업자: jin

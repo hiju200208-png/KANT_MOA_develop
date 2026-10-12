@@ -8,9 +8,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
 }
 const variants: Record<ButtonVariant, string> = {
-  primary: "bg-foreground text-white hover:bg-gradient-to-r hover:from-teal-400 hover:via-violet-400 hover:to-pink-400 hover:shadow-lg hover:shadow-violet-200/50 disabled:bg-neutral-300 disabled:bg-none",
-  secondary: "bg-brand text-white hover:bg-gradient-to-r hover:from-teal-400 hover:via-violet-400 hover:to-pink-400 hover:shadow-lg hover:shadow-violet-200/50 disabled:bg-teal-200 disabled:bg-none",
-  outline: "brand-gradient-soft-hover border border-line bg-white text-foreground hover:border-violet-300",
+  primary: "bg-foreground text-white hover:bg-neutral-700 hover:shadow-lg hover:shadow-black/15 disabled:bg-neutral-300",
+  secondary: "bg-neutral-800 text-white hover:bg-black hover:shadow-lg hover:shadow-black/15 disabled:bg-neutral-300",
+  outline: "brand-gradient-soft-hover border border-line bg-white text-foreground hover:border-neutral-400",
   ghost: "brand-gradient-soft-hover bg-transparent text-foreground",
   danger: "bg-danger text-white hover:bg-red-600 disabled:bg-red-200",
 };

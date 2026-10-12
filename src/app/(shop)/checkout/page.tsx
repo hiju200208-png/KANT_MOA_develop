@@ -22,6 +22,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { Button, Card, EmptyState, Skeleton } from "@/components/ui";
 import { getErrorCode, getErrorMessage } from "@/constants/error-messages";
 import { useCart } from "@/hooks/useCart";
+import { useShippingFee } from "@/hooks/useShippingFee";
 import { createAddress, getAddresses } from "@/services/addresses";
 import { createOrder, payOrder } from "@/services/orders";
 import type { Address, AddressInput } from "@/types/app";
@@ -33,6 +34,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { profile, initialized } = useAuth();
   const { items, totalQuantity, totalPrice, loaded, refresh } = useCart();
+  const { shippingFee, total } = useShippingFee(totalPrice);
   const userId = profile?.id ?? null;
 
   const [addressState, setAddressState] = useState<LoadedAddresses | null>(null);
@@ -190,15 +192,16 @@ export default function CheckoutPage() {
           </h2>
           <dl className="mt-5 space-y-3 text-sm">
             <div className="flex justify-between"><dt className="text-muted">상품 금액</dt><dd className="font-bold tabular-nums">{totalPrice.toLocaleString("ko-KR")}원</dd></div>
+            <div className="flex justify-between"><dt className="text-muted">배송비</dt><dd className="font-bold tabular-nums">{shippingFee === 0 ? "무료" : `${shippingFee.toLocaleString("ko-KR")}원`}</dd></div>
             <div className="flex items-baseline justify-between border-t border-line pt-4">
               <dt className="font-bold">총 결제 금액</dt>
-              <dd className="text-2xl font-black tabular-nums">{totalPrice.toLocaleString("ko-KR")}원</dd>
+              <dd className="text-2xl font-black tabular-nums">{total.toLocaleString("ko-KR")}원</dd>
             </div>
           </dl>
           <p className="mt-4 rounded-lg bg-brand-soft px-3 py-2 text-xs leading-5 text-brand-strong">실제 결제는 이루어지지 않는 테스트 결제예요. 최종 금액은 주문 시 서버에서 다시 계산돼요.</p>
           {submitError && <p role="alert" className="mt-4 text-sm text-danger">{submitError}</p>}
           <Button type="submit" fullWidth size="lg" className="mt-6" loading={submitting}>
-            {totalPrice.toLocaleString("ko-KR")}원 결제하기
+            {total.toLocaleString("ko-KR")}원 결제하기
           </Button>
         </Card>
       </form>

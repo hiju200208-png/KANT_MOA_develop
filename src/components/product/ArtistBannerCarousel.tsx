@@ -2,7 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
+import { useSwipe } from "./useSwipe";
+
+const SETTLE_FALLBACK_MS = 800;
 
 export type ArtistBanner = {
   key: string;
@@ -35,11 +38,52 @@ export function ArtistBannerCarousel({ banners, themeStyle }: ArtistBannerCarous
     trackRef.current?.scrollBy({ left: direction * trackRef.current.clientWidth, behavior: "smooth" });
   }
 
+  // 마우스로 끌어서 넘기기 (터치는 브라우저 기본 스크롤 사용). 끄는 동안은 스냅을 끄고 손을 따라 움직인다.
+  const dragStart = useRef(0);
+  const [settling, setSettling] = useState(false); // 놓은 뒤 제자리로 미끄러지는 동안은 스냅을 꺼 둔다
+  const scrollFromDragStart = (offset: number) => {
+    setSettling(true);
+    trackRef.current?.scrollTo({ left: dragStart.current + offset, behavior: "smooth" });
+  };
+  const { dragX, dragging, handlers } = useSwipe({
+    enabled: banners.length > 1,
+    mouseOnly: true,
+    onSwipe: (step) => scrollFromDragStart(step * (trackRef.current?.clientWidth ?? 0)),
+    onCancel: () => scrollFromDragStart(0),
+  });
+
+  useEffect(() => {
+    if (dragging && trackRef.current) trackRef.current.scrollLeft = dragStart.current - dragX;
+  }, [dragging, dragX]);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!settling || !track) return;
+    const done = () => setSettling(false);
+    track.addEventListener("scrollend", done, { once: true });
+    const timer = window.setTimeout(done, SETTLE_FALLBACK_MS); // scrollend 미지원 브라우저 대비
+    return () => {
+      track.removeEventListener("scrollend", done);
+      window.clearTimeout(timer);
+    };
+  }, [settling]);
+
+  function handlePointerDown(event: PointerEvent<HTMLElement>) {
+    dragStart.current = trackRef.current?.scrollLeft ?? 0;
+    handlers.onPointerDown(event);
+  }
+
   const arrowClass = "absolute top-1/2 z-10 hidden size-10 -translate-y-1/2 place-items-center rounded-full bg-white text-lg shadow-card md:grid";
 
   return (
     <section aria-label="아티스트 배너" className="relative" style={themeStyle}>
-      <ul ref={trackRef} onScroll={handleScroll} className="-mx-2 flex snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none]">
+      <ul
+        ref={trackRef}
+        onScroll={handleScroll}
+        {...handlers}
+        onPointerDown={handlePointerDown}
+        className={`-mx-2 flex overflow-x-auto select-none [scrollbar-width:none] ${dragging ? "cursor-grabbing" : settling ? "" : "snap-x snap-mandatory scroll-smooth"}`}
+      >
         {banners.map((banner) => (
           <li key={banner.key} className="shrink-0 basis-full snap-start px-2 md:basis-1/2">
             <BannerCard banner={banner} />

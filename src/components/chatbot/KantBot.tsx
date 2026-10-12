@@ -118,7 +118,7 @@ export function KantBot() {
                     key={suggestion}
                     type="button"
                     onClick={() => void send(suggestion)}
-                    className="rounded-full border border-line bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 transition-colors hover:border-violet-300 hover:text-violet-700"
+                    className="rounded-full border border-line bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 transition-colors hover:border-neutral-500 hover:bg-neutral-100 hover:text-black"
                   >
                     {suggestion}
                   </button>
@@ -155,7 +155,7 @@ export function KantBot() {
         onClick={() => (open ? close() : setOpen(true))}
         aria-expanded={open}
         aria-label={open ? "칸트봇 닫기" : "칸트봇 열기"}
-        className="fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[45] flex h-14 items-center gap-2 rounded-full bg-[linear-gradient(135deg,var(--brand-strong),#8a70df)] px-5 font-bold text-white shadow-[0_12px_30px_-8px_rgb(105_65_198/0.6)] transition-transform hover:-translate-y-0.5 md:right-6 md:bottom-6"
+        className="fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[45] flex h-14 items-center gap-2 rounded-full bg-neutral-900 px-5 font-bold text-white shadow-[0_12px_30px_-8px_rgb(17_18_20/0.45)] transition-all hover:-translate-y-0.5 hover:bg-neutral-700 md:right-6 md:bottom-6"
       >
         <SparkleIcon className="size-5 text-white" />
         <span className="hidden text-sm text-white sm:inline">{open ? "닫기" : "칸트봇"}</span>
