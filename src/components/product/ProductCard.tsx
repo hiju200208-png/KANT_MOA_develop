@@ -15,7 +15,6 @@ export function ProductCard({ product }: { product: ProductSummary }) {
           src={product.thumbnailUrl}
           alt={`${product.artist.name} ${product.name}`}
           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-          inset="10%"
           className="aspect-square rounded-md [&_img]:transition-[scale] [&_img]:duration-500 [&_img]:ease-out group-hover:[&_img]:scale-[1.07] group-focus-visible:[&_img]:scale-[1.07] motion-reduce:[&_img]:transition-none"
         />
         {product.isSoldOut && (
