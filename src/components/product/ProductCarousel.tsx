@@ -30,7 +30,7 @@ export function ProductCarousel({ products, label }: { products: ProductSummary[
           {pages.map((items, i) => (
             <ul
               key={i}
-              className="grid w-full shrink-0 grid-cols-2 content-start gap-x-4 gap-y-6 md:grid-cols-4"
+              className="grid w-full shrink-0 grid-cols-2 content-start gap-x-3 gap-y-6 md:grid-cols-4"
               aria-label={`${label} 상품 ${i + 1} / ${pageCount}`}
               aria-hidden={i !== page}
               inert={i !== page}

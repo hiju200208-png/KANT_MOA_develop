@@ -13,9 +13,10 @@
   --brand-lilac: #b8a7ff;
   --brand-pink: #ffadd6;
   --danger: #f04452;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --shadow-card: 0 6px 24px rgb(17 18 20 / 7%);
+  /* 위버스샵 기준: 이미지·작은 박스 8px(radius-box-100), 콘텐츠 박스 16px(radius-box-200), 박스 그림자 0 4px 28px 12% */
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --shadow-card: 0 4px 28px rgb(0 0 0 / 12%);
   --content-width: 1080px; /* 위버스샵 --layout-max-width 108rem */
 }
 

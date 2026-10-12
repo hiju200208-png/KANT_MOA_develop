@@ -35,7 +35,7 @@ export async function ArtistShowcase({ artist }: { artist: Artist }) {
           </h2>
         </div>
       </Link>
-      <div className="p-4 md:p-5">
+      <div className="p-4">
         {products.length > 0 ? (
           <ProductCarousel products={products} label={artist.name} />
         ) : (
@@ -50,7 +50,7 @@ export function ArtistShowcaseSkeleton() {
   return (
     <div className="overflow-hidden rounded-[16px] bg-white shadow-[0_4px_28px_rgb(0_0_0/0.12)]" aria-busy="true" aria-label="아티스트 굿즈를 불러오는 중">
       <Skeleton className="h-14 w-full rounded-none md:h-16" />
-      <div className="grid grid-cols-2 gap-4 p-4 md:grid-cols-4 md:p-5">
+      <div className="grid grid-cols-2 gap-3 p-4 md:grid-cols-4">
         {Array.from({ length: 4 }, (_, i) => (
           <Skeleton key={i} className="aspect-square w-full" />
         ))}
