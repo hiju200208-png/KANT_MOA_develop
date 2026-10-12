@@ -90,7 +90,6 @@ export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
     <section
       aria-roledescription="carousel"
       aria-label="메인 배너"
-      data-home=""
       style={{ ...artistThemeStyle(artist?.themeColor ?? null), ...bandStyle }}
       className="transition-[background-color] duration-700"
       onMouseEnter={() => setPaused(true)}
