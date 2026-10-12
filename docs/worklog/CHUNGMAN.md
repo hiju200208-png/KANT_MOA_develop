@@ -1,3 +1,41 @@
+## 2026-10-12 | 메인 배너 개편(아티스트별 랜덤·스와이프)·아티스트 페이지 카테고리·Notice 추가
+
+- 작업자: chungman
+- 브랜치: dev/chunga
+- 관련 이슈 / PR: 공지 데이터 backend-request 이슈 생성 예정 / (PR 생성 예정)
+- 에이전트 사용: O (Claude, Cowork)
+
+### 요청한 작업
+- 메인 배너: 정사각형 상품 이미지를 위버스샵 배너처럼 카드 가운데에 띄우고, 카드 여백 비율을 위버스샵에 맞추기
+- 메인 배너: 아티스트별 상품을 하나씩 무작위로 보여주기, 마우스로 끌거나 손가락으로 밀어서 넘기기
+- 아티스트 상품 페이지: 위버스샵처럼 카테고리 탭과 Notice 영역 추가
+
+### 한 일
+- 작업 전 `git merge origin/develop`(5eab5ca → 00a8f27, fast-forward), 다른 브랜치와 겹치는 파일 없음 확인
+- `MainHeroCarousel.tsx`
+  - 상품 이미지를 카드 높이의 60%로 가운데 배치, 그림자 + 아래 반사 효과
+  - 카드:글자 비율 50:50 → 35:65, 데스크톱 카드 비율 2:1 → 4:3 (모바일은 2:1 유지), 페이지 표시 위치 조정
+  - 포인터 이벤트로 끌어서 넘기기 (50px 이상 끌면 이동, 끄는 중 자동 넘김 정지, 끌어서 넘긴 경우 상세 이동 막음, 세로 이동은 스크롤로 처리)
+- `src/app/(shop)/page.tsx`: 최신 상품 8개 → 아티스트별 판매 중 상품 1개 무작위 (`connection()` 후 선택, 모두 품절이면 품절 상품 중에서)
+- `src/app/(shop)/artists/[slug]/page.tsx`: 왼쪽 Products(카테고리 탭 + 상품 목록), 오른쪽 Notice 2열 레이아웃, 모바일은 세로 배치
+- `ArtistCategoryTabs.tsx` 추가 (`?category=slug`, 전체 + `getCategories()` 목록), `listParams.buildListHref`가 기존 쿼리를 유지하도록 수정
+- `ArtistNotices.tsx` + `src/mocks/notices.ts` 추가 (목 데이터, `TODO(mock)`)
+- `npx tsc --noEmit`, eslint 통과 (에이전트 환경), `npm run build`는 로컬 확인 필요
+
+### 결정 사항 / 이유
+- 무작위 선택은 React 규칙(렌더 중 `Math.random` 금지)에 맞춰 컴포넌트 밖 함수(`pickHeroProducts`)에서 하고, 요청마다 바뀌도록 `connection()` 사용
+- 카테고리 선택은 URL 쿼리로 처리해 새로고침·공유 시에도 유지
+- 공지 데이터가 services에 없어 멈춤 규칙 5에 따라 목 데이터로 화면만 구현
+
+### 멈춘 지점 / 보고한 내용
+- [STOP 5] 공지사항 테이블·`getArtistNotices` 함수 없음 → jin에게 backend-request 이슈로 요청 예정, 그동안 `src/mocks/notices.ts` 사용
+- `MainHeroCarousel.tsx`가 243줄로 200줄을 넘음 → 스와이프 로직 훅 분리 검토
+
+### 남은 일 / TODO
+- backend-request 이슈 생성 후 `TODO(mock): #이슈번호`에 번호 기입, 함수가 생기면 목 데이터 교체
+- `npm run build` 확인 후 PR 생성 (모바일·데스크톱 스크린샷 첨부)
+- 스와이프 로직 `useSwipe` 훅으로 분리 검토
+
 ## 2026-10-12 | ORBIT:ON 이미지 경로 정리·배경 이미지·상세 이미지 화질 개선
 
 - 작업자: chungman
