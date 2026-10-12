@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatNoticeDate, getNotices } from "@/services/notices";
 import type { Artist, Notice } from "@/types/app";
+import { NoticeTrack } from "./NoticeTrack";
 
 const NOTICE_LIMIT = 4;
 
@@ -25,12 +26,12 @@ export async function ArtistNotices({ artist }: ArtistNoticesProps) {
       {notices.length === 0 ? (
         <p className="mt-4 rounded-xl border border-line p-4 text-sm text-muted">등록된 공지가 없어요.</p>
       ) : (
-        <ul className="mt-4 space-y-3">
+        <NoticeTrack count={notices.length}>
           {notices.map((notice) => (
             <li key={notice.id}>
               <Link
                 href={`/artists/${artist.slug}/notices/${notice.id}`}
-                className="group block rounded-xl border border-line p-4 transition-colors hover:border-neutral-400 hover:bg-neutral-100"
+                className="group block h-full rounded-xl border border-line p-4 transition-colors hover:border-neutral-400 hover:bg-neutral-100"
               >
                 <span className="inline-block rounded border border-line px-1.5 py-0.5 text-xs font-bold text-muted">{artist.name}</span>
                 <p className="mt-2 text-sm font-semibold leading-snug group-hover:underline">
@@ -48,7 +49,7 @@ export async function ArtistNotices({ artist }: ArtistNoticesProps) {
               </Link>
             </li>
           ))}
-        </ul>
+        </NoticeTrack>
       )}
     </section>
   );
