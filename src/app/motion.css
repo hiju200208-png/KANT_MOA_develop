@@ -27,3 +27,17 @@
 }
 .hero-slide[data-active="true"] .hero-copy > :nth-child(2) { animation-delay: 90ms; }
 .hero-slide[data-active="true"] .hero-copy > :nth-child(3) { animation-delay: 180ms; }
+
+/* 3. 스켈레톤 쉬머: 로딩 중 회색 상자 위로 밝은 빛줄기가 왼쪽에서 오른쪽으로 지나간다 (ui/Skeleton).
+   배경 이미지를 2배 너비로 두고 위치를 옮겨 빛줄기를 움직인다 (150% → -50% = 왼쪽 밖 → 오른쪽 밖). */
+@keyframes skeleton-shimmer {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
+}
+.skeleton-shimmer {
+  background-color: #e5e5e5;
+  background-image: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 65%) 50%, transparent 70%);
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
