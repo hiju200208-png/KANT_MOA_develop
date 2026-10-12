@@ -1,3 +1,44 @@
+## 2026-10-12 | ORBIT:ON 이미지 경로 정리·배경 이미지·상세 이미지 화질 개선
+
+- 작업자: chungman
+- 브랜치: dev/chunga (이미지는 리포 밖 작업)
+- 관련 이슈 / PR: 없음 / worklog PR (dev/chunga → develop, jin 승인 후 병합)
+- 에이전트 사용: O (Claude, Cowork)
+
+### 요청한 작업
+- worklog PR 올리고 병합 후 develop 최신화
+- jin이 등록한 ORBIT:ON 상품 경로에 맞춰 이미지 정리
+- 아티스트 배경 이미지를 1920×720으로 다시 제작
+- 상세 이미지 가로 1200px 유지, 화질 개선
+
+### 한 일
+- worklog PR 생성 → jin 승인·병합 후 `git fetch origin` → `git merge origin/develop` (fast-forward, 충돌 없음)
+- develop에 반영된 `20261011000001_update_orbit_on_products.sql` 확인, 이미지 폴더명을 DB 경로에 맞춤
+  - `character-keyring` → `mascot-doll`, `mascot-sticker` → `planet-sticker`, `bracelet` → `planet-bracelet`
+  - 그대로: `1st-mini-launch`, `light-stick`, `jersey`, `membership-card`, `ball-cap`
+- DB 경로가 `.webp`라 모든 이미지를 webp로 변환 (main 1440×1440, detail-1 가로 1200)
+- 아티스트 로고 `artists/orbit-on/logo.webp`(1080×1080) 변환
+- 아티스트 배경 `artists/orbit-on/hero.webp` 1920×720 제작 (기존 단체 사진 1200×450을 업스케일, 얼굴 변경 없음)
+- 상세 이미지 8종 화질 개선: 내부 사진을 업스케일 모델(ESPCN ×4)로 다시 키우고, 페이지를 2배 해상도로 렌더링 후 1200px로 축소, webp 품질 90 → 95
+  - 대상: ball-cap, planet-sticker, jersey, planet-bracelet, 1st-mini-launch, membership-card, light-stick, mascot-doll
+- 최종본을 `kantmoa-images/` 구조로 zip 정리해 jin에게 전달 (상품 8종 + logo + hero)
+- 10-12: 다른 PC에서 `5eab5ca` → `00a8f27`(develop 최신) fast-forward, 충돌 없음
+
+### 결정 사항 / 이유
+- 폴더명·확장자는 DB(`thumbnail_path`, `product_images.image_path`) 경로를 기준으로 맞춤 → 경로가 한 글자라도 다르면 화면에 안 나옴
+- 멤버 얼굴 인형은 멤버별 마스코트 인형 키링(`mascot-doll`)으로 대체, plush-doll 이미지는 사용하지 않음 (아크릴 키링도 숨김 처리됨, jin 마이그레이션 `20261012000001`)
+- 멤버 소개 합본(1200×5000)은 들어갈 자리가 없어 업로드 대상에서 제외 (jin 확인)
+- 상세 이미지는 글자 선명도를 위해 2배 렌더링 후 축소하는 방식으로 통일
+
+### 멈춘 지점 / 보고한 내용
+- 로고 경로(`artists/orbit-on/logo.webp`)는 마이그레이션에 없어 jin에게 실제 경로 확인 요청
+
+### 남은 일 / TODO
+- jin: 최종 zip(상품 8종 + logo + hero) Storage 업로드/교체 후 화면 확인 (옛날 이미지가 보이면 `Ctrl+Shift+R`)
+- 마스코트 인형 키링(mascot-doll) 상세 이미지의 캐릭터 이름을 DB 옵션명(쏠리·블루·모찌·찌릿·포포)으로, "마스코트당 1인 2개 한정" 반영
+- 팔찌·멤버십 카드 등 상세 이미지의 예시 스펙(소재·사이즈·혜택)을 실제 값으로 교체
+- 원본이 작은 볼캡은 고화질 원본 확보 시 재작업
+
 ## 2026-10-11 | ORBIT:ON 이미지 생성 (2일차)
 
 - 작업자: chungman
