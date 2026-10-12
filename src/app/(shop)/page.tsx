@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { ArtistPicker } from "@/components/product/ArtistPicker";
 import { ArtistShowcase, ArtistShowcaseSkeleton } from "@/components/product/ArtistShowcase";
@@ -8,7 +9,8 @@ import { EmptyState, Skeleton } from "@/components/ui";
 import { getArtists, getProducts } from "@/services/products";
 import type { Artist, ProductSummary } from "@/types/app";
 
-const HERO_LIMIT = 8;
+// 아티스트마다 배너 후보로 가져올 최대 상품 수
+const HERO_POOL_LIMIT = 50;
 
 export default function HomePage() {
   return (
@@ -36,17 +38,37 @@ export default function HomePage() {
   );
 }
 
+// 아티스트마다 판매 중인 상품 하나를 무작위로 고릅니다 (모두 품절이면 품절 상품 중에서).
+async function pickHeroProducts(artists: Artist[]): Promise<ProductSummary[]> {
+  const picks = await Promise.all(
+    artists.map(async (artist) => {
+      try {
+        const { items } = await getProducts({ artistSlug: artist.slug, limit: HERO_POOL_LIMIT });
+        const onSale = items.filter((product) => !product.isSoldOut);
+        const pool = onSale.length > 0 ? onSale : items;
+        return pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : null;
+      } catch {
+        return null; // 한 아티스트를 못 불러와도 나머지 배너는 보여줌
+      }
+    }),
+  );
+  return picks.filter((product): product is ProductSummary => product !== null);
+}
+
+// 아티스트별 상품 중 하나를 무작위로 골라 배너에 한 장씩 보여줍니다 (새로고침할 때마다 바뀜).
 async function MainHero() {
-  let products: ProductSummary[];
+  await connection(); // 요청마다 다른 상품을 고르기 위해 미리 렌더링하지 않음
+  let artists: Artist[];
   try {
-    products = (await getProducts({ limit: HERO_LIMIT })).items;
+    artists = await getArtists();
   } catch {
     return null; // 배너는 부가 영역이라 실패 시 숨기고, 아래 상품 영역에서 에러를 안내합니다.
   }
+
+  const products = await pickHeroProducts(artists);
   if (products.length === 0) return null;
 
-  // 배너 좌우 그라데이션에 쓰는 아티스트 시그니처 컬러. 못 불러오면 브랜드 색으로 대체
-  const artists = await getArtists().catch((): Artist[] => []);
+  // 배너 좌우 그라데이션에 쓰는 아티스트 시그니처 컬러. 없으면 브랜드 색으로 대체
   const themeColors = Object.fromEntries(artists.map((artist) => [artist.slug, artist.themeColor]));
   return <MainHeroCarousel products={products} themeColors={themeColors} />;
 }
