@@ -85,10 +85,3 @@ a { color: inherit; text-decoration: none; }
     animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
   }
 }
-
-/* 메인에서는 배너 안에 TopBar가 있어 전역 헤더를 숨김 (메인 배너에 data-home 표시).
-   다른 페이지로 이동해도 Next가 이전 페이지를 display: none으로 DOM에 남겨두므로(Activity),
-   숨겨진 data-home은 제외해야 헤더가 다시 보임 */
-.site-header:has(~ main [data-home]:not([style*="display: none"], [style*="display: none"] *)) {
-  display: none;
-}
