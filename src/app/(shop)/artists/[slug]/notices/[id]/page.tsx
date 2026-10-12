@@ -3,15 +3,15 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { LoadError } from "@/components/product/LoadError";
 import { Skeleton } from "@/components/ui";
-import { getArtistNotices, getNotice } from "@/mocks/notices";
+import { formatNoticeDate, getNotice, getNotices } from "@/services/notices";
 import { getArtist } from "@/services/products";
-import type { Artist } from "@/types/app";
+import type { Artist, Notice } from "@/types/app";
 
 interface NoticePageProps {
   params: Promise<{ slug: string; id: string }>;
 }
 
-// 아티스트 공지 상세. 아티스트 페이지 오른쪽 Notice 목록에서 들어온다 (공지 데이터는 아직 목 데이터)
+// 아티스트 공지 상세. 아티스트 페이지 오른쪽 Notice 목록에서 들어온다 (DB notices)
 export default function NoticePage({ params }: NoticePageProps) {
   return (
     <Suspense fallback={<NoticeSkeleton />}>
@@ -22,12 +22,14 @@ export default function NoticePage({ params }: NoticePageProps) {
 
 async function NoticeContent({ params }: NoticePageProps) {
   const { slug, id } = await params;
-  const notice = getNotice(slug, Number(id));
-  if (!notice) notFound();
+  const noticeId = Number(id);
+  if (!Number.isInteger(noticeId)) notFound();
 
   let artist: Artist | null;
+  let notice: Notice | null;
+  let others: Notice[];
   try {
-    artist = await getArtist(slug);
+    [artist, notice, others] = await Promise.all([getArtist(slug), getNotice(noticeId, slug), getNotices({ artistSlug: slug, limit: 5 })]);
   } catch (error) {
     return (
       <div className="content-shell py-8 md:py-12">
@@ -35,9 +37,9 @@ async function NoticeContent({ params }: NoticePageProps) {
       </div>
     );
   }
-  if (!artist) notFound();
+  if (!artist || !notice) notFound();
 
-  const others = getArtistNotices(slug, 5).filter((item) => item.id !== notice.id).slice(0, 4);
+  const otherNotices = others.filter((item) => item.id !== notice.id).slice(0, 4);
   const artistPath = `/artists/${artist.slug}`;
 
   return (
@@ -53,7 +55,7 @@ async function NoticeContent({ params }: NoticePageProps) {
           <span className="inline-block rounded border border-line px-1.5 py-0.5 text-xs font-bold text-muted">{artist.name}</span>
           <h1 className="mt-3 text-xl font-black leading-snug tracking-[-0.03em] md:text-2xl">{notice.title}</h1>
           <time dateTime={notice.publishedAt} className="mt-2 block text-sm text-muted">
-            {notice.publishedAt.replaceAll("-", ".")}
+            {formatNoticeDate(notice.publishedAt)}
           </time>
         </header>
 
@@ -71,15 +73,15 @@ async function NoticeContent({ params }: NoticePageProps) {
         </div>
       </article>
 
-      {others.length > 0 && (
+      {otherNotices.length > 0 && (
         <section aria-labelledby="other-notices" className="mt-8">
           <h2 id="other-notices" className="mb-3 text-base font-black">다른 공지</h2>
           <ul className="divide-y divide-line rounded-2xl border border-line bg-white">
-            {others.map((item) => (
+            {otherNotices.map((item) => (
               <li key={item.id}>
                 <Link href={`${artistPath}/notices/${item.id}`} className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-neutral-100">
                   <span className="min-w-0 truncate text-sm font-semibold">{item.title}</span>
-                  <time dateTime={item.publishedAt} className="shrink-0 text-xs text-muted">{item.publishedAt.replaceAll("-", ".")}</time>
+                  <time dateTime={item.publishedAt} className="shrink-0 text-xs text-muted">{formatNoticeDate(item.publishedAt)}</time>
                 </Link>
               </li>
             ))}
