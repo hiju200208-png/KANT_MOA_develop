@@ -10,7 +10,7 @@ import { useSwipe } from "./useSwipe";
 
 export type SpotlightArtist = Pick<Artist, "id" | "slug" | "name" | "nameKo" | "tagline" | "themeColor"> & { products: BestProduct[] };
 
-const AUTO_SLIDE_MS = 7000;
+const AUTO_SLIDE_MS = 4000;
 const STACK_COUNT = 3; // 오른쪽에 겹쳐 놓는 상품 수
 
 // 아티스트 테마 색으로 만든 파스텔 배경 (흰색을 많이 섞어 글자 대비 유지)
@@ -69,7 +69,7 @@ function Slide({ artist, active }: { artist: SpotlightArtist; active: boolean })
 }
 
 // 메인 배너 (시안 C · 파스텔 스포트라이트) 슬라이드: 아티스트마다 한 장 (문구 + 겹친 인기 상품 3개).
-// 7초마다 자동으로 넘어가고, 마우스로 끌거나 손가락으로 밀어서·위 버튼으로 넘김. 배경 톤도 아티스트 색으로 바뀜
+// 4초마다 자동으로 넘어가고, 마우스로 끌거나 손가락으로 밀어서·위 버튼으로 넘김. 배경 톤도 아티스트 색으로 바뀜
 export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
