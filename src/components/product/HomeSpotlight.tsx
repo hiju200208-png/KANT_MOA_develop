@@ -101,7 +101,7 @@ export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
       <TopBar />
 
       {count > 1 && (
-        <div className="content-shell flex items-center gap-1.5 overflow-x-auto pt-1 [scrollbar-width:none]" role="group" aria-label="아티스트 선택">
+        <div className="content-shell flex items-center gap-1 overflow-x-auto pt-1 [scrollbar-width:none]" role="group" aria-label="아티스트 선택">
           {artists.map((item, i) => {
             const active = i === index;
             return (
@@ -110,7 +110,7 @@ export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
                 type="button"
                 aria-pressed={active}
                 onClick={() => setIndex(i)}
-                className={`h-9 shrink-0 rounded-full px-3.5 text-[13px] whitespace-nowrap transition-colors ${active ? "bg-foreground font-bold text-white" : "border border-black/15 bg-white/70 hover:bg-white"}`}
+                className={`h-7 shrink-0 rounded-full px-3 text-xs whitespace-nowrap transition-colors ${active ? "bg-foreground font-bold text-white" : "border border-black/15 bg-white/70 hover:bg-white"}`}
               >
                 {item.name}
               </button>
