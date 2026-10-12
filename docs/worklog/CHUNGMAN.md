@@ -1,3 +1,35 @@
+## 2026-10-12 | 아티스트 페이지 배너 이미지·카테고리 영어 탭, 메인 배너 코드 정리
+
+- 작업자: chungman
+- 브랜치: dev/chunga
+- 관련 이슈 / PR: 없음 / (PR 생성 예정)
+- 에이전트 사용: O (Claude, Cowork)
+
+### 요청한 작업
+- 아티스트 페이지 카테고리 탭을 영어로
+- 아티스트 페이지 배너는 이전처럼 2개씩 유지하고, 상품 이미지(1:1)만 메인 배너처럼 보이게
+- 인형 키링 카테고리 이동(accessory → doll) 담당 확인
+
+### 한 일
+- 작업 전 develop 최신화(`b48875f` → `7d2c2ee`, sungho PR #45 모션 반영, fast-forward), sungho 미병합 브랜치와 `MainHeroCarousel.tsx` 겹침 확인 후 병합될 때까지 대기(STOP 4)
+- `ArtistCategoryTabs.tsx`: 탭 이름을 DB slug 기반 영어(All·Album·Cheering·Doll·Accessory·Apparel·Living·Membership)로, 스크린리더용 aria-label에 한글 이름 병기
+- `ArtistBannerCarousel.tsx`: 상품 배너의 정사각형 이미지를 메인 배너처럼 카드 오른쪽에 띄우고 그림자·반사 효과 (레이아웃·2개 노출은 이전 그대로)
+- 메인 배너 정리: 스와이프 로직을 `useSwipe.ts` 훅으로 분리, 배너 데이터 형태 `heroSlides.ts`(`HeroSlide`, `productToSlide`) 추가 → `MainHeroCarousel.tsx` 243 → 187줄 (화면·동작 동일)
+- `npm run lint`(에이전트), `npx tsc --noEmit`, `npm run build` 통과
+
+### 결정 사항 / 이유
+- 카테고리 영어 이름은 하드코딩 금지 규칙에 맞춰 DB slug를 변환해 표시 (자연스러운 이름이 필요하면 categories에 영어 이름 칸 필요)
+- 아티스트 페이지에만 영어 탭 적용, `/category` 페이지 탭은 한글 유지
+
+### 멈춘 지점 / 보고한 내용
+- [STOP 4] sungho 미병합 커밋이 `MainHeroCarousel.tsx` 수정 중 → PR #45 병합 후 진행
+- 인형 키링 카테고리 이동은 DB(`supabase/migrations/`)·정적 데이터(`src/data/`) 변경이라 jin 담당 → jin에게 요청
+
+### 남은 일 / TODO
+- jin: 마스코트 인형 키링 카테고리 accessory → doll (마이그레이션 + `src/data/products.ts`)
+- 공지 backend-request 이슈 생성 후 `TODO(mock)` 번호 기입
+- PR 생성 (모바일·데스크톱 스크린샷 첨부)
+
 ## 2026-10-12 | 메인 배너 개편(아티스트별 랜덤·스와이프)·아티스트 페이지 카테고리·Notice 추가
 
 - 작업자: chungman
