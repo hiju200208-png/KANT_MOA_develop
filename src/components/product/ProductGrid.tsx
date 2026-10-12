@@ -18,7 +18,7 @@ export function ProductGrid({ products }: { products: ProductSummary[] }) {
   return (
     <ul className={GRID_CLASS}>
       {products.map((product) => (
-        <li key={product.id}>
+        <li key={product.id} className="reveal">
           <ProductCard product={product} />
         </li>
       ))}
