@@ -99,25 +99,6 @@ export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
     >
       <TopBar showBack={false} />
 
-      {count > 1 && (
-        <div className="content-shell flex items-center gap-1 overflow-x-auto pt-1 [scrollbar-width:none]" role="group" aria-label="아티스트 선택">
-          {artists.map((item, i) => {
-            const active = i === index;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setIndex(i)}
-                className={`h-7 shrink-0 rounded-full px-3 text-xs whitespace-nowrap transition-colors ${active ? "bg-foreground font-bold text-white" : "border border-black/15 bg-white/70 hover:bg-white"}`}
-              >
-                {item.name}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
       <div className="overflow-hidden">
         <ul
           className={`flex touch-pan-y select-none ${dragging ? "cursor-grabbing" : "transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"}`}
@@ -129,6 +110,24 @@ export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
           ))}
         </ul>
       </div>
+
+      {count > 1 && (
+        // 진행 막대: 어두운 막대 위 흰 구간이 현재 배너 위치. 구간마다 투명 버튼이 겹쳐 있어 눌러서 이동
+        <div className="content-shell pb-6 md:pb-8">
+          <div className="relative mx-auto h-1 w-40 rounded-full bg-foreground/80 md:w-60" role="group" aria-label="배너 선택">
+            <span
+              aria-hidden="true"
+              className="absolute inset-y-0 left-0 rounded-full bg-white transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+              style={{ width: `${100 / count}%`, transform: `translateX(${index * 100}%)` }}
+            />
+            <div className="absolute inset-x-0 -inset-y-2 flex">
+              {artists.map((item, i) => (
+                <button key={item.id} type="button" aria-label={item.name} aria-current={i === index} onClick={() => setIndex(i)} className="h-full flex-1" />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
