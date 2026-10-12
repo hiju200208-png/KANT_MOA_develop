@@ -235,6 +235,26 @@ type AddressInput = Omit<Address, 'id' | 'isDefault'> & { isDefault?: boolean };
 - 주문은 기존처럼 주소 문자열을 받습니다: `createOrder({ ..., address: \`${address1} ${address2 ?? ''}\`.trim() })`. 주소록을 고쳐도 지난 주문 배송지는 바뀌지 않습니다.
 - 남의 주소 id를 넘기면 수정·삭제는 아무 일도 일어나지 않고, `setDefaultAddress`/`updateAddress`는 `UNKNOWN` 에러를 던집니다 (화면에서 남의 id를 넘길 일은 없음).
 
+## 5-2. AI 챗봇 — `services/chat.ts`
+
+| 함수 | 입력 | 반환 | 호출 위치 | 에러 |
+|---|---|---|---|---|
+| `askKantBot(message, history)` | `string`(1~500자), `{ role: 'user' \| 'bot'; text }[]` (이번 질문 이전 대화) | `string` (답변) | 클라이언트 | 실패 시 `Error` throw → 화면에서 키워드 답변으로 대체 |
+
+- 내부적으로 `POST /api/chat` → `src/lib/kantbot.ts` → Gemini(`gemini-3.5-flash`, 한도 초과 시 `gemini-3.5-flash-lite`).
+- 답변 근거: DB 상품 목록(이름·가격·옵션·품절·구매 제한, 5분 캐시) + 쇼핑몰 정책. 상품 추천 시 `상품 페이지: /products/{id}` 형식으로 링크를 붙임.
+- **개인정보·주문 정보는 AI에 보내지 않음** (Gemini 무료 티어는 입력이 학습·사람 검토에 쓰일 수 있음). 주문 조회 질문엔 마이페이지 안내.
+- 제한: 질문 500자, 이전 대화 최근 10개, IP당 1분 10회.
+
+`/api/chat` 응답
+
+| HTTP | 본문 | 의미 |
+|---|---|---|
+| 200 | `{ reply: string }` | 정상 |
+| 400 | `{ error: 'INVALID_INPUT' }` | 빈 질문, 500자 초과, 형식 오류 |
+| 429 | `{ error: 'RATE_LIMITED' }` | 1분 10회 초과 |
+| 503 | `{ error: 'AI_UNAVAILABLE' }` | Gemini 한도 초과·장애 |
+
 ## 6. 에러 코드 — `services/errors.ts`
 
 ```ts
@@ -264,6 +284,7 @@ class AppError extends Error {
 
 | 페이지 | 담당 | 사용 함수 |
 |---|---|---|
+| 칸트봇 (전체 화면 공통) | sungho | `askKantBot` (`components/chatbot/kantBotReply.ts` 경유) |
 | 공통 헤더 | jina | `getProfile`, `onAuthChange`, `getCart().totalQuantity`, `getArtists`, `getCategories` |
 | 로그인 / 회원가입 | jina | `signIn`, `signUp` |
 | 메인 | chungman | `getArtists`, `getProducts` |
