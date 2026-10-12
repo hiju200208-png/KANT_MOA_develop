@@ -21,8 +21,8 @@ export default function HomePage() {
         <MainHero />
       </Suspense>
 
-      {/* 간격 규칙(8px 단위): 섹션 사이는 넓게(48/56px), 섹션 안 요소는 가깝게 */}
-      <div className="content-shell space-y-12 pt-10 pb-14 md:space-y-14 md:pt-12 md:pb-16">
+      {/* 위버스샵 메인 참고: 카드형 섹션을 16px 간격으로 쌓는다 */}
+      <div className="content-shell space-y-4 pt-4 pb-12 md:pb-16">
         <Suspense fallback={<Skeleton className="h-48 w-full rounded-[16px] md:h-52" />}>
           <RecommendedArtists />
         </Suspense>
@@ -95,7 +95,7 @@ async function ArtistShowcases() {
   }
   if (artists.length === 0) return <EmptyState title="등록된 아티스트가 없어요" />;
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="space-y-4">
       {artists.map((artist) => (
         <Suspense key={artist.id} fallback={<ArtistShowcaseSkeleton />}>
           <ArtistShowcase artist={artist} />

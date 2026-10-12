@@ -18,7 +18,7 @@ export async function ArtistShowcase({ artist }: { artist: Artist }) {
   }
 
   return (
-    <article className="reveal overflow-hidden rounded-xl bg-white shadow-card">
+    <article className="reveal overflow-hidden rounded-[16px] bg-white shadow-[0_4px_28px_rgb(0_0_0/0.12)]">
       <Link
         href={`/artists/${artist.slug}`}
         style={{
@@ -48,7 +48,7 @@ export async function ArtistShowcase({ artist }: { artist: Artist }) {
 
 export function ArtistShowcaseSkeleton() {
   return (
-    <div className="overflow-hidden rounded-xl bg-white shadow-card" aria-busy="true" aria-label="아티스트 굿즈를 불러오는 중">
+    <div className="overflow-hidden rounded-[16px] bg-white shadow-[0_4px_28px_rgb(0_0_0/0.12)]" aria-busy="true" aria-label="아티스트 굿즈를 불러오는 중">
       <Skeleton className="h-14 w-full rounded-none md:h-16" />
       <div className="grid grid-cols-2 gap-4 p-4 md:grid-cols-4 md:p-5 lg:grid-cols-5">
         {Array.from({ length: 5 }, (_, i) => (
