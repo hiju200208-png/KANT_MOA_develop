@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { ArtistPicker } from "@/components/product/ArtistPicker";
 import { ArtistShowcase, ArtistShowcaseSkeleton } from "@/components/product/ArtistShowcase";
 import { LoadError } from "@/components/product/LoadError";
+import { productToSlide } from "@/components/product/heroSlides";
 import { MainHeroCarousel } from "@/components/product/MainHeroCarousel";
 import { RecentlyViewedProducts } from "@/components/product/RecentlyViewedProducts";
 import { EmptyState, Skeleton } from "@/components/ui";
@@ -68,9 +69,10 @@ async function MainHero() {
   const products = await pickHeroProducts(artists);
   if (products.length === 0) return null;
 
-  // 배너 좌우 그라데이션에 쓰는 아티스트 시그니처 컬러. 없으면 브랜드 색으로 대체
-  const themeColors = Object.fromEntries(artists.map((artist) => [artist.slug, artist.themeColor]));
-  return <MainHeroCarousel products={products} themeColors={themeColors} />;
+  // 배너 좌우 그라데이션은 아티스트 시그니처 컬러. 없으면 브랜드 색으로 대체
+  const themeColors = new Map(artists.map((artist) => [artist.slug, artist.themeColor]));
+  const slides = products.map((product) => productToSlide(product, themeColors.get(product.artist.slug) ?? null));
+  return <MainHeroCarousel slides={slides} />;
 }
 
 async function RecommendedArtists() {

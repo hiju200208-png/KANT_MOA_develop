@@ -2,21 +2,17 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
-import type { ProductSummary } from "@/types/app";
-import { formatPrice } from "./formatPrice";
+import { useEffect, useState, type CSSProperties } from "react";
+import type { HeroSlide } from "./heroSlides";
+import { useSwipe } from "./useSwipe";
 
 const AUTO_SLIDE_MS = 8000;
-// 이만큼(px) 이상 밀면 다음/이전 배너로 넘어가고, 클릭으로 보지 않음
-const SWIPE_THRESHOLD = 50;
-const DRAG_CLICK_TOLERANCE = 6;
 const BASE_COLOR = "#1d1f24";
 const pad = (n: number) => String(n).padStart(2, "0");
 
 interface MainHeroCarouselProps {
-  products: ProductSummary[];
-  /** 아티스트 slug → 시그니처 컬러 (artists.theme_color). 없으면 브랜드 색 */
-  themeColors: Record<string, string | null>;
+  slides: HeroSlide[];
+  label?: string;
 }
 
 // 가운데는 시그니처 컬러의 진한 톤(흰 글자가 잘 보이는 밝기), 좌우 끝으로 갈수록 밝은 시그니처 컬러.
@@ -41,59 +37,16 @@ function Chevron({ direction }: { direction: "left" | "right" }) {
   );
 }
 
-// 메인 상단 전체 폭 배너 (위버스샵 메인 상단 참고). 최신 상품을 한 장씩 슬라이드로 보여줍니다.
-export function MainHeroCarousel({ products, themeColors }: MainHeroCarouselProps) {
+// 상단 전체 폭 배너 (위버스샵 메인 상단 참고). 메인·아티스트 페이지에서 함께 씁니다.
+export function MainHeroCarousel({ slides, label = "추천 굿즈" }: MainHeroCarouselProps) {
   const [index, setIndex] = useState(0);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
-  const [dragX, setDragX] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  const dragStart = useRef<{ x: number; y: number } | null>(null);
-  const dragMoved = useRef(false);
-  const count = products.length;
+  const count = slides.length;
   const move = (step: number) => setIndex((current) => (current + step + count) % count);
+  const { dragX, dragging, handlers } = useSwipe({ enabled: count > 1, onSwipe: move });
   const paused = hovered || focused || reducedMotion || dragging;
-
-  // 마우스로 끌거나 손가락으로 밀어서 배너 넘기기
-  const handlePointerDown = (event: PointerEvent<HTMLUListElement>) => {
-    if (count < 2 || (event.pointerType === "mouse" && event.button !== 0)) return;
-    dragStart.current = { x: event.clientX, y: event.clientY };
-    dragMoved.current = false;
-  };
-
-  const handlePointerMove = (event: PointerEvent<HTMLUListElement>) => {
-    const start = dragStart.current;
-    if (!start) return;
-    // 버튼을 뗀 채로 들어온 마우스 이동은 무시 (배너 밖에서 버튼을 뗀 경우)
-    if (event.pointerType === "mouse" && event.buttons === 0) {
-      handlePointerEnd();
-      return;
-    }
-    const dx = event.clientX - start.x;
-    if (!dragging) {
-      // 세로로 더 많이 움직이면 페이지 스크롤로 보고 끌기를 시작하지 않음
-      if (Math.abs(dx) < DRAG_CLICK_TOLERANCE) return;
-      if (Math.abs(event.clientY - start.y) > Math.abs(dx)) {
-        dragStart.current = null;
-        return;
-      }
-      setDragging(true);
-      event.currentTarget.setPointerCapture(event.pointerId);
-    }
-    dragMoved.current = true;
-    setDragX(dx);
-  };
-
-  const handlePointerEnd = () => {
-    if (dragging) {
-      if (dragX <= -SWIPE_THRESHOLD) move(1);
-      else if (dragX >= SWIPE_THRESHOLD) move(-1);
-    }
-    dragStart.current = null;
-    setDragging(false);
-    setDragX(0);
-  };
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -117,7 +70,7 @@ export function MainHeroCarousel({ products, themeColors }: MainHeroCarouselProp
   return (
     <section
       aria-roledescription="carousel"
-      aria-label="추천 굿즈"
+      aria-label={label}
       className="relative overflow-hidden"
       style={{ backgroundColor: BASE_COLOR }}
       onMouseEnter={() => setHovered(true)}
@@ -130,69 +83,30 @@ export function MainHeroCarousel({ products, themeColors }: MainHeroCarouselProp
       <ul
         className={`flex touch-pan-y select-none ${dragging ? "cursor-grabbing" : "transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"}`}
         style={{ transform: `translateX(calc(-${index * 100}% + ${dragX}px))` }}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerEnd}
-        onPointerCancel={handlePointerEnd}
-        onDragStart={(event) => event.preventDefault()}
-        onClickCapture={(event) => {
-          // 끌어서 넘긴 경우에는 상품 상세로 이동하지 않음
-          if (dragMoved.current) {
-            event.preventDefault();
-            event.stopPropagation();
-            dragMoved.current = false;
-          }
-        }}
+        {...handlers}
       >
-        {products.map((product, i) => {
+        {slides.map((slide, i) => {
           const active = i === index;
-          const color = themeColors[product.artist.slug] ?? "var(--brand)";
           return (
             <li
-              key={product.id}
+              key={slide.key}
               className="hero-slide w-full shrink-0 [--edge:10%] md:[--edge:22%] xl:[--edge:28%]"
               data-active={active}
-              style={slideBackground(color)}
+              style={slideBackground(slide.color ?? "var(--brand)")}
               aria-roledescription="slide"
               aria-label={`${i + 1} / ${count}`}
               aria-hidden={!active}
               inert={!active}
             >
               <div className="content-shell pt-6 pb-14 md:py-8">
-                <Link href={`/products/${product.id}`} className="group grid items-center gap-5 md:grid-cols-[7fr_13fr] md:gap-10 md:px-16">
+                <Link href={slide.href} className="group grid items-center gap-5 md:grid-cols-[7fr_13fr] md:gap-10 md:px-16">
                   <div className="relative aspect-2/1 overflow-hidden rounded-lg bg-white/10 md:aspect-4/3">
-                    {product.thumbnailUrl ? (
-                      // 정사각형 상품 이미지를 카드 가운데에 띄우고, 아래에 옅은 반사를 둔다 (위버스샵 배너 참고)
-                      <div className="absolute top-[12%] left-1/2 aspect-square h-[60%] -translate-x-1/2 transition-transform duration-500 group-hover:scale-[1.03]">
-                        <div className="relative size-full overflow-hidden rounded-sm shadow-[0_12px_28px_rgb(0_0_0/0.35)]">
-                          <Image
-                            src={product.thumbnailUrl}
-                            alt={`${product.artist.name} ${product.name}`}
-                            fill
-                            sizes="(min-width: 768px) 15vw, 50vw"
-                            loading={i === 0 ? "eager" : "lazy"}
-                            fetchPriority={i === 0 ? "high" : "auto"}
-                            className="object-cover"
-                          />
-                        </div>
-                        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-full mt-1 h-2/5 overflow-hidden opacity-30 [mask-image:linear-gradient(to_bottom,black,transparent)]">
-                          <div className="relative aspect-square w-full -scale-y-100">
-                            <Image src={product.thumbnailUrl} alt="" fill sizes="(min-width: 768px) 20vw, 50vw" loading="lazy" className="object-cover" />
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div role="img" aria-label={`${product.name} 이미지 준비 중`} className="grid size-full place-items-center text-xs font-semibold text-white/70">
-                        이미지 준비 중
-                      </div>
-                    )}
+                    <SlideImage slide={slide} priority={i === 0} />
                   </div>
                   <div className="hero-copy text-white">
-                    <p className="text-sm font-bold opacity-80">{product.artist.name}</p>
-                    <h2 className="mt-1 text-2xl font-black leading-snug md:text-4xl">{product.name}</h2>
-                    <p className="mt-2 text-sm opacity-80">
-                      {product.category.name} · {formatPrice(product.price)}
-                    </p>
+                    <p className="text-sm font-bold opacity-80">{slide.eyebrow}</p>
+                    <h2 className="mt-1 text-2xl font-black leading-snug md:text-4xl">{slide.title}</h2>
+                    <p className="mt-2 text-sm opacity-80">{slide.subtitle}</p>
                   </div>
                 </Link>
               </div>
@@ -215,11 +129,11 @@ export function MainHeroCarousel({ products, themeColors }: MainHeroCarouselProp
               <Chevron direction="left" />
             </button>
             <div className="flex items-center">
-              {products.map((product, i) => (
+              {slides.map((slide, i) => (
                 <button
-                  key={product.id}
+                  key={slide.key}
                   type="button"
-                  aria-label={`${i + 1}번째 배너: ${product.name}`}
+                  aria-label={`${i + 1}번째 배너: ${slide.title}`}
                   aria-current={i === index ? "true" : undefined}
                   onClick={() => setIndex(i)}
                   className="group/mark grid h-6 place-items-center px-1"
@@ -240,5 +154,34 @@ export function MainHeroCarousel({ products, themeColors }: MainHeroCarouselProp
         </div>
       )}
     </section>
+  );
+}
+
+function SlideImage({ slide, priority }: { slide: HeroSlide; priority: boolean }) {
+  const loading = priority ? "eager" : "lazy";
+  if (!slide.imageUrl) {
+    return (
+      <div role="img" aria-label={`${slide.title} 이미지 준비 중`} className="grid size-full place-items-center text-xs font-semibold text-white/70">
+        이미지 준비 중
+      </div>
+    );
+  }
+  if (slide.variant === "cover") {
+    return (
+      <Image src={slide.imageUrl} alt={slide.imageAlt} fill sizes="(min-width: 768px) 35vw, 100vw" loading={loading} fetchPriority={priority ? "high" : "auto"} className="object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+    );
+  }
+  // 정사각형 상품 이미지를 카드 가운데에 띄우고, 아래에 옅은 반사를 둔다 (위버스샵 배너 참고)
+  return (
+    <div className="absolute top-[12%] left-1/2 aspect-square h-[60%] -translate-x-1/2 transition-transform duration-500 group-hover:scale-[1.03]">
+      <div className="relative size-full overflow-hidden rounded-sm shadow-[0_12px_28px_rgb(0_0_0/0.35)]">
+        <Image src={slide.imageUrl} alt={slide.imageAlt} fill sizes="(min-width: 768px) 15vw, 50vw" loading={loading} fetchPriority={priority ? "high" : "auto"} className="object-cover" />
+      </div>
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-full mt-1 h-2/5 overflow-hidden opacity-30 [mask-image:linear-gradient(to_bottom,black,transparent)]">
+        <div className="relative aspect-square w-full -scale-y-100">
+          <Image src={slide.imageUrl} alt="" fill sizes="(min-width: 768px) 15vw, 50vw" loading="lazy" className="object-cover" />
+        </div>
+      </div>
+    </div>
   );
 }
