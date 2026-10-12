@@ -1,18 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import type { ProductSummary } from "@/types/app";
 import { ProductCard } from "./ProductCard";
 import { useSwipe } from "./useSwipe";
 
-const PER_PAGE = 4;
+// 한 페이지 상품 수: PC(md 이상) 4개 한 줄, 모바일 2개 한 줄. 서버 렌더링은 PC 기준
+const WIDE_QUERY = "(min-width: 768px)";
+const subscribeWide = (onChange: () => void) => {
+  const query = window.matchMedia(WIDE_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+};
 const EDGE_RESISTANCE = 3; // 첫·마지막 페이지에서 바깥쪽으로 끌면 덜 움직이게
 const pad = (n: number) => String(n).padStart(2, "0");
 
 export function ProductCarousel({ products, label }: { products: ProductSummary[]; label: string }) {
-  const [page, setPage] = useState(0);
-  const pageCount = Math.ceil(products.length / PER_PAGE);
-  const pages = Array.from({ length: pageCount }, (_, i) => products.slice(i * PER_PAGE, i * PER_PAGE + PER_PAGE));
+  const [rawPage, setPage] = useState(0);
+  const wide = useSyncExternalStore(subscribeWide, () => window.matchMedia(WIDE_QUERY).matches, () => true);
+  const perPage = wide ? 4 : 2;
+  const pageCount = Math.ceil(products.length / perPage);
+  const page = Math.min(rawPage, pageCount - 1); // 화면 폭이 바뀌어 페이지 수가 줄어도 범위 안으로
+  const pages = Array.from({ length: pageCount }, (_, i) => products.slice(i * perPage, i * perPage + perPage));
   const move = (step: number) => setPage(Math.min(Math.max(page + step, 0), pageCount - 1));
   const { dragX, dragging, handlers } = useSwipe({ enabled: pageCount > 1, onSwipe: move });
   const atEdge = (page === 0 && dragX > 0) || (page === pageCount - 1 && dragX < 0);
