@@ -2,11 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import type { ProductSummary } from "@/types/app";
 import { formatPrice } from "./formatPrice";
 
 const AUTO_SLIDE_MS = 8000;
+// 이만큼(px) 이상 밀면 다음/이전 배너로 넘어가고, 클릭으로 보지 않음
+const SWIPE_THRESHOLD = 50;
+const DRAG_CLICK_TOLERANCE = 6;
 const BASE_COLOR = "#1d1f24";
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -44,9 +47,53 @@ export function MainHeroCarousel({ products, themeColors }: MainHeroCarouselProp
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [dragX, setDragX] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const dragStart = useRef<{ x: number; y: number } | null>(null);
+  const dragMoved = useRef(false);
   const count = products.length;
   const move = (step: number) => setIndex((current) => (current + step + count) % count);
-  const paused = hovered || focused || reducedMotion;
+  const paused = hovered || focused || reducedMotion || dragging;
+
+  // 마우스로 끌거나 손가락으로 밀어서 배너 넘기기
+  const handlePointerDown = (event: PointerEvent<HTMLUListElement>) => {
+    if (count < 2 || (event.pointerType === "mouse" && event.button !== 0)) return;
+    dragStart.current = { x: event.clientX, y: event.clientY };
+    dragMoved.current = false;
+  };
+
+  const handlePointerMove = (event: PointerEvent<HTMLUListElement>) => {
+    const start = dragStart.current;
+    if (!start) return;
+    // 버튼을 뗀 채로 들어온 마우스 이동은 무시 (배너 밖에서 버튼을 뗀 경우)
+    if (event.pointerType === "mouse" && event.buttons === 0) {
+      handlePointerEnd();
+      return;
+    }
+    const dx = event.clientX - start.x;
+    if (!dragging) {
+      // 세로로 더 많이 움직이면 페이지 스크롤로 보고 끌기를 시작하지 않음
+      if (Math.abs(dx) < DRAG_CLICK_TOLERANCE) return;
+      if (Math.abs(event.clientY - start.y) > Math.abs(dx)) {
+        dragStart.current = null;
+        return;
+      }
+      setDragging(true);
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+    dragMoved.current = true;
+    setDragX(dx);
+  };
+
+  const handlePointerEnd = () => {
+    if (dragging) {
+      if (dragX <= -SWIPE_THRESHOLD) move(1);
+      else if (dragX >= SWIPE_THRESHOLD) move(-1);
+    }
+    dragStart.current = null;
+    setDragging(false);
+    setDragX(0);
+  };
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -81,8 +128,21 @@ export function MainHeroCarousel({ products, themeColors }: MainHeroCarouselProp
       }}
     >
       <ul
-        className="flex transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
-        style={{ transform: `translateX(-${index * 100}%)` }}
+        className={`flex touch-pan-y select-none ${dragging ? "cursor-grabbing" : "transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"}`}
+        style={{ transform: `translateX(calc(-${index * 100}% + ${dragX}px))` }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerEnd}
+        onPointerCancel={handlePointerEnd}
+        onDragStart={(event) => event.preventDefault()}
+        onClickCapture={(event) => {
+          // 끌어서 넘긴 경우에는 상품 상세로 이동하지 않음
+          if (dragMoved.current) {
+            event.preventDefault();
+            event.stopPropagation();
+            dragMoved.current = false;
+          }
+        }}
       >
         {products.map((product, i) => {
           const active = i === index;
@@ -98,18 +158,28 @@ export function MainHeroCarousel({ products, themeColors }: MainHeroCarouselProp
               inert={!active}
             >
               <div className="content-shell pt-6 pb-14 md:py-8">
-                <Link href={`/products/${product.id}`} className="group grid items-center gap-5 md:grid-cols-2 md:gap-10 md:px-16">
-                  <div className="relative aspect-2/1 overflow-hidden rounded-lg bg-white/10">
+                <Link href={`/products/${product.id}`} className="group grid items-center gap-5 md:grid-cols-[7fr_13fr] md:gap-10 md:px-16">
+                  <div className="relative aspect-2/1 overflow-hidden rounded-lg bg-white/10 md:aspect-4/3">
                     {product.thumbnailUrl ? (
-                      <Image
-                        src={product.thumbnailUrl}
-                        alt={`${product.artist.name} ${product.name}`}
-                        fill
-                        sizes="(min-width: 768px) 40vw, 100vw"
-                        loading={i === 0 ? "eager" : "lazy"}
-                        fetchPriority={i === 0 ? "high" : "auto"}
-                        className="object-contain transition-transform duration-500 group-hover:scale-[1.03]"
-                      />
+                      // 정사각형 상품 이미지를 카드 가운데에 띄우고, 아래에 옅은 반사를 둔다 (위버스샵 배너 참고)
+                      <div className="absolute top-[12%] left-1/2 aspect-square h-[60%] -translate-x-1/2 transition-transform duration-500 group-hover:scale-[1.03]">
+                        <div className="relative size-full overflow-hidden rounded-sm shadow-[0_12px_28px_rgb(0_0_0/0.35)]">
+                          <Image
+                            src={product.thumbnailUrl}
+                            alt={`${product.artist.name} ${product.name}`}
+                            fill
+                            sizes="(min-width: 768px) 15vw, 50vw"
+                            loading={i === 0 ? "eager" : "lazy"}
+                            fetchPriority={i === 0 ? "high" : "auto"}
+                            className="object-cover"
+                          />
+                        </div>
+                        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-full mt-1 h-2/5 overflow-hidden opacity-30 [mask-image:linear-gradient(to_bottom,black,transparent)]">
+                          <div className="relative aspect-square w-full -scale-y-100">
+                            <Image src={product.thumbnailUrl} alt="" fill sizes="(min-width: 768px) 20vw, 50vw" loading="lazy" className="object-cover" />
+                          </div>
+                        </div>
+                      </div>
                     ) : (
                       <div role="img" aria-label={`${product.name} 이미지 준비 중`} className="grid size-full place-items-center text-xs font-semibold text-white/70">
                         이미지 준비 중
@@ -139,7 +209,7 @@ export function MainHeroCarousel({ products, themeColors }: MainHeroCarouselProp
             <Chevron direction="right" />
           </button>
 
-          <div className="pointer-events-auto absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2 md:bottom-6 md:left-[calc(50%+2.5rem)] md:translate-x-0">
+          <div className="pointer-events-auto absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2 md:bottom-6 md:left-[calc(4rem_+_(100%_-_10.5rem)_*_0.35_+_2.5rem)] md:translate-x-0">
             <button type="button" aria-label="이전 배너" onClick={() => move(-1)} className="grid size-9 place-items-center text-white md:hidden">
               <Chevron direction="left" />
             </button>
