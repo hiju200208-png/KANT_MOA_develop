@@ -1,3 +1,4 @@
+-- 원래 20261012000010이었으나 리디자인 마이그레이션과 번호가 겹쳐 적용되지 않아 000014로 이동
 -- DAYLOG 멤버 프로필 생년월일 정정
 update public.artist_members
 set birthday = case name

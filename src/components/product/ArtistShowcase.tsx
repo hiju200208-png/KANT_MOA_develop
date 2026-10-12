@@ -53,7 +53,7 @@ export function ArtistShowcaseSkeleton() {
       <Skeleton className="h-14 w-full rounded-none md:h-16" />
       <div className="grid grid-cols-2 gap-3 p-4 md:grid-cols-4 md:gap-6 md:px-10 md:py-6">
         {Array.from({ length: 4 }, (_, i) => (
-          <Skeleton key={i} className="aspect-square w-full" />
+          <Skeleton key={i} className={`aspect-square w-full ${i >= 2 ? "max-md:hidden" : ""}`} />
         ))}
       </div>
     </div>
