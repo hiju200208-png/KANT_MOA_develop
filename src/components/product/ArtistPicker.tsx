@@ -10,11 +10,11 @@ import { ArtistLogo } from "./ArtistLogo";
 // 로고 타일 + 이름. 마우스를 올리면 살짝 떠오른다
 function ArtistTile({ artist }: { artist: Artist }) {
   return (
-    <Link href={`/artists/${artist.slug}`} className="group flex w-20 flex-col items-center gap-2 md:w-[108px]">
+    <Link href={`/artists/${artist.slug}`} className="group flex w-16 flex-col items-center gap-1.5 md:w-[84px]">
       <span className="transition-transform duration-300 group-hover:-translate-y-1 group-focus-visible:-translate-y-1 motion-reduce:transition-none">
         <ArtistLogo artist={artist} size="lg" />
       </span>
-      <span className="text-center text-xs leading-snug font-medium break-all md:text-sm">{artist.name}</span>
+      <span className="text-center text-[11px] leading-snug font-medium break-all md:text-xs">{artist.name}</span>
     </Link>
   );
 }
@@ -35,10 +35,10 @@ export function ArtistPicker({ artists }: { artists: Artist[] }) {
   }
 
   return (
-    <section aria-labelledby="our-artists" className="rounded-xl bg-white p-5 shadow-card md:p-6">
-      <h2 id="our-artists" className="text-lg font-bold md:text-xl">Recommended Artist</h2>
+    <section aria-labelledby="our-artists" className="rounded-xl bg-white p-4 shadow-card md:p-5">
+      <h2 id="our-artists" className="text-base font-bold md:text-lg">Recommended Artist</h2>
 
-      <ul className="mt-3 flex gap-3 overflow-x-auto pt-1 pb-1 md:gap-6">
+      <ul className="mt-2 flex gap-3 overflow-x-auto pt-1 pb-1 md:gap-5">
         {artists.map((artist) => (
           <li key={artist.id} className="shrink-0">
             <ArtistTile artist={artist} />
@@ -49,9 +49,9 @@ export function ArtistPicker({ artists }: { artists: Artist[] }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="brand-gradient-soft-hover mt-5 flex h-12 w-full items-center justify-center gap-1.5 rounded-full border border-line bg-white text-sm font-bold hover:border-violet-300 md:text-base"
+        className="brand-gradient-soft-hover mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-full border border-line bg-white text-sm font-bold hover:border-violet-300"
       >
-        <SearchIcon className="size-4 md:size-5" />
+        <SearchIcon className="size-4" />
         아티스트
       </button>
 

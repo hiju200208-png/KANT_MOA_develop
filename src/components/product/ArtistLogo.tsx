@@ -6,7 +6,7 @@ import { artistThemeStyle } from "./artistTheme";
 const BOX = {
   sm: "size-10 rounded-xl text-sm",
   md: "size-16 rounded-2xl text-xl md:size-18",
-  lg: "size-20 rounded-[30%] text-2xl md:size-[108px] md:text-3xl", // 메인 Recommended Artist
+  lg: "size-16 rounded-[30%] text-xl md:size-[84px] md:text-2xl", // 메인 Recommended Artist
 };
 
 export function ArtistLogo({ artist, size = "md" }: { artist: Artist; size?: keyof typeof BOX }) {
