@@ -18,21 +18,20 @@ export async function ArtistShowcase({ artist }: { artist: Artist }) {
   }
 
   return (
-    <article className="reveal overflow-hidden rounded-lg bg-white shadow-card">
+    <article className="reveal overflow-hidden rounded-xl bg-white shadow-card">
       <Link
         href={`/artists/${artist.slug}`}
         style={{
           ...artistThemeStyle(artist.themeColor),
           background: "linear-gradient(110deg, var(--artist-color), color-mix(in srgb, var(--artist-color) 65%, white))",
         }}
-        className="group relative isolate flex h-16 items-end px-5 pb-2.5 md:h-[72px] md:px-6 md:pb-3"
+        className="group relative isolate flex h-14 items-center px-5 md:h-16 md:px-6"
       >
         <div className="absolute inset-0 -z-10 bg-linear-to-r from-black/35 via-black/10 to-transparent" aria-hidden="true" />
         <div className="text-white">
-          <span className="rounded bg-black/60 px-1.5 py-0.5 text-xs font-bold">Now</span>
-          <h2 className="mt-1.5 flex items-center gap-1 text-xl font-black tracking-tight md:text-2xl">
+          <h2 className="flex items-center gap-1 text-lg font-black tracking-tight md:text-xl">
             {artist.name}
-            <span aria-hidden="true" className="text-lg font-normal transition-transform group-hover:translate-x-1">›</span>
+            <span aria-hidden="true" className="text-base font-normal transition-transform group-hover:translate-x-1">›</span>
           </h2>
         </div>
       </Link>
@@ -49,8 +48,8 @@ export async function ArtistShowcase({ artist }: { artist: Artist }) {
 
 export function ArtistShowcaseSkeleton() {
   return (
-    <div className="overflow-hidden rounded-lg bg-white shadow-card" aria-busy="true" aria-label="아티스트 굿즈를 불러오는 중">
-      <Skeleton className="h-16 w-full rounded-none md:h-[72px]" />
+    <div className="overflow-hidden rounded-xl bg-white shadow-card" aria-busy="true" aria-label="아티스트 굿즈를 불러오는 중">
+      <Skeleton className="h-14 w-full rounded-none md:h-16" />
       <div className="grid grid-cols-2 gap-4 p-4 md:grid-cols-4 md:p-5 lg:grid-cols-5">
         {Array.from({ length: 5 }, (_, i) => (
           <Skeleton key={i} className="aspect-square w-full" />
