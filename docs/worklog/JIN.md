@@ -6,11 +6,11 @@
 - 에이전트 사용: O (Claude Code)
 
 ### 한 일
-- 리디자인 요청 9건 반영 (~): 상품 배지 칸, tagline, product_images.kind, home_banners, notices(목 10건 이전), shop_settings, wishlists, get_best_products RPC
+- 리디자인 요청 9건 반영 (`20261012000010`~`000013`): 상품 배지 칸, tagline, product_images.kind, home_banners, notices(목 10건 이전), shop_settings, wishlists, get_best_products RPC
 - 서비스: searchProducts, getBestProducts, getHomeBanners, excludeId, wishlist.ts, notices.ts, settings.ts
 - 배송비 실제 부과: orders.shipping_fee, create_order 수정, 장바구니·주문서·주문 상세에 배송비 표시 (useShippingFee)
-- DAYLOG 전달본 반영 (): 가격·이름·카테고리, 옵션 정리, 상세 이미지 재등록, 로고·히어로. 이미지 116개 업로드
-- SODAFM 배너 2종 추가 (), 기존 3종 이미지 교체
+- DAYLOG 전달본 반영 (`000009`): 가격·이름·카테고리, 옵션 정리, 상세 이미지 재등록, 로고·히어로. 이미지 116개 업로드
+- SODAFM 배너 2종 추가 (`000008`), 기존 3종 이미지 교체
 - 이미지 교체: ORBIT:ON 대표 8, SODAFM 텀블러·인형, SODAFM 누끼 10 (기존 사진은 main-photo.webp로 백업)
 - ui/polish: 메인·상품 상세 위버스샵 수치로 축소, Recommended Artist 로고 타일, 카드 캡션
 
