@@ -1,47 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type CSSProperties } from "react";
+import { useState } from "react";
 import { SearchIcon } from "@/components/layout/Icons";
 import { Input, Modal } from "@/components/ui";
 import type { Artist } from "@/types/app";
 import { ArtistLogo } from "./ArtistLogo";
 
-// 카드 태그라인은 DB에 없는 마케팅 카피라 프론트 상수로 둔다. slug가 없으면 한글 이름을 보여준다.
-const ARTIST_TAGLINE: Record<string, string> = {
-  "orbit-on": "A BRIGHTER TOMORROW",
-  daylog: "RECORD OUR DAYS",
-  sodafm: "PLAY OUR COLOR",
-};
-
-// 흰 바탕 텍스트 카드. 마우스를 올리거나 키보드로 선택하면 카드 아래로 시그니처 컬러 빛이 은은하게 번진다.
-function ArtistCard({ artist }: { artist: Artist }) {
-  const color = artist.themeColor ?? "var(--brand)";
-  const glow = { "--glow": `color-mix(in oklab, ${color} 85%, transparent)` } as CSSProperties;
-
+// 로고 타일 + 이름. 마우스를 올리면 살짝 떠오른다
+function ArtistTile({ artist }: { artist: Artist }) {
   return (
-    <Link
-      href={`/artists/${artist.slug}`}
-      style={glow}
-      className="group flex items-end justify-between gap-4 rounded-2xl bg-white p-5 shadow-card transition-[translate,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_16px_44px_-6px_var(--glow)] focus-visible:-translate-y-1 focus-visible:shadow-[0_16px_44px_-6px_var(--glow)] motion-reduce:transition-none"
-    >
-      <div className="min-w-0">
-        <p className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.12em] text-muted">
-          <span aria-hidden="true" className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-          {ARTIST_TAGLINE[artist.slug] ?? artist.nameKo}
-        </p>
-        <h3 className="mt-2 text-xl font-black tracking-tight">{artist.name}</h3>
-      </div>
-      <span aria-hidden="true" className="shrink-0 text-muted transition-transform group-hover:translate-x-1 group-hover:text-foreground">
-        <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M5 12h14M13 6l6 6-6 6" />
-        </svg>
+    <Link href={`/artists/${artist.slug}`} className="group flex w-20 flex-col items-center gap-2 md:w-[108px]">
+      <span className="transition-transform duration-300 group-hover:-translate-y-1 group-focus-visible:-translate-y-1 motion-reduce:transition-none">
+        <ArtistLogo artist={artist} size="lg" />
       </span>
+      <span className="text-center text-xs leading-snug font-medium break-all md:text-sm">{artist.name}</span>
     </Link>
   );
 }
 
-// 메인 "ARTIST" 영역: 아티스트 카드를 누르면 아티스트 굿즈 페이지로, 아래 검색 바는 아티스트 검색 창을 엽니다.
+// 메인 "Recommended Artist" 영역 (위버스샵 참고): 로고를 누르면 아티스트 굿즈 페이지로, 아래 검색 바는 아티스트 검색 창을 엽니다.
 export function ArtistPicker({ artists }: { artists: Artist[] }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -57,18 +35,13 @@ export function ArtistPicker({ artists }: { artists: Artist[] }) {
   }
 
   return (
-    <section aria-labelledby="our-artists">
-      <div className="mb-4 flex flex-col gap-1.5 md:mb-5 md:flex-row md:items-end md:justify-between">
-        <h2 id="our-artists" className="text-base font-semibold tracking-wide text-muted md:text-lg">
-          ARTIST
-        </h2>
-        <p className="text-sm text-muted">각기 다른 빛으로, 더 특별한 이야기를 만들어가는 아티스트들을 만나보세요.</p>
-      </div>
+    <section aria-labelledby="our-artists" className="rounded-xl bg-white p-5 shadow-card md:p-6">
+      <h2 id="our-artists" className="text-lg font-bold md:text-xl">Recommended Artist</h2>
 
-      <ul className="grid gap-3 md:grid-cols-3 md:gap-5">
+      <ul className="mt-3 flex gap-3 overflow-x-auto pt-1 pb-1 md:gap-6">
         {artists.map((artist) => (
-          <li key={artist.id} className="reveal">
-            <ArtistCard artist={artist} />
+          <li key={artist.id} className="shrink-0">
+            <ArtistTile artist={artist} />
           </li>
         ))}
       </ul>
@@ -76,10 +49,10 @@ export function ArtistPicker({ artists }: { artists: Artist[] }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="brand-gradient-soft-hover mt-4 flex h-11 w-full items-center gap-2 rounded-full border border-line bg-white px-4 text-left text-sm text-muted hover:border-violet-300 md:mt-5"
+        className="brand-gradient-soft-hover mt-5 flex h-12 w-full items-center justify-center gap-1.5 rounded-full border border-line bg-white text-sm font-bold hover:border-violet-300 md:text-base"
       >
-        <SearchIcon className="size-4 text-foreground" />
-        아티스트를 검색해보세요.
+        <SearchIcon className="size-4 md:size-5" />
+        아티스트
       </button>
 
       <Modal open={open} onClose={handleClose} title="아티스트 검색">
