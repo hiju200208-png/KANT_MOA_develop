@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui";
-import { getArtistBanners, getProducts } from "@/services/products";
+import { getArtistBanners, getArtistMembers, getProducts } from "@/services/products";
 import type { Artist, ArtistPromoBanner, ProductSummary } from "@/types/app";
 import { ArtistBannerCarousel, type ArtistBanner } from "./ArtistBannerCarousel";
 import { artistThemeStyle } from "./artistTheme";
@@ -29,19 +29,22 @@ export async function ArtistBanners({ artist }: { artist: Artist }) {
     return <ArtistBannerCarousel banners={banners} themeStyle={artistThemeStyle(artist.themeColor)} />;
   }
 
-  let featured: ProductSummary[] = [];
-  try {
-    featured = (await getProducts({ artistSlug: artist.slug, limit: FEATURED_LIMIT })).items;
-  } catch {
-    // 상품을 못 불러와도 아티스트 배너는 보여주고, 상품 목록 영역에서 에러를 안내합니다.
-  }
+  const [featured, hasMembers] = await Promise.all([
+    getProducts({ artistSlug: artist.slug, limit: FEATURED_LIMIT })
+      .then((result) => result.items)
+      .catch((): ProductSummary[] => []), // 상품을 못 불러와도 배너는 보여주고, 상품 목록 영역에서 에러를 안내합니다.
+    getArtistMembers(artist.slug)
+      .then((members) => members.length > 0)
+      .catch(() => true), // 확인을 못 하면 기존처럼 멤버 소개로 연결
+  ]);
 
   const banners: ArtistBanner[] = [
     {
       key: "artist",
-      href: `/artists/${artist.slug}/about`,
+      // 멤버 정보가 없는 아티스트는 멤버 소개 페이지로 보내지 않음
+      href: hasMembers ? `/artists/${artist.slug}/about` : null,
       title: artist.name,
-      subtitle: `${artist.nameKo} 멤버 소개 보기 ›`,
+      subtitle: hasMembers ? `${artist.nameKo} 멤버 소개 보기 ›` : (artist.tagline ?? artist.nameKo),
       imageUrl: artist.heroImageUrl,
       imageAlt: `${artist.name} 단체 사진`,
       variant: "cover",
