@@ -20,6 +20,11 @@ const toSummary = (p: StaticProduct): ProductSummary => {
     thumbnailUrl: p.imageUrl,
     artist: { slug: artist.slug, name: artist.name, nameKo: artist.nameKo },
     category: { slug: p.categorySlug, name: p.category },
+    // 정적 데이터에는 배지 정보가 없어 기본값
+    isLimited: false,
+    isPreorder: false,
+    releaseDate: null,
+    createdAt: p.createdAt,
   };
 };
 
@@ -35,9 +40,11 @@ export function fallbackProducts({
   sort = 'latest',
   limit = 20,
   offset = 0,
+  excludeId,
 }: ProductQuery = {}): ProductList {
   const filtered = products.filter(
-    (p) => (!artistSlug || p.artistSlug === artistSlug) && (!categorySlug || p.categorySlug === categorySlug),
+    (p) =>
+      (!artistSlug || p.artistSlug === artistSlug) && (!categorySlug || p.categorySlug === categorySlug) && p.id !== excludeId,
   );
   // data/products.ts가 이미 최신순이라 latest는 그대로, 가격순은 같은 가격이면 id 오름차순 (DB 정렬과 동일)
   const sorted =
@@ -57,6 +64,8 @@ export function fallbackProduct(id: number): ProductDetail | null {
     ...toSummary(p),
     description: p.description,
     imageUrls: p.detailImageUrls,
+    galleryUrls: [],
+    detailUrls: p.detailImageUrls,
     variants,
     hasOptions: !(variants.length === 1 && variants[0].optionName === '기본'),
   };

@@ -125,7 +125,11 @@ export function OrderDetail() {
               </li>
             ))}
           </ul>
-          <div className="flex justify-between border-t border-line py-5 text-base">
+          <div className="flex justify-between border-t border-line pt-4 text-sm">
+            <span className="text-muted">배송비</span>
+            <span className="font-bold">{order.shippingFee === 0 ? "무료" : `${order.shippingFee.toLocaleString("ko-KR")}원`}</span>
+          </div>
+          <div className="flex justify-between py-5 text-base">
             <span className="font-bold">총 결제 금액</span>
             <span className="font-black">{order.totalPrice.toLocaleString("ko-KR")}원</span>
           </div>

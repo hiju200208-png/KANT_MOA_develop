@@ -9,9 +9,11 @@ import { PageTitle } from "@/components/order/PageTitle";
 import { Button, Card, Skeleton } from "@/components/ui";
 import { getErrorMessage } from "@/constants/error-messages";
 import { useCart } from "@/hooks/useCart";
+import { useShippingFee } from "@/hooks/useShippingFee";
 
 export default function CartPage() {
   const { items, totalQuantity, totalPrice, loaded, updateQuantity, removeItem } = useCart();
+  const { shippingFee, total } = useShippingFee(totalPrice);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,9 +62,10 @@ export default function CartPage() {
             <dl className="mt-5 space-y-3 text-sm">
               <div className="flex justify-between"><dt className="text-muted">상품 수량</dt><dd className="font-bold">{totalQuantity}개</dd></div>
               <div className="flex justify-between"><dt className="text-muted">상품 금액</dt><dd className="font-bold tabular-nums">{totalPrice.toLocaleString("ko-KR")}원</dd></div>
+              <div className="flex justify-between"><dt className="text-muted">배송비</dt><dd className="font-bold tabular-nums">{shippingFee === 0 ? "무료" : `${shippingFee.toLocaleString("ko-KR")}원`}</dd></div>
               <div className="flex items-baseline justify-between border-t border-line pt-4">
                 <dt className="font-bold">합계</dt>
-                <dd className="text-2xl font-black tabular-nums">{totalPrice.toLocaleString("ko-KR")}원</dd>
+                <dd className="text-2xl font-black tabular-nums">{total.toLocaleString("ko-KR")}원</dd>
               </div>
             </dl>
             {hasUnavailable && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-xs leading-5 text-danger">품절·재고 부족 상품은 합계에서 제외됐어요. 삭제 후 주문해주세요.</p>}

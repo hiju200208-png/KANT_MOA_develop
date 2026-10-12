@@ -182,6 +182,7 @@ export type Database = {
       }
       artists: {
         Row: {
+          tagline: string | null
           created_at: string
           hero_image_path: string | null
           id: number
@@ -193,6 +194,7 @@ export type Database = {
           theme_color: string | null
         }
         Insert: {
+          tagline?: string | null
           created_at?: string
           hero_image_path?: string | null
           id?: never
@@ -204,6 +206,7 @@ export type Database = {
           theme_color?: string | null
         }
         Update: {
+          tagline?: string | null
           created_at?: string
           hero_image_path?: string | null
           id?: never
@@ -279,6 +282,99 @@ export type Database = {
         }
         Relationships: []
       }
+      home_banners: {
+        Row: {
+          badge: string | null
+          ends_at: string | null
+          eyebrow: string | null
+          id: number
+          image_path: string
+          is_active: boolean
+          link_path: string
+          slot: string
+          sort_order: number
+          starts_at: string | null
+          subtitle: string | null
+          title: string
+        }
+        Insert: {
+          badge?: string | null
+          ends_at?: string | null
+          eyebrow?: string | null
+          id?: never
+          image_path: string
+          is_active?: boolean
+          link_path: string
+          slot: string
+          sort_order?: number
+          starts_at?: string | null
+          subtitle?: string | null
+          title: string
+        }
+        Update: {
+          badge?: string | null
+          ends_at?: string | null
+          eyebrow?: string | null
+          id?: never
+          image_path?: string
+          is_active?: boolean
+          link_path?: string
+          slot?: string
+          sort_order?: number
+          starts_at?: string | null
+          subtitle?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      notices: {
+        Row: {
+          artist_id: number | null
+          body: string | null
+          id: number
+          is_pinned: boolean
+          product_id: number | null
+          published_at: string
+          show_in_topbar: boolean
+          title: string
+        }
+        Insert: {
+          artist_id?: number | null
+          body?: string | null
+          id?: never
+          is_pinned?: boolean
+          product_id?: number | null
+          published_at?: string
+          show_in_topbar?: boolean
+          title: string
+        }
+        Update: {
+          artist_id?: number | null
+          body?: string | null
+          id?: never
+          is_pinned?: boolean
+          product_id?: number | null
+          published_at?: string
+          show_in_topbar?: boolean
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notices_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notices_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           id: number
@@ -326,6 +422,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          shipping_fee: number
           address: string
           cancelled_at: string | null
           created_at: string
@@ -338,6 +435,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          shipping_fee?: number
           address: string
           cancelled_at?: string | null
           created_at?: string
@@ -350,6 +448,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          shipping_fee?: number
           address?: string
           cancelled_at?: string | null
           created_at?: string
@@ -373,18 +472,21 @@ export type Database = {
       }
       product_images: {
         Row: {
+          kind: string
           id: number
           image_path: string
           product_id: number
           sort_order: number
         }
         Insert: {
+          kind?: string
           id?: never
           image_path: string
           product_id: number
           sort_order?: number
         }
         Update: {
+          kind?: string
           id?: never
           image_path?: string
           product_id?: number
@@ -440,6 +542,9 @@ export type Database = {
       }
       products: {
         Row: {
+          is_limited: boolean
+          is_preorder: boolean
+          release_date: string | null
           artist_id: number
           category_id: number
           created_at: string
@@ -451,6 +556,9 @@ export type Database = {
           thumbnail_path: string | null
         }
         Insert: {
+          is_limited?: boolean
+          is_preorder?: boolean
+          release_date?: string | null
           artist_id: number
           category_id: number
           created_at?: string
@@ -462,6 +570,9 @@ export type Database = {
           thumbnail_path?: string | null
         }
         Update: {
+          is_limited?: boolean
+          is_preorder?: boolean
+          release_date?: string | null
           artist_id?: number
           category_id?: number
           created_at?: string
@@ -510,6 +621,81 @@ export type Database = {
         }
         Relationships: []
       }
+      shop_settings: {
+        Row: {
+          address: string
+          business_number: string
+          ceo_name: string
+          company_name: string
+          cs_hours: string
+          cs_phone: string
+          ecommerce_number: string
+          free_shipping_threshold: number
+          id: boolean
+          ship_days_text: string
+          shipping_fee: number
+        }
+        Insert: {
+          address: string
+          business_number: string
+          ceo_name: string
+          company_name: string
+          cs_hours: string
+          cs_phone: string
+          ecommerce_number: string
+          free_shipping_threshold: number
+          id?: boolean
+          ship_days_text: string
+          shipping_fee: number
+        }
+        Update: {
+          address?: string
+          business_number?: string
+          ceo_name?: string
+          company_name?: string
+          cs_hours?: string
+          cs_phone?: string
+          ecommerce_number?: string
+          free_shipping_threshold?: number
+          id?: boolean
+          ship_days_text?: string
+          shipping_fee?: number
+        }
+        Relationships: []
+      }
+      wishlists: {
+        Row: {
+          created_at: string
+          product_id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          product_id: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          product_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlists_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wishlists_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -523,6 +709,13 @@ export type Database = {
           p_recipient_phone: string
         }
         Returns: string
+      }
+      get_best_products: {
+        Args: { artist_slug?: string; days?: number; limit_count?: number }
+        Returns: {
+          product_id: number
+          rank: number
+        }[]
       }
       merge_cart: { Args: { p_items: Json }; Returns: undefined }
       pay_order: { Args: { p_order_id: string }; Returns: undefined }

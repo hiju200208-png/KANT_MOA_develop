@@ -34,6 +34,10 @@ export function RecentlyViewedTracker({ product }: { product: ProductSummary }) 
         thumbnailUrl: product.thumbnailUrl,
         artist: product.artist,
         category: product.category,
+        isLimited: product.isLimited,
+        isPreorder: product.isPreorder,
+        releaseDate: product.releaseDate,
+        createdAt: product.createdAt,
       };
       const next = [summary, ...current.filter((item) => item.id !== product.id)].slice(0, MAX_ITEMS);
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));

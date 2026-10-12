@@ -11,6 +11,7 @@ export type Artist = {
   logoUrl: string | null;
   heroImageUrl: string | null; // 아티스트 페이지 상단 배경 (1920×720)
   themeColor: string | null;
+  tagline: string | null; // 아티스트 섹션 한 줄 소개
 };
 
 // 아티스트 페이지 상단 배너 (DB에 등록된 경우만. 없으면 화면이 hero + 최신 상품으로 구성)
@@ -51,7 +52,14 @@ export type ProductSummary = {
   thumbnailUrl: string | null;
   artist: Pick<Artist, 'slug' | 'name' | 'nameKo'>;
   category: Pick<Category, 'slug' | 'name'>;
+  isLimited: boolean; // '한정' 배지
+  isPreorder: boolean; // '예약 판매' 배지
+  releaseDate: string | null; // 'YYYY-MM-DD'
+  createdAt: string; // ISO. NEW 배지는 프론트에서 계산
 };
+
+// 인기 순위 (getBestProducts). rank는 1부터
+export type BestProduct = ProductSummary & { rank: number };
 
 export type Variant = {
   id: number;
@@ -65,7 +73,9 @@ export type Variant = {
 
 export type ProductDetail = ProductSummary & {
   description: string | null;
-  imageUrls: string[]; // 상세 이미지 (sort_order 순)
+  imageUrls: string[]; // = detailUrls (기존 화면 호환용)
+  galleryUrls: string[]; // 상단 썸네일 갤러리 (kind = gallery)
+  detailUrls: string[]; // 아래 긴 상세 이미지 (kind = detail)
   variants: Variant[]; // 1개 이상. 옵션 없는 상품은 optionName '기본' 1개
   hasOptions: boolean; // variants가 '기본' 1개뿐이면 false → 옵션 선택 UI 숨김
 };
@@ -74,6 +84,13 @@ export type ProductQuery = {
   artistSlug?: string;
   categorySlug?: string;
   sort?: 'latest' | 'price_asc' | 'price_desc'; // 기본 'latest'
+  limit?: number; // 기본 20
+  offset?: number; // 기본 0
+  excludeId?: number; // 이 상품은 빼고 (상세의 '함께 보면 좋은 굿즈')
+};
+
+export type SearchQuery = {
+  q: string; // 상품명·아티스트명(영문·한글) 부분 일치
   limit?: number; // 기본 20
   offset?: number; // 기본 0
 };
@@ -118,6 +135,8 @@ export type OrderSummary = {
 };
 
 export type Order = OrderSummary & {
+  itemsPrice: number; // 상품 금액 합계 (totalPrice - shippingFee)
+  shippingFee: number;
   recipientName: string;
   recipientPhone: string;
   address: string;
@@ -152,6 +171,42 @@ export type Address = {
   address1: string; // 기본주소
   address2: string | null; // 상세주소
   isDefault: boolean;
+};
+
+// 메인 기획전 배너. main = 큰 카드, side = 오른쪽 작은 카드
+export type HomeBanner = {
+  id: number;
+  eyebrow: string | null;
+  title: string;
+  subtitle: string | null;
+  badge: string | null;
+  imageUrl: string;
+  href: string; // 사이트 내부 경로
+};
+
+export type Notice = {
+  id: number;
+  artistSlug: string | null; // null = 전체 공지
+  title: string;
+  body: string[]; // 줄 단위 ("## " 섹션, "- " 목록, "※ " 주의, "< >" 소제목)
+  productId: number | null; // 상세 하단 '상품 보러가기'
+  isPinned: boolean;
+  showInTopbar: boolean;
+  publishedAt: string; // ISO
+  isNew: boolean; // 게시 7일 이내
+};
+
+export type ShopSettings = {
+  freeShippingThreshold: number; // 상품 금액이 이 이상이면 무료배송
+  shippingFee: number;
+  shipDaysText: string;
+  companyName: string;
+  ceoName: string;
+  businessNumber: string;
+  ecommerceNumber: string;
+  address: string;
+  csPhone: string;
+  csHours: string;
 };
 
 export type AddressInput = Omit<Address, 'id' | 'isDefault'> & { isDefault?: boolean };

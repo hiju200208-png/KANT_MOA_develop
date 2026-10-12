@@ -10,15 +10,17 @@ export const artists: Artist[] = [
     logoUrl: 'https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/artists/orbit-on/logo.webp',
     heroImageUrl: 'https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/artists/orbit-on/hero.webp',
     themeColor: '#B8A4FF',
+    tagline: '다섯 개의 행성, 하나의 궤도',
   },
   {
     id: 2,
     name: 'DAYLOG',
     nameKo: '데이로그',
     slug: 'daylog',
-    logoUrl: 'https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/artists/daylog/logo.webp',
-    heroImageUrl: 'https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/artists/daylog/hero.webp',
+    logoUrl: 'https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/artists/daylog/logo-thumbnail.webp',
+    heroImageUrl: 'https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/artists/daylog/hero-banner.webp',
     themeColor: '#F4C2C2',
+    tagline: '평범한 하루도, 조금 더 특별하게',
   },
   {
     id: 3,
@@ -28,6 +30,7 @@ export const artists: Artist[] = [
     logoUrl: 'https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/artists/sodafm/logo.webp',
     heroImageUrl: 'https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/artists/sodafm/hero.webp',
     themeColor: '#87CEEB',
+    tagline: '청량한 주파수로 너에게',
   },
 ];
 
