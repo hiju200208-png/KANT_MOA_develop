@@ -1,3 +1,33 @@
+## 2026-10-12 | 아티스트 멤버 소개 페이지 리디자인 (BELIFT LAB 프로필 구조)
+
+- 작업자: SUNGHO
+- 브랜치: dev/sungho
+- 관련 이슈 / PR: 없음
+- 에이전트 사용: O (Claude Code)
+
+### 요청한 작업
+- 멤버 소개 페이지를 BELIFT LAB 아티스트 프로필(ILLIT) 구조로 전면 개편
+- 단체 사진 높이 축소, 스크롤 등장 애니메이션, 멤버 카드는 레퍼런스와 같은 지그재그 + 검은 이름표
+
+### 한 일
+- HTML 시안(product-images/member-page-preview) 먼저 확인 후 사이트에 반영
+- `src/app/(shop)/artists/[slug]/about/page.tsx` 전면 수정: 아티스트 메뉴 띠(PROFILE / GOODS) → 단체 사진(최대 560px) → 디도 세리프 이름 워드마크 → SLOGAN | MEMBER → 소개 문단(DB 값으로 생성) → 멤버 카드 → 굿즈 바로가기
+- `src/components/product/MemberGallery.tsx` 추가: 250×500 세로 사진 지그재그 배치, 검은 이름표(이름·생일), 클릭 시 상세 팝업(`<dialog>`: 포지션·소개·생일·MBTI·마스코트·태그)
+- 스크롤 등장은 기존 `reveal`(motion.css) 사용, 메뉴 띠는 고정하지 않음(스크롤 시 따라오지 않게)
+- SODA FM(4명)·ORBIT:ON(5명, 모바일 375px) 확인, `npx tsc --noEmit`, eslint 통과
+
+### 결정 사항 / 이유
+- 슬로건(`tagline`)이 없는 아티스트는 MEMBER 칸만 표시, 데뷔일은 DB에 없어 넣지 않음
+- 모바일은 카드 150×300, 2열 지그재그 유지
+
+### 멈춘 지점 / 보고한 내용
+- 멤버 소개 페이지는 충만 담당 → PR에서 공유 필요
+- 예전 `MemberCard.tsx`는 더 이상 쓰이지 않지만 충만 파일이라 삭제하지 않음
+
+### 남은 일 / TODO
+- SODA FM 단체 사진(`sodafm/hero.webp`)이 예전 2D 그림 → 새 3D 단체 사진 가로형으로 교체 필요
+- DB 이름 "SODAFM" → "SODA FM" 표기 통일 여부 결정 (진)
+
 ## 2026-10-12 | 404·아티스트 목록·아티스트 공지 상세
 
 - 작업자: SUNGHO
