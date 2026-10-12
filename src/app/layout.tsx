@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import type { ReactNode } from "react";
+import { KantBot } from "@/components/chatbot/KantBot";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <Footer />
             <MobileBottomNav />
           </div>
+          <KantBot />
         </AuthProvider>
       </body>
     </html>
