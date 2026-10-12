@@ -98,14 +98,14 @@ export function MainHeroCarousel({ slides, label = "추천 굿즈" }: MainHeroCa
               aria-hidden={!active}
               inert={!active}
             >
-              <div className="content-shell pt-6 pb-14 md:py-8">
+              <div className="content-shell pt-6 pb-14 md:py-6">
                 <Link href={slide.href} className="group grid items-center gap-5 md:grid-cols-[7fr_13fr] md:gap-10 md:px-16">
-                  <div className="relative aspect-2/1 overflow-hidden rounded-lg bg-white/10 md:aspect-4/3">
+                  <div className="relative aspect-2/1 overflow-hidden rounded-lg bg-white/10 md:aspect-16/10">
                     <SlideImage slide={slide} priority={i === 0} />
                   </div>
                   <div className="hero-copy text-white">
                     <p className="text-sm font-bold opacity-80">{slide.eyebrow}</p>
-                    <h2 className="mt-1 text-2xl font-black leading-snug md:text-4xl">{slide.title}</h2>
+                    <h2 className="mt-1 text-2xl font-black leading-snug md:text-3xl">{slide.title}</h2>
                     <p className="mt-2 text-sm opacity-80">{slide.subtitle}</p>
                   </div>
                 </Link>
@@ -124,7 +124,7 @@ export function MainHeroCarousel({ slides, label = "추천 굿즈" }: MainHeroCa
             <Chevron direction="right" />
           </button>
 
-          <div className="pointer-events-auto absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2 md:bottom-6 md:left-[calc(4rem_+_(100%_-_10.5rem)_*_0.35_+_2.5rem)] md:translate-x-0">
+          <div className="pointer-events-auto absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2 md:bottom-4 md:left-[calc(4rem_+_(100%_-_10.5rem)_*_0.35_+_2.5rem)] md:translate-x-0">
             <button type="button" aria-label="이전 배너" onClick={() => move(-1)} className="grid size-9 place-items-center text-white md:hidden">
               <Chevron direction="left" />
             </button>
