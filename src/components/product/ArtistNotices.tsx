@@ -18,7 +18,7 @@ export async function ArtistNotices({ artist }: ArtistNoticesProps) {
   }
 
   return (
-    <section aria-labelledby="artist-notice-title" className="rounded-2xl border border-line bg-white p-5 md:p-6 lg:sticky lg:top-24">
+    <section aria-labelledby="artist-notice-title" className="rounded-2xl border border-line bg-white px-4 py-5 md:p-6 lg:sticky lg:top-24">
       <h2 id="artist-notice-title" className="text-xl font-black">
         Notice
       </h2>
