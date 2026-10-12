@@ -6,7 +6,7 @@ import { artistThemeStyle } from "./artistTheme";
 const BOX = {
   sm: "size-10 rounded-xl text-sm",
   md: "size-16 rounded-2xl text-xl md:size-18",
-  lg: "size-16 rounded-[38%] text-xl md:size-[84px] md:text-2xl", // 메인 Recommended Artist
+  lg: "size-16 rounded-[38%] text-xl md:size-18 md:text-2xl", // 메인 Recommended Artist
 };
 
 export function ArtistLogo({ artist, size = "md" }: { artist: Artist; size?: keyof typeof BOX }) {
@@ -14,7 +14,7 @@ export function ArtistLogo({ artist, size = "md" }: { artist: Artist; size?: key
   return (
     <span style={artistThemeStyle(artist.themeColor)} className={`relative grid shrink-0 place-items-center overflow-hidden border border-line bg-(--artist-color) font-black ${box}`}>
       {artist.logoUrl ? (
-        <Image src={artist.logoUrl} alt="" fill sizes="108px" className="object-cover" />
+        <Image src={artist.logoUrl} alt="" fill sizes="72px" className="object-cover" />
       ) : (
         <span className="text-white" aria-hidden="true">{artist.name.charAt(0)}</span>
       )}

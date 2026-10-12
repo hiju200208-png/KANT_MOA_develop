@@ -23,7 +23,7 @@ export default function HomePage() {
 
       {/* 간격 규칙(8px 단위): 섹션 사이는 넓게(48/56px), 섹션 안 요소는 가깝게 */}
       <div className="content-shell space-y-12 pt-10 pb-14 md:space-y-14 md:pt-12 md:pb-16">
-        <Suspense fallback={<Skeleton className="h-48 w-full rounded-xl md:h-56" />}>
+        <Suspense fallback={<Skeleton className="h-48 w-full rounded-[16px] md:h-52" />}>
           <RecommendedArtists />
         </Suspense>
 
