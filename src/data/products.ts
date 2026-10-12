@@ -105,7 +105,7 @@ export const products: StaticProduct[] = [
     artistSlug: 'sodafm',
     status: 'on_sale',
     createdAt: '2026-10-07T08:49:09.530192+00:00',
-    detailImageUrls: [],
+    detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/sodafm/tumbler/detail-1.webp'],
     variants: [
       { id: 53, optionName: '블루', extraPrice: 0, stock: 60, maxPerUser: null },
       { id: 52, optionName: '민트', extraPrice: 0, stock: 59, maxPerUser: null },
@@ -124,7 +124,7 @@ export const products: StaticProduct[] = [
     artistSlug: 'sodafm',
     status: 'on_sale',
     createdAt: '2026-10-07T08:49:09.530192+00:00',
-    detailImageUrls: [],
+    detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/sodafm/outer-collection/detail-1.webp'],
     variants: [
       { id: 49, optionName: '후드티', extraPrice: 0, stock: 40, maxPerUser: null },
       { id: 48, optionName: '맨투맨', extraPrice: 0, stock: 40, maxPerUser: null },
@@ -143,7 +143,7 @@ export const products: StaticProduct[] = [
     artistSlug: 'sodafm',
     status: 'on_sale',
     createdAt: '2026-10-07T08:49:09.530192+00:00',
-    detailImageUrls: [],
+    detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/sodafm/member-doll/detail-1.webp'],
     variants: [
       { id: 45, optionName: '하람', extraPrice: 0, stock: 40, maxPerUser: 2 },
       { id: 44, optionName: '윤슬', extraPrice: 0, stock: 40, maxPerUser: 2 },
@@ -162,7 +162,7 @@ export const products: StaticProduct[] = [
     artistSlug: 'sodafm',
     status: 'on_sale',
     createdAt: '2026-10-07T08:49:09.530192+00:00',
-    detailImageUrls: [],
+    detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/sodafm/acrylic-keyring/detail-1.webp'],
     variants: [
       { id: 41, optionName: '하람', extraPrice: 0, stock: 100, maxPerUser: 3 },
       { id: 40, optionName: '윤슬', extraPrice: 0, stock: 100, maxPerUser: 3 },
@@ -181,7 +181,7 @@ export const products: StaticProduct[] = [
     artistSlug: 'sodafm',
     status: 'on_sale',
     createdAt: '2026-10-07T08:49:09.530192+00:00',
-    detailImageUrls: [],
+    detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/sodafm/light-stick/detail-1.webp'],
     variants: [
       { id: 37, optionName: '기본', extraPrice: 0, stock: 300, maxPerUser: 2 },
     ],
@@ -197,7 +197,7 @@ export const products: StaticProduct[] = [
     artistSlug: 'sodafm',
     status: 'on_sale',
     createdAt: '2026-10-07T08:49:09.530192+00:00',
-    detailImageUrls: [],
+    detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/sodafm/mini-album/detail-1.webp'],
     variants: [
       { id: 36, optionName: '기본', extraPrice: 0, stock: 300, maxPerUser: null },
     ],
@@ -264,7 +264,7 @@ export const products: StaticProduct[] = [
     artistSlug: 'sodafm',
     status: 'on_sale',
     createdAt: '2026-10-07T06:09:13.928468+00:00',
-    detailImageUrls: [],
+    detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/sodafm/membership-card/detail-1.webp'],
     variants: [
       { id: 29, optionName: '기본', extraPrice: 0, stock: 500, maxPerUser: 1 },
     ],
@@ -280,7 +280,7 @@ export const products: StaticProduct[] = [
     artistSlug: 'sodafm',
     status: 'on_sale',
     createdAt: '2026-10-07T06:09:13.928468+00:00',
-    detailImageUrls: [],
+    detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/sodafm/mug/detail-1.webp'],
     variants: [
       { id: 28, optionName: '기본', extraPrice: 0, stock: 60, maxPerUser: null },
     ],
@@ -294,11 +294,11 @@ export const products: StaticProduct[] = [
     description: '자수 로고 볼캡.',
     categorySlug: 'apparel',
     artistSlug: 'sodafm',
-    status: 'sold_out',
+    status: 'on_sale',
     createdAt: '2026-10-07T06:09:13.928468+00:00',
-    detailImageUrls: [],
+    detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/sodafm/ball-cap/detail-1.webp'],
     variants: [
-      { id: 27, optionName: '기본', extraPrice: 0, stock: 0, maxPerUser: null },
+      { id: 27, optionName: '기본', extraPrice: 0, stock: 80, maxPerUser: null },
     ],
   },
   {
