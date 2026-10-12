@@ -23,6 +23,8 @@
 
 별도 API 서버와 Next.js API Route는 사용하지 않습니다. 주문·결제·재고처럼 신뢰가 필요한 로직은 전부 Supabase RPC(Postgres 함수)로 처리합니다.
 
+**예외: AI 챗봇(칸트봇)** — Gemini API 키를 브라우저에 노출하지 않기 위해 `src/app/api/chat/route.ts` 하나만 Route Handler로 둡니다. 키는 `GEMINI_API_KEY`(서버 전용, `NEXT_PUBLIC_` 아님)로 `.env.local`·Vercel 환경 변수에 등록합니다.
+
 ## 3. 역할 분담
 
 팀 구성: 백엔드 1명(jin), 프론트엔드 3명(jina, chungman, sungho) — 총 4명

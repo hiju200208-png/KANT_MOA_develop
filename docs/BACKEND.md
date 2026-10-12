@@ -12,6 +12,7 @@
 - `src/services/` : 프론트가 호출하는 데이터 접근 함수 (명세: `docs/API_SPEC.md`)
 - `src/types/app.ts` : services 반환 타입 (프론트와 공유)
 - `src/proxy.ts` : 세션 갱신 (Next.js 16의 Proxy, 구 middleware)
+- `src/lib/kantbot.ts`, `src/app/api/chat/route.ts`, `src/services/chat.ts` : AI 챗봇(칸트봇) 서버 로직·API·호출 함수
 - `src/types/database.ts` : 자동 생성 타입 (직접 편집 금지)
 
 `src/app/`, `src/components/`는 프론트 담당 영역이므로 수정하지 않습니다.
@@ -28,7 +29,7 @@
   └─ 주문/결제/취소 → supabase.rpc(...)              (SECURITY DEFINER 함수)
 ```
 
-- 별도 API 서버, Next.js API Route 없음
+- 별도 API 서버 없음. Next.js API Route는 AI 챗봇 `src/app/api/chat/route.ts` 하나만 예외 (Gemini API 키 보호)
 - 관리자 없음. 카탈로그 테이블에는 쓰기 정책을 만들지 않음
 - 결제는 가짜 결제 (`pay_order` 호출 = 결제 완료)
 
