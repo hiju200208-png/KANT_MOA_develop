@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getArtistNotices } from "@/mocks/notices";
 import type { Artist } from "@/types/app";
 
@@ -19,20 +20,25 @@ export function ArtistNotices({ artist }: ArtistNoticesProps) {
       ) : (
         <ul className="mt-4 space-y-3">
           {notices.map((notice) => (
-            <li key={notice.id} className="rounded-xl border border-line p-4">
-              <span className="inline-block rounded border border-line px-1.5 py-0.5 text-xs font-bold text-muted">{artist.name}</span>
-              <p className="mt-2 text-sm font-semibold leading-snug">
-                {notice.title}
-                {notice.isNew && (
-                  <span className="ml-1.5 inline-grid size-4 place-items-center rounded-full bg-red-500 align-[-2px] text-[10px] font-black text-white">
-                    <span aria-hidden="true">N</span>
-                    <span className="sr-only">새 공지</span>
-                  </span>
-                )}
-              </p>
-              <time dateTime={notice.publishedAt} className="mt-1.5 block text-xs text-muted">
-                {notice.publishedAt.replaceAll("-", ".")}
-              </time>
+            <li key={notice.id}>
+              <Link
+                href={`/artists/${artist.slug}/notices/${notice.id}`}
+                className="group block rounded-xl border border-line p-4 transition-colors hover:border-violet-300 hover:bg-violet-50/40"
+              >
+                <span className="inline-block rounded border border-line px-1.5 py-0.5 text-xs font-bold text-muted">{artist.name}</span>
+                <p className="mt-2 text-sm font-semibold leading-snug group-hover:underline">
+                  {notice.title}
+                  {notice.isNew && (
+                    <span className="ml-1.5 inline-grid size-4 place-items-center rounded-full bg-red-500 align-[-2px] text-[10px] font-black text-white">
+                      <span aria-hidden="true">N</span>
+                      <span className="sr-only">새 공지</span>
+                    </span>
+                  )}
+                </p>
+                <time dateTime={notice.publishedAt} className="mt-1.5 block text-xs text-muted">
+                  {notice.publishedAt.replaceAll("-", ".")}
+                </time>
+              </Link>
             </li>
           ))}
         </ul>
