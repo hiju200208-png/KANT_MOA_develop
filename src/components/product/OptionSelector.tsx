@@ -11,15 +11,15 @@ interface OptionSelectorProps {
 export function OptionSelector({ variants, selectedId, onSelect, disabled = false }: OptionSelectorProps) {
   return (
     <fieldset>
-      <legend className="mb-3 text-sm font-bold">옵션 선택</legend>
-      <div className="flex flex-wrap gap-2">
+      <legend className="mb-2 text-sm font-bold">옵션 선택</legend>
+      <div className="flex flex-wrap gap-1.5">
         {variants.map((variant) => {
           const checked = variant.id === selectedId;
           const unavailable = disabled || variant.isSoldOut;
           return (
             <label
               key={variant.id}
-              className={`inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full border px-4 text-sm font-semibold transition-all has-focus-visible:outline-2 has-focus-visible:outline-brand ${checked ? "border-foreground bg-foreground text-white" : "brand-gradient-soft-hover border-line bg-white hover:border-violet-300"} ${unavailable ? "cursor-not-allowed opacity-40" : ""}`}
+              className={`inline-flex min-h-9 cursor-pointer items-center gap-1 rounded-[8px] border px-3 text-[13px] font-medium transition-all has-focus-visible:outline-2 has-focus-visible:outline-brand ${checked ? "border-foreground bg-foreground text-white" : "brand-gradient-soft-hover border-line bg-white hover:border-violet-300"} ${unavailable ? "cursor-not-allowed opacity-40" : ""}`}
             >
               <input
                 type="radio"

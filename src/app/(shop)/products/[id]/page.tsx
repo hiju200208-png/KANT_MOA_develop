@@ -17,7 +17,7 @@ interface ProductPageProps {
 
 export default function ProductPage({ params }: ProductPageProps) {
   return (
-    <div className="content-shell py-6 md:py-12">
+    <div className="content-shell pb-10 md:pt-5 md:pb-16">
       <Suspense fallback={<ProductPageSkeleton />}>
         <ProductContent params={params} />
       </Suspense>
@@ -42,41 +42,42 @@ async function ProductContent({ params }: ProductPageProps) {
   return (
     <>
       <RecentlyViewedTracker product={product} />
-      <nav aria-label="현재 위치" className="mb-5 flex items-center gap-1.5 text-xs font-semibold text-muted">
-        <Link href={`/artists/${product.artist.slug}`} className="brand-gradient-text-hover">{product.artist.name}</Link>
-        <span aria-hidden="true">›</span>
-        <Link href={`/category/${product.category.slug}`} className="brand-gradient-text-hover">{product.category.name}</Link>
-      </nav>
+      {/* 위버스샵 판매 페이지 기준: 이미지 58% · 정보 영역, 아티스트 14px 굵게 › 상품명 15px 회색 › 가격 20px */}
+      <div className="-mx-4 grid md:mx-0 md:grid-cols-[58fr_42fr] md:gap-5">
+        <ProductImage src={product.thumbnailUrl} alt={altBase} sizes="(min-width: 768px) 58vw, 100vw" eager className="aspect-square md:rounded-[8px]" />
 
-      <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
-        <ProductImage src={product.thumbnailUrl} alt={altBase} sizes="(min-width: 1024px) 50vw, 100vw" eager className="aspect-square rounded-lg" />
-
-        <div>
-          <Link href={`/artists/${product.artist.slug}`} className="brand-gradient-text-hover text-sm font-bold text-muted">
+        <div className="min-w-0 px-4 pt-5 pb-5 md:px-0 md:pt-4">
+          <Link href={`/artists/${product.artist.slug}`} className="inline-flex items-center gap-0.5 text-sm leading-[18px] font-bold text-black hover:underline">
             {product.artist.name}
+            <span aria-hidden="true">›</span>
           </Link>
-          <h1 className="mt-2 text-2xl font-black leading-snug md:text-3xl">{product.name}</h1>
-          <div className="mt-3 flex items-center gap-3">
-            <p className="text-2xl font-black">{formatPrice(product.price)}</p>
+          <h1 className="mt-1.5 mb-1 text-[15px] leading-[21px] font-normal break-all text-[#484848]">{product.name}</h1>
+          <div className="mt-3 flex items-center gap-2">
+            <p className="text-xl leading-[26px] font-extrabold text-black">{formatPrice(product.price)}</p>
             {product.isSoldOut && <Badge className="bg-neutral-100 text-muted">품절</Badge>}
           </div>
-          <div className="mt-8 border-t border-line pt-8">
+          <div className="mt-5">
             <ProductPurchasePanel product={product} />
           </div>
         </div>
       </div>
 
-      <section aria-label="상품 정보" className="mx-auto mt-16 max-w-3xl">
-        <h2 className="border-b border-line pb-4 text-lg font-black">상품 정보</h2>
-        {product.description && <p className="mt-6 whitespace-pre-line text-sm leading-7 text-neutral-700">{product.description}</p>}
+      <section aria-labelledby="product-info-tab" className="mt-2 md:mt-0">
+        {/* 탭 모양 제목 (위버스샵 상세정보 탭: 높이 44px, 14px 굵게, 아래 3px 선) */}
+        <div className="border-b border-black/10">
+          <h2 id="product-info-tab" className="mx-auto flex h-11 w-fit items-center border-b-[3px] border-black px-6 text-sm font-bold">상세정보</h2>
+        </div>
+        <div className="mx-auto max-w-3xl">
+        {product.description && <p className="mt-5 whitespace-pre-line text-[13px] leading-[17px] text-[#484848]">{product.description}</p>}
         {product.imageUrls.length > 0 && (
-          <div className="mt-8 space-y-4">
+          <div className="mt-5">
             {product.imageUrls.map((url, index) => (
-              <Image key={url} src={url} alt={`${altBase} 상세 이미지 ${index + 1}`} width={1200} height={1200} sizes="(min-width: 768px) 768px, 100vw" className="h-auto w-full rounded-md" />
+              <Image key={url} src={url} alt={`${altBase} 상세 이미지 ${index + 1}`} width={1200} height={1200} sizes="(min-width: 768px) 768px, 100vw" className="h-auto w-full" />
             ))}
           </div>
         )}
-        {!product.description && product.imageUrls.length === 0 && <p className="mt-6 text-sm text-muted">등록된 상세 정보가 없어요.</p>}
+        {!product.description && product.imageUrls.length === 0 && <p className="mt-5 text-[13px] text-muted">등록된 상세 정보가 없어요.</p>}
+        </div>
       </section>
     </>
   );
@@ -84,14 +85,14 @@ async function ProductContent({ params }: ProductPageProps) {
 
 function ProductPageSkeleton() {
   return (
-    <div className="grid gap-8 lg:grid-cols-2 lg:gap-12" aria-busy="true" aria-label="상품 정보를 불러오는 중">
-      <Skeleton className="aspect-square w-full rounded-lg" />
-      <div className="space-y-4">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-8 w-3/4" />
-        <Skeleton className="h-8 w-32" />
-        <Skeleton className="mt-8 h-40 w-full" />
-        <Skeleton className="h-13 w-full rounded-full" />
+    <div className="grid gap-5 md:grid-cols-[58fr_42fr]" aria-busy="true" aria-label="상품 정보를 불러오는 중">
+      <Skeleton className="aspect-square w-full rounded-[8px]" />
+      <div className="space-y-3 md:pt-4">
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-5 w-3/4" />
+        <Skeleton className="h-6 w-28" />
+        <Skeleton className="mt-5 h-28 w-full rounded-[8px]" />
+        <Skeleton className="h-11 w-full rounded-[8px]" />
       </div>
     </div>
   );
