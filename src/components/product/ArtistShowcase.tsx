@@ -6,7 +6,7 @@ import { artistThemeStyle } from "./artistTheme";
 import { LoadError } from "./LoadError";
 import { ProductCarousel } from "./ProductCarousel";
 
-const SHOWCASE_LIMIT = 15; // PC 5개씩 최대 3페이지
+const SHOWCASE_LIMIT = 12; // 4개씩 최대 3페이지
 
 // 메인 페이지 아티스트별 굿즈 패널 (위버스샵 아티스트 섹션 참고)
 export async function ArtistShowcase({ artist }: { artist: Artist }) {
@@ -50,8 +50,8 @@ export function ArtistShowcaseSkeleton() {
   return (
     <div className="overflow-hidden rounded-[16px] bg-white shadow-[0_4px_28px_rgb(0_0_0/0.12)]" aria-busy="true" aria-label="아티스트 굿즈를 불러오는 중">
       <Skeleton className="h-14 w-full rounded-none md:h-16" />
-      <div className="grid grid-cols-2 gap-4 p-4 md:grid-cols-4 md:p-5 lg:grid-cols-5">
-        {Array.from({ length: 5 }, (_, i) => (
+      <div className="grid grid-cols-2 gap-4 p-4 md:grid-cols-4 md:p-5">
+        {Array.from({ length: 4 }, (_, i) => (
           <Skeleton key={i} className="aspect-square w-full" />
         ))}
       </div>
