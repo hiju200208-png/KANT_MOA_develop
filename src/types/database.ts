@@ -86,6 +86,44 @@ export type Database = {
           },
         ]
       }
+      artist_banners: {
+        Row: {
+          artist_id: number
+          id: number
+          image_path: string
+          link_path: string
+          sort_order: number
+          subtitle: string | null
+          title: string
+        }
+        Insert: {
+          artist_id: number
+          id?: never
+          image_path: string
+          link_path: string
+          sort_order?: number
+          subtitle?: string | null
+          title: string
+        }
+        Update: {
+          artist_id?: number
+          id?: never
+          image_path?: string
+          link_path?: string
+          sort_order?: number
+          subtitle?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_banners_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artist_members: {
         Row: {
           artist_id: number

@@ -137,6 +137,7 @@ type Profile = {
 |---|---|---|---|---|
 | `getArtists()` | - | `Artist[]` (sort_order 순) | 서버 | - |
 | `getArtist(slug)` | `string` | `Artist \| null` | 서버 | - |
+| `getArtistBanners(slug)` | `string` | `ArtistPromoBanner[]` (sort_order 순, 등록된 배너 없으면 빈 배열 → 화면은 hero + 최신 상품으로 구성) | 서버 | - |
 | `getArtistMembers(slug)` | `string` | `ArtistMember[]` (sort_order 순, 없는 slug면 빈 배열) | 서버 | - |
 | `getCategories()` | - | `Category[]` (sort_order 순, 7개) | 서버 | - |
 | `getProducts(params?)` | `ProductQuery` | `{ items: ProductSummary[]; total: number }` | 서버 | - |

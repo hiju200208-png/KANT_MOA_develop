@@ -763,6 +763,18 @@ SQL 원본: `supabase/migrations/20261007000009_add_artist_members.sql` (테이�
 | RLS | 누구나 조회만. 쓰기 정책 없음 (대시보드/마이그레이션으로 관리) |
 | 이름 | `name`은 굿즈 옵션명(`product_variants.option_name`)과 동일하게 유지 |
 
+### 6-13. 아티스트 배너 (artist_banners)
+
+SQL 원본: `supabase/migrations/20261012000006_add_artist_banners.sql`
+
+| 항목 | 규칙 |
+|---|---|
+| 용도 | 아티스트 페이지 상단 배너. 등록된 배너가 있으면 그것만, 없으면 hero + 최신 상품 3개로 자동 구성 |
+| 컬럼 | image_path, title, subtitle, link_path(사이트 내부 경로), sort_order |
+| 이미지 | artists 버킷 `<artist-slug>/banners/<이름>.webp`, 16:9 (예: 1600×900), **글씨 없는 배경** (제목·부제는 화면이 위에 그림) |
+| RLS | 누구나 조회만. 쓰기 정책 없음 (대시보드/마이그레이션으로 관리) |
+| 현재 | SODAFM 3종 (멤버 소개, 1st 미니앨범, 응원봉) |
+
 ---
 
 ## 7. 프론트 연동 참고
