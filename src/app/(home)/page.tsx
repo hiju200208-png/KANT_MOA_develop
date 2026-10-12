@@ -3,7 +3,6 @@ import { ArtistPicker } from "@/components/product/ArtistPicker";
 import { ArtistShowcase, ArtistShowcaseSkeleton } from "@/components/product/ArtistShowcase";
 import { LoadError } from "@/components/product/LoadError";
 import { HomeSpotlight, type SpotlightArtist } from "@/components/product/HomeSpotlight";
-import { RecentlyViewedProducts } from "@/components/product/RecentlyViewedProducts";
 import { EmptyState, Skeleton } from "@/components/ui";
 import { getArtists, getBestProducts } from "@/services/products";
 import type { Artist, BestProduct } from "@/types/app";
@@ -12,8 +11,7 @@ export default function HomePage() {
   return (
     <>
       <h1 className="sr-only">KANT MOA 공식 굿즈샵</h1>
-      {/* data-home: 메인 배너 안에 TopBar가 있어 전역 헤더를 CSS로 숨김 (layout/Header.tsx). 로딩 중에도 숨겨 깜빡임 방지 */}
-      <Suspense fallback={<Skeleton data-home="" className="h-[640px] w-full rounded-none md:h-[600px]" />}>
+      <Suspense fallback={<Skeleton className="h-[640px] w-full rounded-none md:h-[600px]" />}>
         <MainHero />
       </Suspense>
 
@@ -28,8 +26,6 @@ export default function HomePage() {
             <ArtistShowcases />
           </Suspense>
         </section>
-
-        <RecentlyViewedProducts />
       </div>
     </>
   );

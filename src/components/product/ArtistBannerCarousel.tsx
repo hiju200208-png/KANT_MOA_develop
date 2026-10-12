@@ -9,7 +9,7 @@ const SETTLE_FALLBACK_MS = 800;
 
 export type ArtistBanner = {
   key: string;
-  href: string;
+  href: string | null; // null이면 누를 수 없는 배너 (멤버 소개가 없는 아티스트의 단체 사진)
   title: string;
   subtitle: string;
   imageUrl: string | null;
@@ -108,8 +108,21 @@ export function ArtistBannerCarousel({ banners, themeStyle }: ArtistBannerCarous
 }
 
 function BannerCard({ banner }: { banner: ArtistBanner }) {
+  const className = "group relative isolate flex aspect-video items-end overflow-hidden rounded-lg bg-linear-to-br from-(--artist-color) to-foreground p-6 md:p-8";
+  return banner.href ? (
+    <Link href={banner.href} className={className}>
+      <BannerContent banner={banner} />
+    </Link>
+  ) : (
+    <div className={className}>
+      <BannerContent banner={banner} />
+    </div>
+  );
+}
+
+function BannerContent({ banner }: { banner: ArtistBanner }) {
   return (
-    <Link href={banner.href} className="group relative isolate flex aspect-video items-end overflow-hidden rounded-lg bg-linear-to-br from-(--artist-color) to-foreground p-6 md:p-8">
+    <>
       {banner.imageUrl && banner.variant === "cover" && (
         <Image src={banner.imageUrl} alt={banner.imageAlt} fill sizes="(min-width: 768px) 50vw, 100vw" loading="eager" className="-z-10 object-cover" />
       )}
@@ -131,6 +144,6 @@ function BannerCard({ banner }: { banner: ArtistBanner }) {
         <h2 className="text-xl font-black leading-snug md:text-2xl">{banner.title}</h2>
         <p className="mt-1.5 text-sm opacity-90">{banner.subtitle}</p>
       </div>
-    </Link>
+    </>
   );
 }
