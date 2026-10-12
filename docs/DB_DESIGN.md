@@ -25,7 +25,7 @@
 | 멤버십 카드 | 일반 상품과 동일하게 처리. 아티스트별 상품 + variant `max_per_user = 1`. 멤버십 혜택(회원 전용 구매 등)은 범위 밖 |
 | 옵션 | 사이즈·앨범 버전·멤버 모두 `product_variants`로 처리. 옵션 없는 상품도 '기본' variant 1개 보유 |
 | 재고 | variant 단위로 관리 |
-| 1인 구매 제한 | **옵션(variant)당 최대 개수** (`product_variants.max_per_user`, null이면 무제한) |
+| 1인 구매 제한 | **옵션(variant)당 최대 개수** (`product_variants.max_per_user`, 기본 4개. null이면 무제한이지만 현재 무제한 옵션 없음, 2026-10-12) |
 | 장바구니 | 비회원은 localStorage, 로그인 시 `merge_cart` RPC로 서버 장바구니에 병합 |
 | 주문 | `create_order` 시 pending 생성, 재고 차감 없음 |
 | 결제 | `pay_order` 시 구매 제한 검증 + 재고 차감 + paid 처리 + 장바구니에서 제거 |
