@@ -3,7 +3,6 @@ import { ArtistPicker } from "@/components/product/ArtistPicker";
 import { ArtistShowcase, ArtistShowcaseSkeleton } from "@/components/product/ArtistShowcase";
 import { LoadError } from "@/components/product/LoadError";
 import { HomeSpotlight, type SpotlightArtist } from "@/components/product/HomeSpotlight";
-import { RecentlyViewedProducts } from "@/components/product/RecentlyViewedProducts";
 import { EmptyState, Skeleton } from "@/components/ui";
 import { getArtists, getBestProducts } from "@/services/products";
 import type { Artist, BestProduct } from "@/types/app";
@@ -27,8 +26,6 @@ export default function HomePage() {
             <ArtistShowcases />
           </Suspense>
         </section>
-
-        <RecentlyViewedProducts />
       </div>
     </>
   );

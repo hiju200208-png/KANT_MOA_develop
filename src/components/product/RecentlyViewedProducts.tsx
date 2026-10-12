@@ -77,35 +77,6 @@ export function RecentlyViewedTracker({ product }: { product: ProductSummary }) 
   return null;
 }
 
-// 메인 하단 섹션: 최근 4개
-export function RecentlyViewedProducts() {
-  const products = useRecentlyViewed();
-  if (products.length === 0) return null;
-
-  return (
-    <section aria-labelledby="recently-viewed-products" className="reveal rounded-lg bg-white p-4 shadow-card">
-      <div className="mb-4 flex items-end justify-between gap-3">
-        <div>
-          <h2 id="recently-viewed-products" className="text-lg font-black md:text-xl">최근 본 상품</h2>
-          <p className="mt-1 text-sm text-muted">방금 둘러본 굿즈를 다시 확인해보세요.</p>
-        </div>
-        {products.length > 4 && (
-          <Link href="/recently-viewed" className="shrink-0 text-sm font-bold text-muted hover:text-foreground">
-            전체 보기 ›
-          </Link>
-        )}
-      </div>
-      <ul className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
-        {products.slice(0, 4).map((product) => (
-          <li key={product.id}>
-            <ProductCard product={product} />
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
 // 최근 본 상품 페이지 목록: 저장된 전체 (최대 20개)
 export function RecentlyViewedList() {
   const products = useRecentlyViewed();
