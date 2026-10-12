@@ -1,5 +1,5 @@
-// 칸트봇 답변. 지금은 키워드로 고른 고정 답변이고, AI API를 연동할 때 이 함수만 교체하면 된다.
-// TODO(chatbot): AI API 연동 (대화 기록 history를 함께 보내 문맥 유지)
+// 칸트봇 답변. AI(Gemini, /api/chat)로 답하고, 실패하면(한도 초과·장애) 아래 키워드 고정 답변으로 대체한다.
+import { askKantBot } from "@/services/chat";
 
 export type ChatMessage = { id: number; role: "bot" | "user"; text: string };
 
@@ -13,9 +13,17 @@ const REPLIES: { keywords: string[]; text: string }[] = [
 
 const FALLBACK = "아직 배우는 중이라 정확히 답하기 어려워요. 배송, 교환·환불, 상품 추천에 대해 물어봐 주세요!";
 
+// history: 이번 질문까지 포함한 전체 대화 (KantBot.send 기준)
 export async function getKantBotReply(message: string, history: ChatMessage[]): Promise<string> {
-  void history; // API 연동 시 사용
-  await new Promise((resolve) => setTimeout(resolve, 700)); // 답변을 기다리는 느낌을 주기 위한 지연
+  try {
+    const previous = history.slice(0, -1).map(({ role, text }) => ({ role, text }));
+    return await askKantBot(message, previous);
+  } catch {
+    return keywordReply(message);
+  }
+}
+
+function keywordReply(message: string): string {
   const found = REPLIES.find(({ keywords }) => keywords.some((keyword) => message.includes(keyword)));
   return found?.text ?? FALLBACK;
 }

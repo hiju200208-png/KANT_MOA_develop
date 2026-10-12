@@ -1,3 +1,33 @@
+## 2026-10-12 | AI 챗봇(칸트봇) 백엔드 · Gemini 연동
+
+- 작업자: jin
+- 브랜치: dev/jin
+- 관련 이슈 / PR: sungho 칸트봇 UI(키워드 답변) → AI 연동 / -
+- 에이전트 사용: O (Claude Code)
+
+### 요청한 작업
+- 칸트봇에 AI 답변 연결 (Gemini 무료 API)
+
+### 한 일
+- `@google/genai` 설치, `.env.example`에 `GEMINI_API_KEY`
+- `src/lib/kantbot.ts`: DB 상품 목록(5분 캐시) + 쇼핑몰 정책을 시스템 지시로 넣어 Gemini 호출. `gemini-3.5-flash`, 429면 `gemini-3.5-flash-lite`
+- `src/app/api/chat/route.ts`: 입력 검사(500자, 이전 대화 10개), IP당 1분 10회 제한, 실패 시 503
+- `src/services/chat.ts` + `components/chatbot/kantBotReply.ts`: AI 호출, 실패 시 기존 키워드 답변으로 대체
+- 문서: SETUP 2장·BACKEND에 Route Handler 예외, API_SPEC 5-2장
+- 테스트: 가격·구매 제한, 품절, 대화 문맥, 관계없는 질문 거절, 개인정보 안내, 추천+링크, 입력 검사(400), 요청 제한(429)
+
+### 결정 사항 / 이유
+- 상품이 25개뿐이라 검색 도구 없이 전체 목록을 프롬프트에 포함
+- Gemini 무료 티어는 입력이 학습·사람 검토에 쓰일 수 있어 회원·주문 정보는 보내지 않음
+- 무료 한도는 프로젝트 전체 합산 → 한도 초과 시 lite 모델, 그래도 실패하면 키워드 답변
+- gemini-2.5 계열은 신규 사용자에게 제공 종료(404)라 3.5 사용
+- 요청 제한은 서버 메모리 기준 (ponytail 주석: 여러 인스턴스에선 느슨함)
+
+### 남은 일 / TODO
+- Vercel 배포 시 `GEMINI_API_KEY` 환경 변수 등록
+- 칸트봇 화면에 "개인정보는 입력하지 마세요" 안내 문구 (sungho)
+- 답변의 `/products/번호`를 클릭 가능한 링크로 표시 (sungho, 선택)
+
 ## 2026-10-12 | ORBIT:ON 이미지 교체 · 아크릴 키링 숨김
 
 - 작업자: jin
