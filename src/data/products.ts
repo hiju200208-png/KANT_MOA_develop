@@ -18,7 +18,7 @@ export const products: StaticProduct[] = [
     createdAt: '2026-10-11T12:08:33.485685+00:00',
     detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/orbit-on/planet-bracelet/detail-1.webp'],
     variants: [
-      { id: 62, optionName: '기본', extraPrice: 0, stock: 100, maxPerUser: null },
+      { id: 62, optionName: '기본', extraPrice: 0, stock: 100, maxPerUser: 4 },
     ],
   },
   {
@@ -35,7 +35,7 @@ export const products: StaticProduct[] = [
     createdAt: '2026-10-11T12:08:33.485685+00:00',
     detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/orbit-on/planet-sticker/detail-1.webp'],
     variants: [
-      { id: 61, optionName: '기본', extraPrice: 0, stock: 200, maxPerUser: null },
+      { id: 61, optionName: '기본', extraPrice: 0, stock: 200, maxPerUser: 4 },
     ],
   },
   {
@@ -52,7 +52,7 @@ export const products: StaticProduct[] = [
     createdAt: '2026-10-11T12:08:33.485685+00:00',
     detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/orbit-on/ball-cap/detail-1.webp'],
     variants: [
-      { id: 60, optionName: '기본', extraPrice: 0, stock: 80, maxPerUser: null },
+      { id: 60, optionName: '기본', extraPrice: 0, stock: 80, maxPerUser: 4 },
     ],
   },
   {
@@ -107,10 +107,10 @@ export const products: StaticProduct[] = [
     createdAt: '2026-10-07T08:49:09.530192+00:00',
     detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/sodafm/tumbler/detail-1.webp'],
     variants: [
-      { id: 53, optionName: '블루', extraPrice: 0, stock: 60, maxPerUser: null },
-      { id: 52, optionName: '민트', extraPrice: 0, stock: 59, maxPerUser: null },
-      { id: 51, optionName: '옐로', extraPrice: 0, stock: 60, maxPerUser: null },
-      { id: 50, optionName: '화이트', extraPrice: 0, stock: 60, maxPerUser: null },
+      { id: 53, optionName: '블루', extraPrice: 0, stock: 60, maxPerUser: 4 },
+      { id: 52, optionName: '민트', extraPrice: 0, stock: 59, maxPerUser: 4 },
+      { id: 51, optionName: '옐로', extraPrice: 0, stock: 60, maxPerUser: 4 },
+      { id: 50, optionName: '화이트', extraPrice: 0, stock: 60, maxPerUser: 4 },
     ],
   },
   {
@@ -126,10 +126,10 @@ export const products: StaticProduct[] = [
     createdAt: '2026-10-07T08:49:09.530192+00:00',
     detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/sodafm/outer-collection/detail-1.webp'],
     variants: [
-      { id: 49, optionName: '후드티', extraPrice: 0, stock: 40, maxPerUser: null },
-      { id: 48, optionName: '맨투맨', extraPrice: 0, stock: 40, maxPerUser: null },
-      { id: 47, optionName: '트랙 자켓', extraPrice: 10000, stock: 30, maxPerUser: null },
-      { id: 46, optionName: '바시티 자켓', extraPrice: 30000, stock: 18, maxPerUser: null },
+      { id: 49, optionName: '후드티', extraPrice: 0, stock: 40, maxPerUser: 4 },
+      { id: 48, optionName: '맨투맨', extraPrice: 0, stock: 40, maxPerUser: 4 },
+      { id: 47, optionName: '트랙 자켓', extraPrice: 10000, stock: 30, maxPerUser: 4 },
+      { id: 46, optionName: '바시티 자켓', extraPrice: 30000, stock: 18, maxPerUser: 4 },
     ],
   },
   {
@@ -199,7 +199,7 @@ export const products: StaticProduct[] = [
     createdAt: '2026-10-07T08:49:09.530192+00:00',
     detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/sodafm/mini-album/detail-1.webp'],
     variants: [
-      { id: 36, optionName: '기본', extraPrice: 0, stock: 300, maxPerUser: null },
+      { id: 36, optionName: '기본', extraPrice: 0, stock: 300, maxPerUser: 4 },
     ],
   },
   {
@@ -247,10 +247,10 @@ export const products: StaticProduct[] = [
     createdAt: '2026-10-07T08:49:09.530192+00:00',
     detailImageUrls: [],
     variants: [
-      { id: 33, optionName: 'S', extraPrice: 0, stock: 50, maxPerUser: null },
-      { id: 32, optionName: 'M', extraPrice: 0, stock: 50, maxPerUser: null },
-      { id: 31, optionName: 'L', extraPrice: 0, stock: 50, maxPerUser: null },
-      { id: 30, optionName: 'XL', extraPrice: 2000, stock: 23, maxPerUser: null },
+      { id: 33, optionName: 'S', extraPrice: 0, stock: 50, maxPerUser: 4 },
+      { id: 32, optionName: 'M', extraPrice: 0, stock: 50, maxPerUser: 4 },
+      { id: 31, optionName: 'L', extraPrice: 0, stock: 50, maxPerUser: 4 },
+      { id: 30, optionName: 'XL', extraPrice: 2000, stock: 23, maxPerUser: 4 },
     ],
   },
   {
@@ -282,7 +282,7 @@ export const products: StaticProduct[] = [
     createdAt: '2026-10-07T06:09:13.928468+00:00',
     detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/sodafm/mug/detail-1.webp'],
     variants: [
-      { id: 28, optionName: '기본', extraPrice: 0, stock: 60, maxPerUser: null },
+      { id: 28, optionName: '기본', extraPrice: 0, stock: 60, maxPerUser: 4 },
     ],
   },
   {
@@ -298,7 +298,7 @@ export const products: StaticProduct[] = [
     createdAt: '2026-10-07T06:09:13.928468+00:00',
     detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/sodafm/ball-cap/detail-1.webp'],
     variants: [
-      { id: 27, optionName: '기본', extraPrice: 0, stock: 80, maxPerUser: null },
+      { id: 27, optionName: '기본', extraPrice: 0, stock: 80, maxPerUser: 4 },
     ],
   },
   {
@@ -333,7 +333,7 @@ export const products: StaticProduct[] = [
     createdAt: '2026-10-07T06:09:13.928468+00:00',
     detailImageUrls: [],
     variants: [
-      { id: 22, optionName: '기본', extraPrice: 0, stock: 80, maxPerUser: null },
+      { id: 22, optionName: '기본', extraPrice: 0, stock: 80, maxPerUser: 4 },
     ],
   },
   {
@@ -384,8 +384,8 @@ export const products: StaticProduct[] = [
     createdAt: '2026-10-07T06:09:13.928468+00:00',
     detailImageUrls: [],
     variants: [
-      { id: 16, optionName: '포토북', extraPrice: 0, stock: 200, maxPerUser: null },
-      { id: 15, optionName: '플랫폼', extraPrice: 0, stock: 200, maxPerUser: null },
+      { id: 16, optionName: '포토북', extraPrice: 0, stock: 200, maxPerUser: 4 },
+      { id: 15, optionName: '플랫폼', extraPrice: 0, stock: 200, maxPerUser: 4 },
     ],
   },
   {
@@ -401,10 +401,10 @@ export const products: StaticProduct[] = [
     createdAt: '2026-10-07T06:09:13.928468+00:00',
     detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/orbit-on/jersey/detail-1.webp'],
     variants: [
-      { id: 13, optionName: 'S', extraPrice: 0, stock: 50, maxPerUser: null },
-      { id: 12, optionName: 'M', extraPrice: 0, stock: 50, maxPerUser: null },
-      { id: 11, optionName: 'L', extraPrice: 0, stock: 50, maxPerUser: null },
-      { id: 10, optionName: 'XL', extraPrice: 2000, stock: 30, maxPerUser: null },
+      { id: 13, optionName: 'S', extraPrice: 0, stock: 50, maxPerUser: 4 },
+      { id: 12, optionName: 'M', extraPrice: 0, stock: 50, maxPerUser: 4 },
+      { id: 11, optionName: 'L', extraPrice: 0, stock: 50, maxPerUser: 4 },
+      { id: 10, optionName: 'XL', extraPrice: 2000, stock: 30, maxPerUser: 4 },
     ],
   },
   {
@@ -436,9 +436,9 @@ export const products: StaticProduct[] = [
     createdAt: '2026-10-07T06:09:13.928468+00:00',
     detailImageUrls: ['https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/products/orbit-on/1st-mini-launch/detail-1.webp'],
     variants: [
-      { id: 3, optionName: 'A버전', extraPrice: 0, stock: 200, maxPerUser: null },
-      { id: 2, optionName: 'B버전', extraPrice: 0, stock: 200, maxPerUser: null },
-      { id: 1, optionName: '디지팩', extraPrice: 0, stock: 150, maxPerUser: null },
+      { id: 3, optionName: 'A버전', extraPrice: 0, stock: 200, maxPerUser: 4 },
+      { id: 2, optionName: 'B버전', extraPrice: 0, stock: 200, maxPerUser: 4 },
+      { id: 1, optionName: '디지팩', extraPrice: 0, stock: 150, maxPerUser: 4 },
     ],
   },
 ];

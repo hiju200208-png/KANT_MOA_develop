@@ -69,7 +69,7 @@ type Variant = {
   extraPrice: number;
   price: number;                 // 상품 기본가 + extraPrice
   stock: number;
-  maxPerUser: number | null;     // null = 무제한
+  maxPerUser: number | null;     // 기본 4 (null = 무제한, 현재 없음)
   isSoldOut: boolean;            // stock === 0
 };
 

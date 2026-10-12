@@ -56,7 +56,7 @@
 | 아티스트 | ORBIT:ON(`orbit-on`), DAYLOG(`daylog`), SODAFM(`sodafm`) 3개 고정 |
 | 이미지 | Storage public 버킷(`products`, `artists`). DB에는 경로만 저장 (`*_path` 컬럼). variant별 이미지 없음 |
 | 재고 | variant 단위 |
-| 1인 구매 제한 | variant 단위 `max_per_user` (null = 무제한), **paid 주문만 집계** |
+| 1인 구매 제한 | variant 단위 `max_per_user` (기본 4개, null = 무제한), **paid 주문만 집계** |
 | 주문 생성 | `create_order` → pending, 재고 차감 없음, 장바구니 유지 |
 | 결제 | `pay_order` → 구매 제한 검증, 재고 차감, paid, 결제된 옵션만 장바구니에서 제거 |
 | 취소 | pending: 상태만 변경 / paid: 재고 복구 |
