@@ -52,7 +52,7 @@ export function AddressPickerModal({ open, addresses, selectedId, newDraft, onSe
                       type="button"
                       aria-pressed={isSelected}
                       onClick={() => onSelect(address.id)}
-                      className={`w-full rounded-md border p-4 text-left transition-all ${isSelected ? "border-foreground bg-neutral-50" : "brand-gradient-soft-hover border-line hover:border-violet-300"}`}
+                      className={`w-full rounded-md border p-4 text-left transition-all ${isSelected ? "border-foreground bg-neutral-50" : "brand-gradient-soft-hover border-line hover:border-neutral-400"}`}
                     >
                       <AddressSummary address={address} />
                     </button>

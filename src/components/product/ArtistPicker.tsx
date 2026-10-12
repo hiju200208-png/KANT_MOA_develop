@@ -49,7 +49,7 @@ export function ArtistPicker({ artists }: { artists: Artist[] }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="brand-gradient-soft-hover mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-full border border-line bg-white text-sm font-bold hover:border-violet-300"
+        className="brand-gradient-soft-hover mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-full border border-line bg-white text-sm font-bold hover:border-neutral-400"
       >
         <SearchIcon className="size-4" />
         아티스트

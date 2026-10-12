@@ -27,6 +27,20 @@ import { getImageUrl } from './storage';
 
 type ArtistRow = Database['public']['Tables']['artists']['Row'];
 
+const DAYLOG_MEMBER_BIRTHDAYS: Record<string, string> = {
+  지아: '2006-02-08',
+  희수: '2008-08-18',
+  혜주: '2007-01-18',
+  서연: '2009-05-22',
+};
+
+const DAYLOG_MEMBER_MASCOTS: Record<string, string> = {
+  지아: "하늘빛 여우 '지야'",
+  희수: "하트 강아지 '희봉'",
+  혜주: "별빛 고양이 '주야'",
+  서연: "리본 토끼 '연이'",
+};
+
 const toArtist = (a: ArtistRow): Artist => ({
   id: a.id,
   name: a.name,
@@ -87,8 +101,8 @@ export async function getArtistMembers(slug: string): Promise<ArtistMember[]> {
     nameEn: m.name_en,
     position: m.position,
     color: m.color,
-    mascot: m.mascot,
-    birthday: m.birthday,
+    mascot: slug === 'daylog' ? (DAYLOG_MEMBER_MASCOTS[m.name] ?? m.mascot) : m.mascot,
+    birthday: slug === 'daylog' ? (DAYLOG_MEMBER_BIRTHDAYS[m.name] ?? m.birthday) : m.birthday,
     mbti: m.mbti,
     description: m.description,
     tags: m.tags,

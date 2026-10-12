@@ -23,7 +23,7 @@ export function ArtistNotices({ artist }: ArtistNoticesProps) {
             <li key={notice.id}>
               <Link
                 href={`/artists/${artist.slug}/notices/${notice.id}`}
-                className="group block rounded-xl border border-line p-4 transition-colors hover:border-violet-300 hover:bg-violet-50/40"
+                className="group block rounded-xl border border-line p-4 transition-colors hover:border-neutral-400 hover:bg-neutral-100"
               >
                 <span className="inline-block rounded border border-line px-1.5 py-0.5 text-xs font-bold text-muted">{artist.name}</span>
                 <p className="mt-2 text-sm font-semibold leading-snug group-hover:underline">

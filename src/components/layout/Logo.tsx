@@ -9,12 +9,12 @@ export function Logo() {
       className="group inline-flex shrink-0 items-center"
     >
       <Image
-        src="/brand/kant-moa-bubble-logo-v3.png"
+        src="/brand/kant-moa-logo-black.png"
         alt="KANT MOA"
-        width={2172}
-        height={724}
+        width={203}
+        height={52}
         priority
-        className="h-auto w-[156px] drop-shadow-[0_3px_7px_rgba(126,109,210,0.16)] transition-transform duration-500 group-hover:scale-[1.03] sm:w-[174px]"
+        className="h-auto w-[156px] transition-[filter,transform] duration-300 group-hover:brightness-75 group-hover:scale-[1.02] sm:w-[174px]"
       />
     </Link>
   );
