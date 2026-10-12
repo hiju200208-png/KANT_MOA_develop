@@ -1,12 +1,15 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ArtistBanners, ArtistBannersSkeleton } from "@/components/product/ArtistBanners";
+import { ArtistCategoryTabs } from "@/components/product/ArtistCategoryTabs";
+import { ArtistNotices } from "@/components/product/ArtistNotices";
 import type { SearchParams } from "@/components/product/listParams";
 import { LoadError } from "@/components/product/LoadError";
 import { ProductGridSkeleton } from "@/components/product/ProductGrid";
 import { ProductListSection } from "@/components/product/ProductListSection";
-import { getArtist } from "@/services/products";
-import type { Artist } from "@/types/app";
+import { Skeleton } from "@/components/ui";
+import { getArtist, getCategories } from "@/services/products";
+import type { Artist, Category } from "@/types/app";
 
 interface ArtistPageProps {
   params: Promise<{ slug: string }>;
@@ -36,18 +39,38 @@ async function ArtistContent({ params, searchParams }: ArtistPageProps) {
   }
   if (!artist) notFound();
 
+  // 카테고리 탭: 목록을 못 불러오면 탭만 숨기고 전체 상품을 보여줌
+  const categories = await getCategories().catch((): Category[] => []);
+  const query = await searchParams;
+  const category = categories.find((item) => item.slug === query.category)?.slug;
+  const basePath = `/artists/${artist.slug}`;
+  const listPath = category ? `${basePath}?category=${category}` : basePath;
+
   return (
     <div className="content-shell py-6 md:py-10">
       <h1 className="sr-only">{artist.name}</h1>
       <Suspense fallback={<ArtistBannersSkeleton />}>
         <ArtistBanners artist={artist} />
       </Suspense>
-      <section id="artist-products" aria-label={`${artist.name} 굿즈`} className="mt-12 scroll-mt-24">
-        <h2 className="mb-6 text-xl font-black md:text-2xl">{artist.name} 굿즈</h2>
-        <Suspense fallback={<ProductGridSkeleton />}>
-          <ProductListSection filter={{ artistSlug: artist.slug }} basePath={`/artists/${artist.slug}`} searchParams={searchParams} />
-        </Suspense>
-      </section>
+      {/* 위버스샵 아티스트 페이지처럼 왼쪽 상품(카테고리 탭), 오른쪽 공지 */}
+      <div className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+        <section id="artist-products" aria-labelledby="artist-products-title" className="scroll-mt-24 rounded-2xl border border-line bg-white p-5 md:p-6">
+          <h2 id="artist-products-title" className="text-xl font-black">
+            Products
+          </h2>
+          {categories.length > 0 && (
+            <div className="mt-4">
+              <ArtistCategoryTabs basePath={basePath} categories={categories} current={category} />
+            </div>
+          )}
+          <div className="mt-6">
+            <Suspense key={category ?? "all"} fallback={<ProductGridSkeleton />}>
+              <ProductListSection filter={{ artistSlug: artist.slug, categorySlug: category }} basePath={listPath} searchParams={searchParams} />
+            </Suspense>
+          </div>
+        </section>
+        <ArtistNotices artist={artist} />
+      </div>
     </div>
   );
 }
@@ -56,8 +79,9 @@ function ArtistPageSkeleton() {
   return (
     <div className="content-shell py-6 md:py-10">
       <ArtistBannersSkeleton />
-      <div className="mt-12">
+      <div className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <ProductGridSkeleton />
+        <Skeleton className="hidden h-96 rounded-2xl lg:block" />
       </div>
     </div>
   );

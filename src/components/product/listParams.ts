@@ -30,5 +30,7 @@ export function buildListHref(basePath: string, sort: ProductSort, limit = PAGE_
   if (sort !== "latest") params.set("sort", sort);
   if (limit > PAGE_SIZE) params.set("limit", String(limit));
   const query = params.toString();
-  return query ? `${basePath}?${query}` : basePath;
+  if (!query) return basePath;
+  // basePath에 이미 쿼리가 있으면(예: ?category=album) 이어 붙임
+  return `${basePath}${basePath.includes("?") ? "&" : "?"}${query}`;
 }
