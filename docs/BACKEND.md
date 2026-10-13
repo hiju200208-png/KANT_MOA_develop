@@ -118,6 +118,7 @@ DB_DESIGN.md 6장의 SQL을 아래 순서로 나눠서 커밋합니다.
 |---|---|---|---|
 | `merge_cart` | `p_items jsonb` (`[{variant_id, quantity}]`) | void | NOT_AUTHENTICATED |
 | `create_order` | `p_recipient_name`, `p_recipient_phone`, `p_address` | uuid (order_id) | NOT_AUTHENTICATED, CART_EMPTY, UNAVAILABLE_ITEM, PURCHASE_LIMIT_EXCEEDED |
+| `create_direct_order` | `p_variant_id`, `p_quantity`, `p_recipient_name`, `p_recipient_phone`, `p_address` | uuid (order_id). 바로 구매: 장바구니와 상관없이 옵션 하나만 주문 (`orders.is_direct = true`, 결제해도 장바구니 유지) | NOT_AUTHENTICATED, INVALID_ORDER, UNAVAILABLE_ITEM, PURCHASE_LIMIT_EXCEEDED |
 | `pay_order` | `p_order_id uuid` | void | NOT_AUTHENTICATED, INVALID_ORDER, PURCHASE_LIMIT_EXCEEDED, OUT_OF_STOCK |
 | `cancel_order` | `p_order_id uuid` | void | NOT_AUTHENTICATED, INVALID_ORDER, ALREADY_CANCELLED |
 | `set_default_address` | `p_address_id bigint` | void | NOT_AUTHENTICATED, INVALID_ADDRESS (→ 앱에서는 UNKNOWN) |
