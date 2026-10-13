@@ -110,7 +110,8 @@ async function ArtistShowcases() {
   if (artists.length === 0) return <EmptyState title="등록된 아티스트가 없어요" />;
   return (
     <div className="space-y-4">
-      {artists.map((artist) => (
+      {/* 좋아요 많은 아티스트부터 (TODO(mock): 아티스트 좋아요 백엔드 연결 전까지 목 데이터) */}
+      {sortByArtistLikes(artists).map((artist) => (
         <Suspense key={artist.id} fallback={<ArtistShowcaseSkeleton />}>
           <ArtistShowcase artist={artist} />
         </Suspense>
