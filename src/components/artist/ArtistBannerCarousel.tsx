@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
-import { useSwipe } from "./useSwipe";
+import { useSwipe } from "@/components/product/useSwipe";
 
 const SETTLE_FALLBACK_MS = 800;
 

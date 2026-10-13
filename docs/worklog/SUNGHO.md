@@ -1,3 +1,62 @@
+## 2026-10-13 | 메인 배너 기준 배지(COMEBACK·NEW·BEST), 상품 자동 맞춤, 슬라이드별 소제목
+
+- 작업자: SUNGHO
+- 브랜치: dev/sungho
+- 관련 이슈 / PR: #152 후속
+- 에이전트 사용: O (Claude Code)
+
+### 요청한 작업
+- 첫 화면 TWS 영상이 사라지는 문제 수정 (#152)
+- 배너 상품이 잘리지 않게, 상품과 문구 거리 좁히기, 글자 굵게
+- 소제목("앨범부터 응원봉…")을 영상·상품별로 다르게
+- 배너에 오르는 기준을 COMEBACK(영상)·NEW·BEST로, 오른쪽 위에 기준별 색 배지
+- ORBIT:ON·DAYLOG·SODAFM은 배너에서 제외, BEST를 영상 사이에 배치
+
+### 한 일
+- `src/app/(home)/page.tsx`: 대표 상품 선정 — 발매일(`release_date`)이 최근 30일 안이거나 곧 발매되는 상품이 있으면 NEW, 없으면 최근 7일 판매 1위 BEST. 가상 아티스트 3팀 제외
+- `src/components/home/HomeSpotlight.tsx`
+  - 기준 배지: COMEBACK 빨강, NEW 초록, BEST 황토 (오른쪽 위), 상품 설명에도 NEW/BEST 1 표시와 선정 기준 문구
+  - 순서: 영상(COMEBACK)과 상품(NEW·BEST) 슬라이드를 번갈아
+  - 사진마다 상품 영역을 재서 상자의 88%까지 확대·가운데 정렬 (잘림 방지), 가장자리 흐림
+  - 상품을 문구 쪽으로 붙이고 최대 440px, 제목 700·상품명 600 굵기
+- `src/components/home/heroCopy.ts`: 상품별 소제목(없으면 카테고리별 문구), `heroVideos.ts`: 영상별 소제목
+- develop 머지 시 chungman의 파일 이동(`product/` → `home/`)으로 import 3줄 충돌 → 새 경로로 정리, `heroCopy.ts`도 `home/`으로 이동
+- 확인: 1462px·375px 화면, `npm run build`·`eslint`·`tsc` 통과
+- (수정) 순서: 영상 3개(COMEBACK)는 맨 앞 유지, 그 뒤 상품 슬라이드를 NEW·BEST 번갈아 → TWS · CORTIS · LE SSERAFIM → ZICO(NEW) → BTS(BEST) → SEVENTEEN(NEW) → TXT(BEST) → BOYNEXTDOOR(NEW)
+- (수정) NEW 후보: 발매일 신보가 없으면 등록 14일 이내 최신 상품 (실제 아티스트 상품엔 발매일이 없어서)
+
+### 결정 사항 / 이유
+- NEW 기준을 `created_at`이 아닌 `release_date`로: 이번 주에 데이터를 한꺼번에 넣어 모든 상품의 등록일이 최근이라 구분이 안 됨
+- `Date.now()`는 react-hooks/purity 규칙 때문에 컴포넌트 밖 함수(`pickSpotlight`)에서 계산
+- NEW와 BEST가 같은 상품일 수 있음 (판매 기록이 없으면 BEST도 최신 등록 상품으로 정해지기 때문)
+
+### 멈춘 지점 / 보고한 내용
+- `page.tsx`, `HomeSpotlight.tsx`는 chungman 담당 → PR 리뷰 요청
+
+### 남은 일 / TODO
+- 실제 아티스트 신보 상품에 `release_date`가 들어가면 NEW 슬라이드로 자동 표시
+
+## 2026-10-13 | 배너 영상 파일을 저장소에 추가
+
+- 작업자: SUNGHO
+- 브랜치: dev/sungho
+- 관련 이슈 / PR: #149
+- 에이전트 사용: O (Claude Code)
+
+### 요청한 작업
+- 영상 배너가 다른 팀원 화면에서도 나오도록 영상 파일을 저장소에 포함
+
+### 한 일
+- `public/_mock/`(git 제외) → `public/sources/`로 이동해 커밋: `tws.mp4`(2.3MB), `le-sserafim.mp4`(2.5MB), `cortis.mp4`(5.0MB)
+- `src/components/product/heroVideos.ts` 영상 주소를 `/sources/*.mp4`로 변경
+- 확인: 세 파일 모두 200 응답, 메인 배너에서 영상 로드 정상
+
+### 결정 사항 / 이유
+- 저장소가 공개(PUBLIC)라 공식 뮤비 티저가 공개 배포되는 저작권 위험을 안내했고, 사용자가 감수하고 올리기로 결정
+
+### 남은 일 / TODO
+- 발표 후 영상 삭제 또는 저장소 비공개 전환 검토 (삭제해도 git 기록에는 남음)
+
 ## 2026-10-13 | 메인 배너 미니멀 리디자인 (무채색 · Pretendard · 대표 상품 누끼)
 
 - 작업자: SUNGHO

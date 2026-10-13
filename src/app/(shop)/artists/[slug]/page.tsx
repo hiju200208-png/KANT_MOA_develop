@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { ArtistBanners, ArtistBannersSkeleton } from "@/components/product/ArtistBanners";
-import { ArtistCategoryTabs } from "@/components/product/ArtistCategoryTabs";
-import { ArtistNotices } from "@/components/product/ArtistNotices";
+import { ArtistBanners, ArtistBannersSkeleton } from "@/components/artist/ArtistBanners";
+import { ArtistCategoryTabs } from "@/components/artist/ArtistCategoryTabs";
+import { ArtistNotices } from "@/components/artist/ArtistNotices";
 import type { SearchParams } from "@/components/product/listParams";
 import { LoadError } from "@/components/product/LoadError";
 import { ProductGridSkeleton } from "@/components/product/ProductGrid";

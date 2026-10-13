@@ -1,3 +1,29 @@
+## 2026-10-13 | dev/chunga: 컴포넌트 폴더 정리 (product → home·artist 분리, 안 쓰는 배너 코드 삭제)
+
+- 작업자: chungman
+- 브랜치: dev/chunga (develop `a8d4e58` 반영, 원격 미푸시)
+- 관련 이슈 / PR: - / (PR 예정)
+- 에이전트 사용: O (Claude, Cowork)
+
+### 요청한 작업
+- 코드 리뷰에서 나온 A 항목: 안 쓰는 메인 배너 코드 삭제, `components/product/` 폴더를 역할별로 나누기
+
+### 한 일
+- 삭제: `product/MainHeroCarousel.tsx`·`product/heroSlides.ts` (HomeSpotlight로 바뀐 뒤 import하는 곳 없음)
+- `components/home/`: ArtistPicker, ArtistShowcase, HomeSpotlight, heroVideos
+- `components/artist/`: ArtistBannerCarousel, ArtistBanners, ArtistCategoryTabs, ArtistLogo, ArtistNotices, MemberCard, MemberGallery, NoticeTrack, artistTheme
+- `components/product/`에는 상품 카드·목록·상세·공용 함수(formatPrice, useSwipe 등) 17개만 남김
+- import 경로만 수정 (화면 동작 변경 없음): 메인, `/artists`, `/artists/[slug]`, `/artists/[slug]/about`, 옮긴 컴포넌트끼리의 상대 경로 → `@/components/...`
+- 다른 사람 담당 파일은 수정 없음, 미머지 dev 브랜치 중 같은 파일 수정 중인 곳 없음 확인
+- 확인: 옛 경로 import 0건, eslint 통과, `tsc --noEmit` src 에러 없음 (`.next/types`의 예전 빌드 타입 에러만 있음)
+
+### 멈춘 지점 / 보고한 내용
+- [STOP 6] 폴더 구조 변경 → 사용자 요청으로 진행
+
+### 남은 일 / TODO
+- Windows에서 `npm run build` 확인 (작업 환경에서는 SWC 바이너리 문제로 빌드 불가)
+- README 폴더 구조의 `product/ … 아티스트 배너` 설명을 home·artist 폴더로 바꿀지 팀과 정리
+
 ## 2026-10-12 | dev/chunga: 메인 배너를 파스텔 스포트라이트 슬라이드로 · 상단 줄(헤더) 가운데 로고
 
 - 작업자: chungman
