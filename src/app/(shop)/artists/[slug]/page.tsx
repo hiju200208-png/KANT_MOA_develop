@@ -9,7 +9,7 @@ import { LoadError } from "@/components/product/LoadError";
 import { ProductGridSkeleton } from "@/components/product/ProductGrid";
 import { ProductListSection } from "@/components/product/ProductListSection";
 import { Skeleton } from "@/components/ui";
-import { getArtist } from "@/services/artists";
+import { getArtist, getArtistLikeCounts } from "@/services/artists";
 import { getCategories } from "@/services/products";
 import type { Artist, Category } from "@/types/app";
 
@@ -43,6 +43,8 @@ async function ArtistContent({ params, searchParams }: ArtistPageProps) {
 
   // 카테고리 탭: 목록을 못 불러오면 탭만 숨기고 전체 상품을 보여줌
   const categories = await getCategories().catch((): Category[] => []);
+  // 좋아요 수를 못 불러오면 0으로 보여줌 (버튼은 계속 누를 수 있음)
+  const likeCounts = await getArtistLikeCounts().catch((): Record<number, number> => ({}));
   const query = await searchParams;
   const category = categories.find((item) => item.slug === query.category)?.slug;
   const basePath = `/artists/${artist.slug}`;
@@ -52,7 +54,7 @@ async function ArtistContent({ params, searchParams }: ArtistPageProps) {
     <div className="content-shell py-6 md:py-10">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h1 className="text-xl font-black md:text-2xl">{artist.name}</h1>
-        <ArtistLikeButton slug={artist.slug} name={artist.name} />
+        <ArtistLikeButton slug={artist.slug} name={artist.name} initialCount={likeCounts[artist.id] ?? 0} />
       </div>
       <Suspense fallback={<ArtistBannersSkeleton />}>
         <ArtistBanners artist={artist} />

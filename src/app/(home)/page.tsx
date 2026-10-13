@@ -5,8 +5,8 @@ import { LoadError } from "@/components/product/LoadError";
 import { HomeSpotlight, type SpotlightArtist } from "@/components/home/HomeSpotlight";
 import { HERO_VIDEOS } from "@/components/home/heroVideos";
 import { EmptyState, Skeleton } from "@/components/ui";
-import { sortByArtistLikes } from "@/mocks/artistLikes";
-import { getArtists } from "@/services/artists";
+import { sortByLikes } from "@/components/artist/sortByLikes";
+import { getArtistLikeCounts, getArtists } from "@/services/artists";
 import { getBestProducts, getProducts } from "@/services/products";
 import type { Artist, BestProduct, ProductSummary } from "@/types/app";
 
@@ -61,8 +61,9 @@ async function MainHero() {
   } catch {
     return null; // 배너는 부가 영역이라 실패 시 숨기고, 아래 상품 영역에서 에러를 안내합니다.
   }
-  // 좋아요 많은 아티스트부터 (TODO(mock): 아티스트 좋아요 백엔드 연결 전까지 목 데이터)
-  artists = sortByArtistLikes(artists.filter((artist) => !BANNER_EXCLUDED.includes(artist.slug)));
+  // 좋아요 많은 아티스트부터 (좋아요 수를 못 불러오면 원래 순서)
+  const likeCounts = await getLikeCounts();
+  artists = sortByLikes(artists.filter((artist) => !BANNER_EXCLUDED.includes(artist.slug)), likeCounts);
   const [bests, catalogs] = await Promise.all([
     Promise.all(artists.map((artist) => getBestProducts({ limit: 1, artistSlug: artist.slug }).catch((): BestProduct[] => []))),
     Promise.all(
@@ -96,8 +97,8 @@ async function RecommendedArtists() {
     return <LoadError error={error} retryHref="/" />;
   }
   if (artists.length === 0) return null;
-  // 좋아요 많은 아티스트부터 (TODO(mock): 아티스트 좋아요 백엔드 연결 전까지 목 데이터)
-  return <ArtistPicker artists={sortByArtistLikes(artists)} />;
+  // 좋아요 많은 아티스트부터
+  return <ArtistPicker artists={sortByLikes(artists, await getLikeCounts())} />;
 }
 
 async function ArtistShowcases() {
@@ -108,14 +109,20 @@ async function ArtistShowcases() {
     return <LoadError error={error} retryHref="/" />;
   }
   if (artists.length === 0) return <EmptyState title="등록된 아티스트가 없어요" />;
+  const likeCounts = await getLikeCounts();
   return (
     <div className="space-y-4">
-      {/* 좋아요 많은 아티스트부터 (TODO(mock): 아티스트 좋아요 백엔드 연결 전까지 목 데이터) */}
-      {sortByArtistLikes(artists).map((artist) => (
+      {/* 좋아요 많은 아티스트부터 */}
+      {sortByLikes(artists, likeCounts).map((artist) => (
         <Suspense key={artist.id} fallback={<ArtistShowcaseSkeleton />}>
           <ArtistShowcase artist={artist} />
         </Suspense>
       ))}
     </div>
   );
+}
+
+// 아티스트별 좋아요 수. 못 불러오면 빈 객체 (모두 0 → 원래 순서)
+function getLikeCounts(): Promise<Record<number, number>> {
+  return getArtistLikeCounts().catch((): Record<number, number> => ({}));
 }

@@ -1,3 +1,21 @@
+## 2026-10-13 | dev/chunga: 아티스트 좋아요 목 데이터 → 실제 DB 연결
+
+- 작업자: chungman
+- 브랜치: dev/chunga (develop `0140b33` 반영, JIN #167 아티스트 좋아요 백엔드 포함)
+- 관련 이슈 / PR: JIN #167 / (PR 예정)
+- 에이전트 사용: O (Claude, Cowork)
+
+### 한 일
+- `src/mocks/artistLikes.ts` 삭제, `services/artists.ts`의 `getArtistLikeCounts`(아티스트 id 기준 객체)·`isArtistLiked`·`toggleArtistLike`로 교체
+- `components/artist/sortByLikes.ts`: id 기준 좋아요 수로 정렬 (같으면 원래 순서)
+- 메인 배너·Recommended Artist·아티스트별 굿즈 패널: 실제 좋아요 수 순서 (못 불러오면 원래 순서)
+- `ArtistLikeButton`: 서버에서 센 좋아요 수(initialCount) + 내 좋아요 여부, 누르면 DB 저장
+- 확인: localhost `/artists/bts` 좋아요 0 → 1 → 0 (테스트 후 원래대로), eslint·tsc 통과
+
+### 남은 일 / TODO
+- 지금은 모든 아티스트 좋아요가 0이라 메인 순서는 원래 순서와 같음
+- Windows `npm run build`
+
 ## 2026-10-13 | dev/chunga: 상품·아티스트 좋아요, 상품 공유, 상품 검색
 
 - 작업자: chungman
