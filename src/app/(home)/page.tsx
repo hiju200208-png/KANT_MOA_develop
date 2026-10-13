@@ -96,7 +96,8 @@ async function RecommendedArtists() {
     return <LoadError error={error} retryHref="/" />;
   }
   if (artists.length === 0) return null;
-  return <ArtistPicker artists={artists} />;
+  // 좋아요 많은 아티스트부터 (TODO(mock): 아티스트 좋아요 백엔드 연결 전까지 목 데이터)
+  return <ArtistPicker artists={sortByArtistLikes(artists)} />;
 }
 
 async function ArtistShowcases() {

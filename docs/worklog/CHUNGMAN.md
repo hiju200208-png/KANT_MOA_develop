@@ -18,6 +18,7 @@
 - 아티스트 좋아요 (목 데이터, `src/mocks/artistLikes.ts` TODO(mock))
   - 아티스트 페이지 이름 옆 `ArtistLikeButton`(좋아요 수 표시, 로그인 필요, 이 브라우저에만 저장)
   - 메인 배너: 아티스트를 좋아요 많은 순으로 정렬 (영상 슬라이드는 HomeSpotlight 규칙대로 맨 앞)
+  - 메인 Recommended Artist 줄도 좋아요 많은 순으로 정렬
 - 상품 공유 `ShareButton`: 휴대폰은 기기 공유 창, 컴퓨터는 링크 복사 + "링크를 복사했어요" 안내
 - 상품 검색: `/search?q=` 페이지 (`searchProducts`, 상품명·아티스트명, 더 보기, 결과 없음 안내), `SearchForm`, 상단 줄에 검색 아이콘
 - 확인: localhost에서 검색(응원봉 18개), 상품 좋아요 → /likes 표시 → 취소(테스트 후 원래대로), 아티스트 좋아요 버튼, 모바일 390px 상세·메인, eslint·tsc 통과
