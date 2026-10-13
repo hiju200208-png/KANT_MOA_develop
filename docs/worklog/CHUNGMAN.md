@@ -12,8 +12,8 @@
 ### 한 일
 - 상품 좋아요 (기존 `services/wishlist.ts` 사용)
   - `LikeButton`: 상품 상세 가격 오른쪽 하트. 비로그인은 로그인 페이지로
-  - `/likes` 좋아요한 상품 페이지 (`LikedProductList`, 로그인 필요·빈 상태·오류 상태)
-  - 오른쪽 아래 최근 본 상품 동그라미 왼쪽에 하트 버튼 → `/likes` (`FloatingShortcuts`로 두 버튼을 한 줄에 배치)
+  - 최근 본 상품 동그라미를 누르면 오는 페이지(`/recently-viewed`)를 "내 상품"으로 바꾸고 탭 2개: 최근 본 상품 · 좋아요(`?tab=likes`, `LikedProductList`, 로그인 필요·빈 상태·오류 상태)
+  - 처음엔 동그라미 옆에 하트 버튼을 따로 만들었다가, 요청대로 버튼 없이 탭으로 수정. `/likes`는 좋아요 탭으로 이동
 - 아티스트 좋아요 (목 데이터, `src/mocks/artistLikes.ts` TODO(mock))
   - 아티스트 페이지 이름 옆 `ArtistLikeButton`(좋아요 수 표시, 로그인 필요, 이 브라우저에만 저장)
   - 메인 배너: 아티스트를 좋아요 많은 순으로 정렬 (영상 슬라이드는 HomeSpotlight 규칙대로 맨 앞)
@@ -23,7 +23,7 @@
 
 ### 멈춘 지점 / 보고한 내용
 - [STOP 5] 아티스트 좋아요 테이블·집계 함수가 없음 → JIN에게 backend-request, 그동안 목 데이터
-- [STOP 2] `layout/TopBar.tsx`(검색 아이콘)·`layout/FloatingButtons.tsx`(jina 영역) 수정 → 사용자 요청, jina 공유 필요
+- [STOP 2] `layout/TopBar.tsx`(검색 아이콘, jina 영역) 수정 → 사용자 요청, jina 공유 필요
 
 ### 남은 일 / TODO
 - 아티스트 좋아요 백엔드 연결 후 `src/mocks/artistLikes.ts` 삭제, services로 교체

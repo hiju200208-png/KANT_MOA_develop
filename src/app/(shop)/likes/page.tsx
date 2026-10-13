@@ -1,15 +1,6 @@
-import type { Metadata } from "next";
-import { LikedProductList } from "@/components/product/LikedProducts";
-import { PageTitle } from "@/components/ui";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "좋아요한 상품" };
-
-// 상품 상세에서 하트를 누른 상품 모음 (로그인 필요)
+// 좋아요한 상품은 "최근 본 상품" 페이지의 좋아요 탭에서 보여준다 (예전 주소 호환)
 export default function LikesPage() {
-  return (
-    <div className="content-shell py-8 md:py-12">
-      <PageTitle title="좋아요한 상품" />
-      <LikedProductList />
-    </div>
-  );
+  redirect("/recently-viewed?tab=likes");
 }
