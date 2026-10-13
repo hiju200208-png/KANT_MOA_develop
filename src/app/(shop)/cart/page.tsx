@@ -45,7 +45,7 @@ export default function CartPage() {
         <CartEmpty />
       ) : (
         <div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:items-start">
-          <ul className="space-y-3">
+          <ul className="space-y-2 md:space-y-3">
             {items.map((item) => (
               <CartItemRow
                 key={item.variantId}
@@ -57,21 +57,21 @@ export default function CartPage() {
             ))}
           </ul>
 
-          <Card className="p-6 lg:sticky lg:top-24">
-            <h2 className="text-lg font-black">주문 예상 금액</h2>
-            <dl className="mt-5 space-y-3 text-sm">
+          <Card className="p-4 md:p-6 lg:sticky lg:top-24">
+            <h2 className="text-base font-black md:text-lg">주문 예상 금액</h2>
+            <dl className="mt-4 space-y-2.5 text-[13px] md:mt-5 md:space-y-3 md:text-sm">
               <div className="flex justify-between"><dt className="text-muted">상품 수량</dt><dd className="font-bold">{totalQuantity}개</dd></div>
               <div className="flex justify-between"><dt className="text-muted">상품 금액</dt><dd className="font-bold tabular-nums">{totalPrice.toLocaleString("ko-KR")}원</dd></div>
               <div className="flex justify-between"><dt className="text-muted">배송비</dt><dd className="font-bold tabular-nums">{shippingFee === 0 ? "무료" : `${shippingFee.toLocaleString("ko-KR")}원`}</dd></div>
               <div className="flex items-baseline justify-between border-t border-line pt-4">
                 <dt className="font-bold">합계</dt>
-                <dd className="text-2xl font-black tabular-nums">{total.toLocaleString("ko-KR")}원</dd>
+                <dd className="text-xl font-black tabular-nums md:text-2xl">{total.toLocaleString("ko-KR")}원</dd>
               </div>
             </dl>
             {hasUnavailable && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-xs leading-5 text-danger">품절·재고 부족 상품은 합계에서 제외됐어요. 삭제 후 주문해주세요.</p>}
             {error && <p role="alert" className="mt-4 text-sm text-danger">{error}</p>}
             <Link href="/checkout" aria-disabled={hasUnavailable} className={hasUnavailable ? "pointer-events-none" : ""}>
-              <Button fullWidth size="lg" className="mt-6" disabled={hasUnavailable}>주문하기</Button>
+              <Button fullWidth size="lg" className="mt-5 max-md:h-12 max-md:text-[15px] md:mt-6" disabled={hasUnavailable}>주문하기</Button>
             </Link>
             <p className="mt-3 text-center text-xs text-muted">다음 단계에서 배송지를 확인해요</p>
           </Card>

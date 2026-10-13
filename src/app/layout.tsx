@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
-import type { ReactNode } from "react";
-import { KantBot } from "@/components/chatbot/KantBot";
-import { RecentlyViewedButton } from "@/components/product/RecentlyViewedProducts";
+import { Suspense, type ReactNode } from "react";
+import { FloatingButtons } from "@/components/layout/FloatingButtons";
 import { Footer } from "@/components/layout/Footer";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import "./globals.css";
@@ -25,8 +24,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             {children}
             <Footer />
           </div>
-          <RecentlyViewedButton />
-          <KantBot />
+          <Suspense fallback={null}>
+            <FloatingButtons />
+          </Suspense>
         </AuthProvider>
       </body>
     </html>

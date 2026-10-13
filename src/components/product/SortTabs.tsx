@@ -8,7 +8,7 @@ interface SortTabsProps {
 
 export function SortTabs({ basePath, current }: SortTabsProps) {
   return (
-    <nav aria-label="정렬" className="flex gap-1">
+    <nav aria-label="정렬" className="flex gap-0.5 md:gap-1">
       {SORT_OPTIONS.map((option) => {
         const active = option.value === current;
         return (
@@ -17,7 +17,7 @@ export function SortTabs({ basePath, current }: SortTabsProps) {
             href={buildListHref(basePath, option.value)}
             scroll={false}
             aria-current={active ? "true" : undefined}
-            className={`rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${active ? "bg-foreground" : ""}`}
+            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors md:px-3 md:py-1.5 md:text-sm ${active ? "bg-foreground" : ""}`}
           >
             <span className={active ? "text-white" : "brand-gradient-text-hover text-muted"}>{option.label}</span>
           </Link>
