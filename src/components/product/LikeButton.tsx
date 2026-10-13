@@ -9,6 +9,9 @@ import { HeartIcon } from "./HeartIcon";
 
 type LoadedLike = { key: string; liked: boolean };
 
+// 좋아요가 바뀌었다고 알림 (오른쪽 아래 최근 본 상품 버튼이 좋아요 수를 다시 셈)
+export const LIKES_CHANGE_EVENT = "kantmoa-likes-change";
+
 // 상품 좋아요(찜) 버튼. 비로그인이면 로그인 페이지로 보내고, 돌아오면 다시 누를 수 있다.
 export function LikeButton({ productId }: { productId: number }) {
   const router = useRouter();
@@ -37,6 +40,7 @@ export function LikeButton({ productId }: { productId: number }) {
     setPending(true);
     try {
       setState({ key, liked: await toggleWishlist(productId) });
+      window.dispatchEvent(new Event(LIKES_CHANGE_EVENT));
     } catch (error) {
       if (getErrorCode(error) === "NOT_AUTHENTICATED") router.push(`/login?next=${encodeURIComponent(pathname)}`);
     } finally {

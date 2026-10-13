@@ -2,9 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { EmptyState } from "@/components/ui";
+import { getWishedIds } from "@/services/wishlist";
 import type { ProductSummary } from "@/types/app";
+import { HeartIcon } from "./HeartIcon";
+import { LIKES_CHANGE_EVENT } from "./LikeButton";
 import { ProductCard } from "./ProductCard";
 
 const STORAGE_KEY = "kantmoa-recently-viewed";
@@ -94,26 +98,55 @@ export function RecentlyViewedList() {
   );
 }
 
-// 칸트봇 버튼 위 동그라미: 가장 최근 본 상품 사진, 누르면 최근 본 상품 페이지로. 본 상품이 없으면 숨김
+// 칸트봇 버튼 위 동그라미: 가장 최근 본 상품 사진, 누르면 내 상품(최근 본 상품·좋아요) 페이지로.
+// 최근 본 상품도 좋아요한 상품도 없으면 숨김. 최근 본 상품 없이 좋아요만 있으면 하트를 보여주고 좋아요 탭으로 이동
 // 모바일 bottom = 칸트봇 아래 여백 1rem + 칸트봇 높이(640px 미만 3rem, 이상 3.5rem) + 간격
 export function RecentlyViewedButton() {
   const products = useRecentlyViewed();
+  const likedCount = useLikedCount();
   const latest = products[0];
-  if (!latest) return null;
+  if (!latest && likedCount === 0) return null;
 
   return (
     <Link
-      href="/recently-viewed"
-      aria-label={`최근 본 상품 ${products.length}개 보기`}
-      title="최근 본 상품"
+      href={latest ? "/recently-viewed" : "/recently-viewed?tab=likes"}
+      aria-label={latest ? `최근 본 상품 ${products.length}개 보기` : `좋아요한 상품 ${likedCount}개 보기`}
+      title={latest ? "최근 본 상품" : "좋아요한 상품"}
       className="fixed right-4 bottom-[calc(4.5rem+8px+env(safe-area-inset-bottom))] z-44 block size-12 transition-transform md:size-14 hover:-translate-y-0.5 md:right-6 md:bottom-23"
     >
-      <span className="relative block size-full overflow-hidden rounded-full border-2 border-white bg-neutral-100 shadow-[0_12px_30px_-8px_rgb(17_18_20/0.45)]">
-        {latest.thumbnailUrl && <Image src={latest.thumbnailUrl} alt="" fill sizes="56px" className="object-cover" />}
+      <span className="relative grid size-full place-items-center overflow-hidden rounded-full border-2 border-white bg-neutral-100 shadow-[0_12px_30px_-8px_rgb(17_18_20/0.45)]">
+        {latest?.thumbnailUrl && <Image src={latest.thumbnailUrl} alt="" fill sizes="56px" className="object-cover" />}
+        {!latest && <HeartIcon filled className="size-6 text-rose-500" />}
       </span>
       <span aria-hidden="true" className="absolute -top-1 -left-1 grid h-5 min-w-5 place-items-center rounded-full bg-neutral-900 px-1 text-[11px] font-bold text-white">
-        {products.length}
+        {latest ? products.length : likedCount}
       </span>
     </Link>
   );
+}
+
+type LoadedLikedCount = { userId: string; count: number };
+
+// 로그인한 사용자의 좋아요한 상품 수. 상품 상세에서 좋아요를 누르면(LIKES_CHANGE_EVENT) 다시 센다. 비로그인은 0
+function useLikedCount(): number {
+  const { profile } = useAuth();
+  const userId = profile?.id ?? null;
+  const [state, setState] = useState<LoadedLikedCount | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    let active = true;
+    const load = () =>
+      getWishedIds()
+        .then((ids) => active && setState({ userId, count: ids.length }))
+        .catch(() => {});
+    load();
+    window.addEventListener(LIKES_CHANGE_EVENT, load);
+    return () => {
+      active = false;
+      window.removeEventListener(LIKES_CHANGE_EVENT, load);
+    };
+  }, [userId]);
+
+  return userId && state?.userId === userId ? state.count : 0;
 }
