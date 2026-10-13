@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { TopBar } from "@/components/layout/TopBar";
 import type { Artist, BestProduct } from "@/types/app";
-import { artistThemeStyle } from "./artistTheme";
+import { artistThemeStyle } from "@/components/artist/artistTheme";
 import { HERO_VIDEOS, type HeroVideo } from "./heroVideos";
-import { useSwipe } from "./useSwipe";
+import { useSwipe } from "@/components/product/useSwipe";
 
 export type SpotlightArtist = Pick<Artist, "id" | "slug" | "name" | "nameKo" | "tagline" | "themeColor"> & { products: BestProduct[] };
 

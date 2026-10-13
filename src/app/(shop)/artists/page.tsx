@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { PageTitle } from "@/components/order/PageTitle";
-import { artistThemeStyle } from "@/components/product/artistTheme";
+import { artistThemeStyle } from "@/components/artist/artistTheme";
 import { LoadError } from "@/components/product/LoadError";
 import { EmptyState, Skeleton } from "@/components/ui";
 import { getArtists } from "@/services/products";

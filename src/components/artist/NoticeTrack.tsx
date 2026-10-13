@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
-import { useSwipe } from "./useSwipe";
+import { useSwipe } from "@/components/product/useSwipe";
 
 const SETTLE_MS = 500;
 
