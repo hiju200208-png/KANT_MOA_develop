@@ -253,7 +253,12 @@ function VideoBackdrop({ video: config, active, playing, onStart, onEnded, onErr
 
 // 메인 배너 (시안 C · 파스텔 스포트라이트) 슬라이드: 아티스트마다 한 장 (문구 + 겹친 인기 상품 3개).
 // 4초마다 자동으로 넘어가고, 마우스로 끌거나 손가락으로 밀어서·위 버튼으로 넘김. 배경 톤도 아티스트 색으로 바뀜
-export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
+export function HomeSpotlight({ artists: allArtists }: { artists: SpotlightArtist[] }) {
+  // 영상 배너 아티스트를 맨 앞에 (heroVideos.ts에 적은 순서대로), 나머지는 받은 순서 그대로
+  const artists = [
+    ...Object.keys(HERO_VIDEOS).flatMap((slug) => allArtists.filter((artist) => artist.slug === slug)),
+    ...allArtists.filter((artist) => !(artist.slug in HERO_VIDEOS)),
+  ];
   const count = artists.length;
   const loop = count > 1;
   // 무한 루프: 앞에 마지막 복제, 뒤에 첫 번째 복제를 붙여 [마지막', 1..N, 1'] 로 그림.
