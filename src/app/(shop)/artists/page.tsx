@@ -6,7 +6,7 @@ import { PageTitle } from "@/components/order/PageTitle";
 import { artistThemeStyle } from "@/components/artist/artistTheme";
 import { LoadError } from "@/components/product/LoadError";
 import { EmptyState, Skeleton } from "@/components/ui";
-import { getArtists } from "@/services/products";
+import { getArtists } from "@/services/artists";
 import type { Artist } from "@/types/app";
 
 export const metadata: Metadata = { title: "아티스트" };
