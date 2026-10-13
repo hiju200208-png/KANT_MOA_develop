@@ -18,6 +18,7 @@ export const HERO_VIDEOS: Record<string, HeroVideo> = {
   tws: {
     src: "/sources/tws.mp4",
     base: "0 0 0",
+    description: "연습실의 땀과 밤거리의 설렘까지, TWS와 함께 써 내려가는 청춘의 한 페이지.",
     accent: "rgb(255 255 255 / 0.9)",
     cta: { background: "#ffffff", color: "#111214" },
   },
@@ -25,6 +26,7 @@ export const HERO_VIDEOS: Record<string, HeroVideo> = {
   cortis: {
     src: "/sources/cortis.mp4",
     base: "0 0 0",
+    description: "직접 만들고 직접 무대에 서는 코르티스, 달력에 동그라미 친 그날을 굿즈로 먼저 만나보세요.",
     accent: "#ff5a4e",
     cta: { background: "#f6efe2", color: "#d61f1f" },
   },
@@ -32,6 +34,7 @@ export const HERO_VIDEOS: Record<string, HeroVideo> = {
   "le-sserafim": {
     src: "/sources/le-sserafim.mp4",
     base: "0 0 0",
+    description: "빨간 무대 위로 거침없이, 르세라핌의 새로운 장면을 앨범과 굿즈로 함께하세요.",
     accent: "#ffb3c1",
     cta: { background: "#e8263f", color: "#ffffff" },
   },

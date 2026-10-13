@@ -7,6 +7,7 @@ import { TopBar } from "@/components/layout/TopBar";
 import type { Artist, BestProduct } from "@/types/app";
 import { artistThemeStyle } from "./artistTheme";
 import { formatPrice } from "./formatPrice";
+import { heroSubtitle } from "./heroCopy";
 import { HERO_VIDEOS, type HeroVideo } from "./heroVideos";
 import { useSwipe } from "./useSwipe";
 
@@ -59,21 +60,53 @@ function chipLabel(product: BestProduct) {
   return product.category.name;
 }
 
-// 상품 사진 배경(흰색~연회색 단색)의 밝기를 재서, 배경이 흰색이 되도록 올릴 밝기 배율을 구한다
+// 상품 상자 가장자리를 살짝 흐리게 해서 사진 테두리 선이 보이지 않게
+const FEATHER_MASK = "linear-gradient(to right, transparent, #000 5%, #000 95%, transparent), linear-gradient(to bottom, transparent, #000 5%, #000 95%, transparent)";
+const EDGE_FEATHER: CSSProperties = { maskImage: FEATHER_MASK, maskComposite: "intersect", WebkitMaskImage: FEATHER_MASK, WebkitMaskComposite: "source-in" };
+
+// 사진 분석 결과: 배경을 흰색으로 올릴 밝기 배율 + 상품이 상자에 꽉 차되 잘리지 않게 할 확대·이동 값
+type ImageFit = { lift: number; scale: number; x: number; y: number }; // x·y: 상자 크기 대비 이동(%)
+const NO_FIT: ImageFit = { lift: 1, scale: 1, x: 0, y: 0 };
+const FIT_GRID = 48; // 이 크기로 줄여서 픽셀을 읽는다
+const FIT_FILL = 0.88; // 상품이 상자에서 차지할 최대 비율 (가장자리 흐림 영역에 닿지 않도록)
+const FIT_MAX_SCALE = 1.6;
+
+// 상품 사진(흰색~연회색 단색 배경)을 읽어 배경 밝기와 상품이 있는 영역(배경과 다른 픽셀)을 구한다.
 // 아직 그려지지 않아 읽을 수 없으면 null
-function backgroundLift(image: HTMLImageElement): number | null {
+function analyzeImage(image: HTMLImageElement): ImageFit | null {
   try {
     const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = 8;
-    const context = canvas.getContext("2d");
-    if (!context) return 1;
-    context.drawImage(image, 0, 0, 8, 8);
-    const [r, g, b, a] = context.getImageData(0, 0, 1, 1).data; // 왼쪽 위 모서리 = 배경
-    if (a === 0) return null;
-    const level = Math.min(r, g, b);
-    return level > 200 ? Math.min(255 / level, 1.12) : 1; // 배경이 밝은 단색일 때만
+    canvas.width = canvas.height = FIT_GRID;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) return NO_FIT;
+    context.drawImage(image, 0, 0, FIT_GRID, FIT_GRID);
+    const { data } = context.getImageData(0, 0, FIT_GRID, FIT_GRID);
+    const [br, bg, bb, ba] = data; // 왼쪽 위 모서리 = 배경
+    if (ba === 0) return null;
+    const level = Math.min(br, bg, bb);
+    const lift = level > 200 ? Math.min((255 / level) * 1.02, 1.14) : 1; // 가장자리 오차까지 덮도록 2% 더
+
+    let minX = FIT_GRID, minY = FIT_GRID, maxX = -1, maxY = -1;
+    for (let y = 0; y < FIT_GRID; y++) {
+      for (let x = 0; x < FIT_GRID; x++) {
+        const i = (y * FIT_GRID + x) * 4;
+        const diff = Math.max(Math.abs(data[i] - br), Math.abs(data[i + 1] - bg), Math.abs(data[i + 2] - bb));
+        if (diff > 14) {
+          minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+          minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+        }
+      }
+    }
+    if (maxX < 0) return { ...NO_FIT, lift };
+    const width = (maxX - minX + 1) / FIT_GRID;
+    const height = (maxY - minY + 1) / FIT_GRID;
+    const scale = Math.min(Math.max(FIT_FILL / Math.max(width, height), 1), FIT_MAX_SCALE);
+    // 상품 중심을 상자 가운데로 (확대 후 위치 기준)
+    const centerX = (minX + maxX + 1) / 2 / FIT_GRID - 0.5;
+    const centerY = (minY + maxY + 1) / 2 / FIT_GRID - 0.5;
+    return { lift, scale, x: -centerX * scale * 100, y: -centerY * scale * 100 };
   } catch {
-    return 1.09; // 픽셀을 읽을 수 없으면 연회색 배경 기준값
+    return { ...NO_FIT, lift: 1.09 }; // 픽셀을 읽을 수 없으면 연회색 배경 기준값, 확대 없음
   }
 }
 
@@ -81,16 +114,31 @@ function backgroundLift(image: HTMLImageElement): number | null {
 // 슬라이드가 보일 때 아래에서 살짝 기울어진 채 떠오르고, 이후 천천히 위아래로 떠 있는다
 function HeroProduct({ product, active }: { product: BestProduct; active: boolean }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const [lift, setLift] = useState(1);
+  const [fit, setFit] = useState<ImageFit>(NO_FIT);
   // 이미지가 React 준비 전에 이미 로드됐으면 onLoad가 오지 않으므로, 연결되는 시점에도 한 번 계산한다
+  const imageRef = useRef<HTMLImageElement | null>(null);
   // 바로 읽히면 바로, 아직 그려지지 않았으면 decode()가 끝난 뒤에 잰다
   const measure = useCallback((image: HTMLImageElement | null) => {
+    imageRef.current = image;
     if (!image?.complete || image.naturalWidth === 0) return;
-    const value = backgroundLift(image);
-    if (value !== null) return setLift(value);
-    const retry = () => setLift(backgroundLift(image) ?? 1);
+    const value = analyzeImage(image);
+    if (value !== null) return setFit(value);
+    const retry = () => setFit(analyzeImage(image) ?? NO_FIT);
     image.decode().then(retry, retry);
   }, []);
+
+  // 이미지 로드 신호가 늦거나 오지 않는 경우(지연 로딩·백그라운드 탭)를 대비해, 슬라이드가 보이면 읽힐 때까지 다시 잰다
+  useEffect(() => {
+    if (!active) return;
+    let tries = 0;
+    const timer = window.setInterval(() => {
+      const image = imageRef.current;
+      const value = image?.complete && image.naturalWidth > 0 ? analyzeImage(image) : null;
+      if (value !== null) setFit(value);
+      if (value !== null || ++tries >= 20) window.clearInterval(timer);
+    }, 250);
+    return () => window.clearInterval(timer);
+  }, [active]);
 
   useEffect(() => {
     const element = ref.current;
@@ -118,32 +166,33 @@ function HeroProduct({ product, active }: { product: BestProduct; active: boolea
   }, [active]);
 
   return (
-    <Link href={`/products/${product.id}`} draggable={false} className="group relative mx-auto block w-full">
+    <Link href={`/products/${product.id}`} draggable={false} className="group relative mx-auto block w-full max-w-[280px] md:mx-0 md:max-w-[440px]">
       {/* 움직이는 상자는 배너와 같은 색을 깔아야 곱하기 합성이 배너 바탕 기준으로 된다 (보이지 않음) */}
-      <span ref={ref} className="relative block h-[220px] md:h-[360px]" style={{ backgroundColor: BAND_COLOR }}>
+      <span ref={ref} className="relative block aspect-square" style={{ backgroundColor: BAND_COLOR }}>
         {product.thumbnailUrl && (
           // 합성(multiply)은 감싼 상자에, 밝기 필터는 이미지에 따로 건다 (한 요소에 같이 걸면 Chrome이 합성을 무시함)
-          <span className="absolute inset-0 overflow-hidden mix-blend-multiply">
+          <span className="absolute inset-0 overflow-hidden mix-blend-multiply transition-transform duration-700 group-hover:scale-[1.04] motion-reduce:transition-none" style={EDGE_FEATHER}>
             <Image
               src={product.thumbnailUrl}
               alt={`${product.artist.name} ${product.name}`}
               fill
-              sizes="(min-width: 768px) 40vw, 80vw"
+              sizes="(min-width: 768px) 440px, 280px"
               priority={active}
               ref={measure}
               onLoad={(event) => measure(event.currentTarget)}
-              style={{ filter: `brightness(${lift})` }}
-              // 사진 속 여백만큼 키워서 상품 자체가 배너를 크게 차지하도록
-              className="scale-[1.18] object-contain transition-transform duration-700 group-hover:scale-[1.24] motion-reduce:transition-none"
+              // 사진마다 상품 영역을 재서 상자를 꽉 채우되 잘리지 않게 확대·이동 (분석 전에는 원래 크기)
+              style={{ filter: `brightness(${fit.lift})`, transform: `translate(${fit.x}%, ${fit.y}%) scale(${fit.scale})` }}
+              className="object-contain transition-transform duration-500 motion-reduce:transition-none"
             />
           </span>
         )}
       </span>
       {/* 바닥 그림자: 상품이 떠 있는 느낌 */}
-      <span aria-hidden="true" className="mx-auto -mt-2 block h-3 w-1/2 rounded-[50%] bg-black/10 blur-md" />
+      <span aria-hidden="true" className="mx-auto -mt-4 block h-3 w-1/2 rounded-[50%] bg-black/10 blur-md" />
       {/* 모바일은 옆 설명 대신 이미지 아래 한 줄 */}
       <span className="mt-2 block text-center text-xs text-neutral-500 md:hidden">
-        <span className="text-neutral-900">{product.name}</span> · <span className="tabular-nums">{formatPrice(product.price)}</span>
+        <span className="font-semibold text-neutral-900">BEST 1</span> · <span className="font-medium text-neutral-900">{product.name}</span> ·{" "}
+        <span className="tabular-nums">{formatPrice(product.price)}</span>
       </span>
     </Link>
   );
@@ -155,29 +204,33 @@ function Slide({ artist, active, video }: { artist: SpotlightArtist; active: boo
   return (
     <li aria-roledescription="slide" aria-label={artist.name} aria-hidden={!active} inert={!active} style={artistThemeStyle(artist.themeColor)} className="w-full shrink-0">
       <div className="content-shell">
-        <div className="grid items-center gap-4 pt-4 pb-6 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-10 md:pt-2 md:pb-6">
+        <div className="grid items-center gap-4 pt-4 pb-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-6 md:pt-2 md:pb-6">
           <div className={`flex flex-col gap-3 md:gap-4 ${video ? "text-white text-shadow-[0_1px_10px_rgb(0_0_0/0.5)]" : ""}`}>
             <span style={video ? { color: video.accent } : undefined} className={`text-[11px] font-semibold tracking-[0.22em] md:text-xs ${video ? "" : "text-neutral-500"}`}>
               {artist.name} · OFFICIAL GOODS
             </span>
             <h2
               style={video?.titleColor ? { color: video.titleColor } : undefined}
-              className={`text-[26px] leading-[1.25] font-medium tracking-[-0.02em] break-keep md:text-[44px] ${video ? "" : "text-neutral-900"}`}
+              className={`text-[26px] leading-[1.25] font-bold tracking-[-0.03em] break-keep md:text-[44px] ${video ? "" : "text-neutral-900"}`}
             >
               {video?.title ?? artist.tagline ?? `${artist.nameKo} 공식 굿즈`}
             </h2>
-            <p className={`text-sm md:text-base ${video ? "max-w-md leading-relaxed break-keep text-white/90" : "text-neutral-500"}`}>
-              {video?.description ?? "앨범부터 응원봉, 한정 굿즈까지 한 곳에서"}
+            <p className={`text-sm font-medium md:text-base ${video ? "max-w-md leading-relaxed break-keep text-white/90" : "text-neutral-600"}`}>
+              {video?.description ?? heroSubtitle(artist.name, product)}
             </p>
             {product && (
-              // 대표 상품 설명: 가는 선 아래 카테고리 · 상품명 · 가격 · 상품 보기
+              // 대표 상품 설명: 가는 선 아래 BEST 1 · 카테고리 · 상품명 · 가격 · 상품 보기 + 선정 기준
               <div className="mt-2 hidden max-w-sm border-t border-neutral-300 pt-4 md:block">
-                <p className="text-[11px] tracking-[0.18em] text-neutral-500">{chipLabel(product)}</p>
-                <p className={`mt-1.5 line-clamp-2 text-base font-normal break-keep text-neutral-900 md:text-lg`}>{product.name}</p>
-                <p className="mt-1 text-sm text-neutral-500 tabular-nums">{formatPrice(product.price)}</p>
-                <Link href={`/products/${product.id}`} draggable={false} className="mt-4 inline-flex items-center gap-2 border-b border-neutral-900 pb-0.5 text-sm text-neutral-900 transition-[gap] duration-200 hover:gap-3">
+                <p className="text-[11px] tracking-[0.18em] text-neutral-500">
+                  <span className="font-bold text-neutral-900">BEST 1</span> · {chipLabel(product)}
+                </p>
+                <p className={`mt-1.5 line-clamp-2 text-base font-semibold break-keep text-neutral-900 md:text-lg`}>{product.name}</p>
+                <p className="mt-1 text-sm font-medium text-neutral-600 tabular-nums">{formatPrice(product.price)}</p>
+                <Link href={`/products/${product.id}`} draggable={false} className="mt-4 inline-flex items-center gap-2 border-b border-neutral-900 pb-0.5 text-sm font-semibold text-neutral-900 transition-[gap] duration-200 hover:gap-3">
                   상품 보기 <span aria-hidden="true">→</span>
                 </Link>
+                {/* 배너 상품 선정 기준 (services getBestProducts · DB get_best_products) */}
+                <p className="mt-4 text-[11px] leading-4 text-neutral-400">최근 7일 판매량 1위 상품이에요. 판매 기록이 없으면 최근 등록한 상품을 보여줘요.</p>
               </div>
             )}
             {video && (
