@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { LoadError } from "@/components/product/LoadError";
 import { Skeleton } from "@/components/ui";
 import { formatNoticeDate, getNotice, getNotices } from "@/services/notices";
-import { getArtist } from "@/services/products";
+import { getArtist } from "@/services/artists";
 import type { Artist, Notice } from "@/types/app";
 
 interface NoticePageProps {

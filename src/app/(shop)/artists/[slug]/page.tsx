@@ -8,7 +8,8 @@ import { LoadError } from "@/components/product/LoadError";
 import { ProductGridSkeleton } from "@/components/product/ProductGrid";
 import { ProductListSection } from "@/components/product/ProductListSection";
 import { Skeleton } from "@/components/ui";
-import { getArtist, getCategories } from "@/services/products";
+import { getArtist } from "@/services/artists";
+import { getCategories } from "@/services/products";
 import type { Artist, Category } from "@/types/app";
 
 interface ArtistPageProps {
