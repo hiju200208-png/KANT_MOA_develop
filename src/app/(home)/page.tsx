@@ -1,8 +1,8 @@
 import { Suspense } from "react";
-import { ArtistPicker } from "@/components/product/ArtistPicker";
-import { ArtistShowcase, ArtistShowcaseSkeleton } from "@/components/product/ArtistShowcase";
+import { ArtistPicker } from "@/components/home/ArtistPicker";
+import { ArtistShowcase, ArtistShowcaseSkeleton } from "@/components/home/ArtistShowcase";
 import { LoadError } from "@/components/product/LoadError";
-import { HomeSpotlight, type SpotlightArtist } from "@/components/product/HomeSpotlight";
+import { HomeSpotlight, type SpotlightArtist } from "@/components/home/HomeSpotlight";
 import { EmptyState, Skeleton } from "@/components/ui";
 import { getArtists, getBestProducts } from "@/services/products";
 import type { Artist, BestProduct } from "@/types/app";
