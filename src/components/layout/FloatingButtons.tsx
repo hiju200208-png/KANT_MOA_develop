@@ -6,8 +6,8 @@ import { RecentlyViewedButton } from "@/components/product/RecentlyViewedProduct
 
 // 장바구니·주문서에서는 결제 흐름에 집중하도록 둘 다 숨김
 const HIDE_ALL_PATHS = ["/cart", "/checkout"];
-// 상품 상세에서는 최근 본 상품만 숨김 (방금 본 상품이 곧 그 동그라미라 겹침)
-const HIDE_RECENT_PATHS = ["/products"];
+// 상품 상세(/products/[id])에서는 최근 본 상품만 숨김 (방금 본 상품이 곧 그 동그라미라 겹침). 전체 목록 /products는 보임
+const isProductDetail = (pathname: string) => pathname.startsWith("/products/");
 
 const matches = (pathname: string, paths: string[]) => paths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 
@@ -18,7 +18,7 @@ export function FloatingButtons() {
   if (matches(pathname, HIDE_ALL_PATHS)) return null;
   return (
     <>
-      {!matches(pathname, HIDE_RECENT_PATHS) && <RecentlyViewedButton />}
+      {!isProductDetail(pathname) && <RecentlyViewedButton />}
       <KantBot />
     </>
   );

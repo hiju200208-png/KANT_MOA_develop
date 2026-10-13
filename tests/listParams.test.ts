@@ -10,12 +10,12 @@ test("정렬: 허용된 값만 받고 나머지는 최신순", () => {
   assert.equal(parseSort({}), "latest");
 });
 
-test("더보기 개수: 기본 20, 최대 100으로 제한", () => {
+test("더보기 개수: 기본 20, 최대 500으로 제한 (전체 상품 목록을 끝까지 볼 수 있게)", () => {
   assert.equal(parseLimit({}), PAGE_SIZE);
   assert.equal(parseLimit({ limit: "40" }), 40);
   assert.equal(parseLimit({ limit: "5" }), PAGE_SIZE);
   assert.equal(parseLimit({ limit: "abc" }), PAGE_SIZE);
-  assert.equal(parseLimit({ limit: "100000" }), 100);
+  assert.equal(parseLimit({ limit: "100000" }), 500);
 });
 
 test("목록 주소: 기본값은 생략, 기존 쿼리에는 이어 붙임", () => {
