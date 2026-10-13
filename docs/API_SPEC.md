@@ -133,7 +133,7 @@ type Profile = {
 
 ## 2. 카탈로그 — `services/artists.ts` · `services/products.ts`
 
-`getArtists`·`getArtist`·`getArtistBanners`·`getArtistMembers`는 `services/artists.ts`, 나머지(카테고리·상품·검색·인기·홈 배너)는 `services/products.ts`.
+`getArtists`·`getArtist`·`getArtistBanners`·`getArtistMembers`와 아티스트 좋아요(`getArtistLikeCounts`·`isArtistLiked`·`toggleArtistLike`)는 `services/artists.ts`, 나머지(카테고리·상품·검색·인기·홈 배너)는 `services/products.ts`.
 
 | 함수 | 입력 | 반환 | 호출 위치 | 에러 |
 |---|---|---|---|---|
@@ -141,6 +141,9 @@ type Profile = {
 | `getArtist(slug)` | `string` | `Artist \| null` | 서버 | - |
 | `getArtistBanners(slug)` | `string` | `ArtistPromoBanner[]` (sort_order 순, 등록된 배너 없으면 빈 배열 → 화면은 hero + 최신 상품으로 구성) | 서버 | - |
 | `getArtistMembers(slug)` | `string` | `ArtistMember[]` (sort_order 순, 없는 slug면 빈 배열) | 서버 | - |
+| `getArtistLikeCounts()` | - | `Record<number, number>` (아티스트 id → 좋아요 수. 0개인 아티스트는 키 없음 → `?? 0`). 비로그인도 조회 가능 | 서버/클라이언트 | - |
+| `isArtistLiked(slug)` | `string` | `boolean` (비로그인은 false) | 클라이언트 | - |
+| `toggleArtistLike(slug)` | `string` | `boolean` (바뀐 뒤 상태, true = 좋아요함) | 클라이언트 | `NOT_AUTHENTICATED` |
 | `getCategories()` | - | `Category[]` (sort_order 순, 7개) | 서버 | - |
 | `getProducts(params?)` | `ProductQuery` | `{ items: ProductSummary[]; total: number }` | 서버 | - |
 | `getProduct(id)` | `number` | `ProductDetail \| null` (`galleryUrls` 상단 갤러리, `detailUrls` 아래 상세. `imageUrls` = `detailUrls`) | 서버 | - |

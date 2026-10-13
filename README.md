@@ -273,7 +273,7 @@ KANT_MOA/
 - 평소에는 DB를 쓰고, **DB 조회가 실패하면 정적 데이터로 같은 화면을 그립니다** (아래 8장). 정적 데이터에는 나중에 추가한 실제 아티스트 8팀이 없습니다.
 - 화면에서 쓰는 타입은 `src/types/app.ts`의 `ProductSummary` / `ProductDetail`입니다.
 
-DB 테이블은 16개입니다. 아래는 핵심 관계이고, 이 밖에 `artist_banners`(아티스트 배너), `home_banners`(메인 배너), `notices`(공지), `wishlists`(찜), `shop_settings`(배송비·사업자 정보)가 있습니다.
+DB 테이블은 17개입니다. 아래는 핵심 관계이고, 이 밖에 `artist_likes`(아티스트 좋아요), `artist_banners`(아티스트 배너), `home_banners`(메인 배너), `notices`(공지), `wishlists`(찜), `shop_settings`(배송비·사업자 정보)가 있습니다.
 
 ```mermaid
 erDiagram
@@ -388,7 +388,7 @@ erDiagram
 
 | 파일 | 주요 함수 |
 |---|---|
-| `artists.ts` | `getArtists`, `getArtist`, `getArtistMembers`, `getArtistBanners` |
+| `artists.ts` | `getArtists`, `getArtist`, `getArtistMembers`, `getArtistBanners`, `getArtistLikeCounts`, `isArtistLiked`, `toggleArtistLike` |
 | `products.ts` | `getCategories`, `getProducts`, `getProduct`, `searchProducts`, `getBestProducts`, `getHomeBanners` |
 | `notices.ts` | `getNotices`, `getNotice`, `getTopbarNotice` |
 | `auth.ts` | `signUp`, `signIn`, `signOut`, `getProfile`, `updateProfile`, `onAuthChange` |
@@ -438,7 +438,7 @@ erDiagram
 |---|---|---|
 | 1 | 기획 및 범위 정의 | 아이돌 굿즈샵, 메인·목록·상세 + 장바구니·주문 흐름 |
 | 2 | 개발 환경 | Next.js(App Router) + TypeScript + Tailwind CSS |
-| 3 | 데이터 모델링 | `src/types/product.ts`(과제 규격 `Product`) + `src/data/products.ts`(상품 47개, DB 장애 시 대체 데이터). 실제 저장은 Supabase DB(16개 테이블, 상품 387개) |
+| 3 | 데이터 모델링 | `src/types/product.ts`(과제 규격 `Product`) + `src/data/products.ts`(상품 47개, DB 장애 시 대체 데이터). 실제 저장은 Supabase DB(17개 테이블, 상품 387개) |
 | 4 | 공통 컴포넌트 | `Header`(TopBar), `Footer`, `ProductCard` + 공용 UI 9종 |
 | 5 | 목록 동적 렌더링 | `ProductGrid`에서 `.map()`으로 카드 출력 (`/category/[slug]`, `/artists/[slug]`, 메인) |
 | 6 | 상세 동적 라우팅 | `app/(shop)/products/[id]/page.tsx` |
