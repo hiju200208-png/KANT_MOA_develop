@@ -21,6 +21,20 @@ export async function createOrder(input: CreateOrderInput): Promise<string> {
   return data;
 }
 
+// 바로 구매: 장바구니와 상관없이 옵션 하나만 주문. 결제해도 장바구니는 그대로 둔다.
+export async function createDirectOrder(variantId: number, quantity: number, input: CreateOrderInput): Promise<string> {
+  const supabase = await requireAuth();
+  const { data, error } = await supabase.rpc('create_direct_order', {
+    p_variant_id: variantId,
+    p_quantity: quantity,
+    p_recipient_name: input.recipientName,
+    p_recipient_phone: input.recipientPhone,
+    p_address: input.address,
+  });
+  if (error) throw toAppError(error);
+  return data;
+}
+
 export async function payOrder(orderId: string): Promise<void> {
   const supabase = await requireAuth();
   const { error } = await supabase.rpc('pay_order', { p_order_id: orderId });

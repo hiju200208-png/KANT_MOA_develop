@@ -73,7 +73,7 @@ function Slide({ artist, active, video }: { artist: SpotlightArtist; active: boo
         <div className="grid items-center gap-6 pt-4 pb-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:gap-10 md:pt-6 md:pb-10">
           <div className={`flex flex-col gap-2.5 md:gap-3.5 ${video ? "text-white text-shadow-[0_1px_10px_rgb(0_0_0/0.5)]" : ""}`}>
             <span style={{ color: video ? video.accent : "color-mix(in srgb, var(--artist-color) 55%, #111214)" }} className="text-xs font-bold tracking-[0.14em] md:text-sm">{artist.name} · OFFICIAL GOODS</span>
-            <h2 style={video?.titleColor ? { color: video.titleColor } : undefined} className="text-[26px] leading-tight font-bold break-keep md:text-[44px]">
+            <h2 style={video?.titleColor ? { color: video.titleColor } : undefined} className="text-[22px] leading-tight font-bold break-keep md:text-[44px]">
               {video?.title ?? artist.tagline ?? `${artist.nameKo} 공식 굿즈`}
             </h2>
             <p className={`text-sm md:text-base ${video ? "max-w-md leading-relaxed break-keep text-white/90" : "text-foreground/80"}`}>
@@ -251,8 +251,8 @@ export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
         ) : null;
       })}
 
-      {/* 영상 위에서는 헤더 로고·아이콘·로그인 버튼을 흰색으로 */}
-      <div className={`relative ${videoActive ? "text-white [&_.border-line]:border-white/45 [&_.border-line]:bg-white/10 [&_.border-line]:backdrop-blur-sm [&_a]:text-white [&_button]:text-white [&_img]:brightness-0 [&_img]:invert" : ""}`}>
+      {/* 영상 위에서는 헤더 로고·아이콘·로그인 버튼을 흰색으로. 모바일 메뉴(흰 패널 dialog)는 원래 색 유지 */}
+      <div className={`relative ${videoActive ? "text-white [&_.border-line]:border-white/45 [&_.border-line]:bg-white/10 [&_.border-line]:backdrop-blur-sm [&_a]:text-white [&_button]:text-white [&_img]:brightness-0 [&_img]:invert [&_dialog]:text-foreground [&_dialog_a]:text-foreground [&_dialog_button]:text-foreground [&_dialog_.border-line]:border-line [&_dialog_.border-line]:bg-transparent [&_dialog_.border-line]:backdrop-blur-none" : ""}`}>
         <TopBar showBack={false} />
       </div>
 
