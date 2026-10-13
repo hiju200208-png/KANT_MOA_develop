@@ -5,8 +5,10 @@ import { Suspense } from "react";
 import { formatPrice } from "@/lib/formatPrice";
 import { LoadError } from "@/components/product/LoadError";
 import { ProductImage } from "@/components/product/ProductImage";
+import { LikeButton } from "@/components/product/LikeButton";
 import { ProductPurchasePanel } from "@/components/product/ProductPurchasePanel";
 import { RecentlyViewedTracker } from "@/components/product/RecentlyViewedProducts";
+import { ShareButton } from "@/components/product/ShareButton";
 import { Badge, Skeleton } from "@/components/ui";
 import { getProduct } from "@/services/products";
 import type { ProductDetail } from "@/types/app";
@@ -55,9 +57,15 @@ async function ProductContent({ params }: ProductPageProps) {
             <span aria-hidden="true">›</span>
           </Link>
           <h1 className="mt-1.5 mb-1 text-[14px] leading-[20px] font-normal md:text-[15px] md:leading-[21px] break-all text-[#484848]">{product.name}</h1>
-          <div className="mt-3 flex items-center gap-2">
-            <p className="text-lg leading-[24px] font-extrabold text-black md:text-xl md:leading-[26px]">{formatPrice(product.price)}</p>
-            {product.isSoldOut && <Badge className="bg-neutral-100 text-muted">품절</Badge>}
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <p className="text-lg leading-[24px] font-extrabold text-black md:text-xl md:leading-[26px]">{formatPrice(product.price)}</p>
+              {product.isSoldOut && <Badge className="bg-neutral-100 text-muted">품절</Badge>}
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <LikeButton productId={product.id} />
+              <ShareButton title={`${product.artist.name} ${product.name}`} />
+            </div>
           </div>
           <div className="mt-5">
             <ProductPurchasePanel product={product} />

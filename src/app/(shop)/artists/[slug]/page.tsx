@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ArtistBanners, ArtistBannersSkeleton } from "@/components/artist/ArtistBanners";
+import { ArtistLikeButton } from "@/components/artist/ArtistLikeButton";
 import { ArtistCategoryTabs } from "@/components/artist/ArtistCategoryTabs";
 import { ArtistNotices } from "@/components/artist/ArtistNotices";
 import type { SearchParams } from "@/components/product/listParams";
@@ -49,7 +50,10 @@ async function ArtistContent({ params, searchParams }: ArtistPageProps) {
 
   return (
     <div className="content-shell py-6 md:py-10">
-      <h1 className="sr-only">{artist.name}</h1>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h1 className="text-xl font-black md:text-2xl">{artist.name}</h1>
+        <ArtistLikeButton slug={artist.slug} name={artist.name} />
+      </div>
       <Suspense fallback={<ArtistBannersSkeleton />}>
         <ArtistBanners artist={artist} />
       </Suspense>

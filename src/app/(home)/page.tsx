@@ -5,6 +5,7 @@ import { LoadError } from "@/components/product/LoadError";
 import { HomeSpotlight, type SpotlightArtist } from "@/components/home/HomeSpotlight";
 import { HERO_VIDEOS } from "@/components/home/heroVideos";
 import { EmptyState, Skeleton } from "@/components/ui";
+import { sortByArtistLikes } from "@/mocks/artistLikes";
 import { getArtists } from "@/services/artists";
 import { getBestProducts, getProducts } from "@/services/products";
 import type { Artist, BestProduct, ProductSummary } from "@/types/app";
@@ -60,7 +61,8 @@ async function MainHero() {
   } catch {
     return null; // 배너는 부가 영역이라 실패 시 숨기고, 아래 상품 영역에서 에러를 안내합니다.
   }
-  artists = artists.filter((artist) => !BANNER_EXCLUDED.includes(artist.slug));
+  // 좋아요 많은 아티스트부터 (TODO(mock): 아티스트 좋아요 백엔드 연결 전까지 목 데이터)
+  artists = sortByArtistLikes(artists.filter((artist) => !BANNER_EXCLUDED.includes(artist.slug)));
   const [bests, catalogs] = await Promise.all([
     Promise.all(artists.map((artist) => getBestProducts({ limit: 1, artistSlug: artist.slug }).catch((): BestProduct[] => []))),
     Promise.all(
