@@ -4,7 +4,8 @@ export type ProductSort = NonNullable<ProductQuery["sort"]>;
 export type SearchParams = Record<string, string | string[] | undefined>;
 
 export const PAGE_SIZE = 20;
-const MAX_LIMIT = 100;
+// 전체 상품(/products)도 "더 보기"로 끝까지 볼 수 있도록 넉넉하게 둔다
+const MAX_LIMIT = 500;
 
 export const SORT_OPTIONS: { value: ProductSort; label: string }[] = [
   { value: "latest", label: "최신순" },

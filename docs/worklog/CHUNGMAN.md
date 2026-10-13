@@ -1,3 +1,28 @@
+## 2026-10-13 | dev/chunga: 전체 상품 목록(/products)·상품 없음 404 (#93 #94)
+
+- 작업자: chungman
+- 브랜치: dev/chunga
+- 관련 이슈 / PR: #93, #94 (상위 #54) / (PR 예정)
+- 에이전트 사용: O (Claude, Cowork)
+
+### 요청한 작업
+- GitHub 이슈 중 CHUNGMAN 담당 확인 후 해결
+
+### 한 일
+- #93 `/products` 전체 상품 목록 페이지 추가: `getProducts()` 전체 조회, 정렬·더 보기(`ProductListSection` 재사용), 로딩·오류 상태, 제목 metadata "전체 상품"
+- 카테고리 탭 맨 앞에 "전체"(→ `/products`) 추가: `ALL_CATEGORY`(popularCategory.ts), `CategoryTabs`에 선택 `href` 지원
+- 더 보기 최대 개수 100 → 500 (`listParams.ts`, 상품 387개라 100개에서 더 보기가 멈추던 문제)
+- #94 `products/[id]/not-found.tsx`: "상품을 찾을 수 없어요" + "전체 상품 보기"·"홈으로 가기"
+- 확인: localhost `/products`(387개·탭·정렬), `/products/999999`(상품 전용 404), `/category/album`(전체 탭), eslint·tsc 통과
+
+### 멈춘 지점 / 보고한 내용
+- #54의 metadata는 #96(JINA) 담당이라 손대지 않음 (`/products`·상품 404 title만 추가)
+- 이미지 이슈 #50 #86 #87 #88은 최종 이미지 파일·Storage 업로드(JIN)가 필요해 코드 작업 없음
+
+### 남은 일 / TODO
+- `npm run build`, 모바일에서 `/products` 확인
+- 이미지 최종본 확보 후 #86~#88 진행
+
 ## 2026-10-13 | dev/chunga: formatPrice → lib, PageTitle → ui, 주문서 페이지 200줄 이하로 분리
 
 - 작업자: chungman
