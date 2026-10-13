@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from "re
 import { TopBar } from "@/components/layout/TopBar";
 import type { Artist, ProductSummary } from "@/types/app";
 import { artistThemeStyle } from "@/components/artist/artistTheme";
-import { formatPrice } from "@/components/product/formatPrice";
+import { formatPrice } from "@/lib/formatPrice";
 import { heroSubtitle } from "./heroCopy";
 import { HERO_VIDEOS, type HeroVideo } from "./heroVideos";
 import { useSwipe } from "@/components/product/useSwipe";

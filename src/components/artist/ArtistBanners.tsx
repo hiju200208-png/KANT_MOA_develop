@@ -4,7 +4,7 @@ import { getProducts } from "@/services/products";
 import type { Artist, ArtistPromoBanner, ProductSummary } from "@/types/app";
 import { ArtistBannerCarousel, type ArtistBanner } from "./ArtistBannerCarousel";
 import { artistThemeStyle } from "./artistTheme";
-import { formatPrice } from "@/components/product/formatPrice";
+import { formatPrice } from "@/lib/formatPrice";
 
 const FEATURED_LIMIT = 3;
 

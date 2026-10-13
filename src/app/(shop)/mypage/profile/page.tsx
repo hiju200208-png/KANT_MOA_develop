@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { LoginRequired } from "@/components/order/LoginRequired";
-import { PageTitle } from "@/components/order/PageTitle";
+import { Button, Card, Input, PageTitle, Skeleton } from "@/components/ui";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Button, Card, Input, Skeleton } from "@/components/ui";
 import { getErrorMessage } from "@/constants/error-messages";
 import { updateProfile } from "@/services/auth";
 import type { Profile } from "@/types/app";

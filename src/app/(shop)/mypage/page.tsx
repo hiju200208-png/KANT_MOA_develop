@@ -4,9 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LoginRequired } from "@/components/order/LoginRequired";
-import { PageTitle } from "@/components/order/PageTitle";
+import { Badge, Button, Card, PageTitle, Skeleton } from "@/components/ui";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Badge, Button, Card, Skeleton } from "@/components/ui";
 import { getErrorMessage } from "@/constants/error-messages";
 import { signOut } from "@/services/auth";
 

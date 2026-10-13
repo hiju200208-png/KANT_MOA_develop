@@ -13,6 +13,7 @@ import { getErrorMessage } from "@/constants/error-messages";
 import { useCart } from "@/hooks/useCart";
 import { cancelOrder, getOrder, payOrder } from "@/services/orders";
 import type { Order } from "@/types/app";
+import { formatPrice } from "@/lib/formatPrice";
 
 const TITLES = {
   pending: "결제가 완료되지 않았어요",
@@ -121,17 +122,17 @@ export function OrderDetail() {
                   <p className="font-bold">{item.productName}</p>
                   <p className="mt-1 text-xs text-muted">{item.optionName} · {item.quantity}개</p>
                 </div>
-                <p className="shrink-0 font-bold">{(item.unitPrice * item.quantity).toLocaleString("ko-KR")}원</p>
+                <p className="shrink-0 font-bold">{formatPrice(item.unitPrice * item.quantity)}</p>
               </li>
             ))}
           </ul>
           <div className="flex justify-between border-t border-line pt-4 text-sm">
             <span className="text-muted">배송비</span>
-            <span className="font-bold">{order.shippingFee === 0 ? "무료" : `${order.shippingFee.toLocaleString("ko-KR")}원`}</span>
+            <span className="font-bold">{order.shippingFee === 0 ? "무료" : formatPrice(order.shippingFee)}</span>
           </div>
           <div className="flex justify-between py-5 text-base">
             <span className="font-bold">총 결제 금액</span>
-            <span className="font-black">{order.totalPrice.toLocaleString("ko-KR")}원</span>
+            <span className="font-black">{formatPrice(order.totalPrice)}</span>
           </div>
         </Card>
 

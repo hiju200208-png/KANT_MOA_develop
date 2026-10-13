@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui";
 import type { CartItem } from "@/types/app";
 import { QuantityStepper } from "./QuantityStepper";
+import { formatPrice } from "@/lib/formatPrice";
 
 const REMOVE_ANIMATION_MS = 200;
 
@@ -71,7 +72,7 @@ export function CartItemRow({ item, busy, onQuantityChange, onRemove }: CartItem
           ) : (
             <Badge className="bg-red-50 text-danger">품절·재고 부족</Badge>
           )}
-          <p className="whitespace-nowrap text-sm font-black tabular-nums md:text-base">{(item.unitPrice * item.quantity).toLocaleString("ko-KR")}원</p>
+          <p className="whitespace-nowrap text-sm font-black tabular-nums md:text-base">{formatPrice(item.unitPrice * item.quantity)}</p>
         </div>
       </div>
     </li>
