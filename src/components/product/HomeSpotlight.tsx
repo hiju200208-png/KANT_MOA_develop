@@ -42,7 +42,7 @@ function Slide({ artist, active }: { artist: SpotlightArtist; active: boolean })
         <div className="grid items-center gap-6 pt-4 pb-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:gap-10 md:pt-6 md:pb-10">
           <div className="flex flex-col gap-2.5 md:gap-3.5">
             <span style={{ color: "color-mix(in srgb, var(--artist-color) 55%, #111214)" }} className="text-xs font-bold tracking-[0.14em] md:text-sm">{artist.name} · OFFICIAL GOODS</span>
-            <h2 className="text-[26px] leading-tight font-bold break-keep md:text-[44px]">{artist.tagline ?? `${artist.nameKo} 공식 굿즈`}</h2>
+            <h2 className="text-[22px] leading-tight font-bold break-keep md:text-[44px]">{artist.tagline ?? `${artist.nameKo} 공식 굿즈`}</h2>
             <p className="text-sm text-foreground/80 md:text-base">앨범부터 응원봉, 한정 굿즈까지 한 곳에서</p>
           </div>
 
