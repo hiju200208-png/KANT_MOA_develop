@@ -85,3 +85,9 @@ a { color: inherit; text-decoration: none; }
     animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
   }
 }
+
+/* 모바일 햄버거 메뉴: 오른쪽에서 밀려 들어옴 */
+@keyframes menu-in {
+  from { transform: translateX(100%); }
+  to { transform: none; }
+}

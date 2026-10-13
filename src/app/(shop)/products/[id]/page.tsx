@@ -71,7 +71,6 @@ async function ProductContent({ params }: ProductPageProps) {
           <h2 id="product-info-tab" className="mx-auto flex h-11 w-fit items-center border-b-[3px] border-black px-6 text-sm font-bold">상세정보</h2>
         </div>
         <div className="mx-auto max-w-3xl">
-        {product.description && <p className="mt-5 whitespace-pre-line text-[13px] leading-[17px] text-[#484848]">{product.description}</p>}
         {product.imageUrls.length > 0 && (
           <div className="mt-5">
             {product.imageUrls.map((url, index) => (
@@ -79,7 +78,7 @@ async function ProductContent({ params }: ProductPageProps) {
             ))}
           </div>
         )}
-        {!product.description && product.imageUrls.length === 0 && <p className="mt-5 text-[13px] text-muted">등록된 상세 정보가 없어요.</p>}
+        {product.imageUrls.length === 0 &&<p className="mt-5 text-[13px] text-muted">등록된 상세 정보가 없어요.</p>}
         </div>
       </section>
     </>
