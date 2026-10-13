@@ -2,12 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { TopBar } from "@/components/layout/TopBar";
 import type { Artist, BestProduct } from "@/types/app";
 import { artistThemeStyle } from "@/components/artist/artistTheme";
+import { formatPrice } from "@/components/product/formatPrice";
 import { HERO_VIDEOS, type HeroVideo } from "./heroVideos";
 import { useSwipe } from "@/components/product/useSwipe";
+
+// 배너 글꼴(배너 전체): 위버스샵과 같은 Pretendard (오픈 폰트, OFL). 사이트 글꼴 목록에 이름은 있지만 불러오지는 않아서
+// 배너에서 웹폰트(쓰인 글자만 내려받는 dynamic subset)를 불러온다. React 19가 <link>를 <head>로 올려 준다
+const PRETENDARD_CSS = "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css";
+const displayFont = "font-['Pretendard_Variable',Pretendard,sans-serif]";
 
 export type SpotlightArtist = Pick<Artist, "id" | "slug" | "name" | "nameKo" | "tagline" | "themeColor"> & { products: BestProduct[] };
 
@@ -15,14 +21,10 @@ const AUTO_SLIDE_MS = 4000;
 const VIDEO_MAX_WAIT_MS = 30000; // 영상이 멈추거나 끝 신호가 오지 않아도 배너가 멈춰 있지 않도록
 const AFTER_VIDEO_MS = 1000; // 영상이 끝난 뒤 마지막 장면을 잠깐 보여주고 넘김
 const SLIDE_MS = 700; // 슬라이드 넘김 애니메이션 길이 (아래 duration-700과 맞춤)
-const STACK_COUNT = 3; // 오른쪽에 겹쳐 놓는 상품 수
 
-// 아티스트 테마 색으로 만든 파스텔 배경 (흰색을 많이 섞어 글자 대비 유지)
-const bandStyle: CSSProperties = {
-  backgroundColor: "color-mix(in srgb, var(--artist-color) 14%, white)",
-  backgroundImage:
-    "radial-gradient(1100px 560px at 72% 42%, color-mix(in srgb, var(--artist-color) 10%, white) 0%, color-mix(in srgb, var(--artist-color) 22%, white) 55%, color-mix(in srgb, var(--artist-color) 16%, #eef2fb) 100%)",
-};
+// 미니멀 배너: 아티스트 색 없이 톤다운된 무채색 단색 바탕
+const BAND_COLOR = "#f2f2f0";
+const bandStyle: CSSProperties = { backgroundColor: BAND_COLOR, backgroundImage: "none" };
 
 // 영상 배너: 바탕은 영상 분위기 색(base), 영상 네 면을 같은 색으로 은은하게 녹이고 왼쪽 문구 뒤는 조금 더 어둡게
 const videoBandStyle = (video: HeroVideo): CSSProperties => ({ backgroundColor: `rgb(${video.base})`, backgroundImage: "none" });
@@ -51,34 +53,133 @@ const ambientMaskStyle: CSSProperties = {
 };
 const AMBIENT_FPS_MS = 120; // 배경 색을 영상 장면에 맞춰 다시 그리는 간격
 
-// 상품 카드를 부채꼴로 겹쳐 놓는 위치 (가운데 → 오른쪽 위 → 왼쪽 아래)
-const STACK_POSITION = [
-  "left-[22%] top-[6%] z-20 w-[52%] rotate-[-3deg]",
-  "right-0 top-[2%] z-10 w-[38%] rotate-[7deg]",
-  "left-0 bottom-[4%] z-30 w-[36%] rotate-[-8deg]",
-];
-
 function chipLabel(product: BestProduct) {
   if (product.isLimited) return "한정";
   if (product.isPreorder) return "예약 판매";
   return product.category.name;
 }
 
+// 상품 사진 배경(흰색~연회색 단색)의 밝기를 재서, 배경이 흰색이 되도록 올릴 밝기 배율을 구한다
+// 아직 그려지지 않아 읽을 수 없으면 null
+function backgroundLift(image: HTMLImageElement): number | null {
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 8;
+    const context = canvas.getContext("2d");
+    if (!context) return 1;
+    context.drawImage(image, 0, 0, 8, 8);
+    const [r, g, b, a] = context.getImageData(0, 0, 1, 1).data; // 왼쪽 위 모서리 = 배경
+    if (a === 0) return null;
+    const level = Math.min(r, g, b);
+    return level > 200 ? Math.min(255 / level, 1.12) : 1; // 배경이 밝은 단색일 때만
+  } catch {
+    return 1.09; // 픽셀을 읽을 수 없으면 연회색 배경 기준값
+  }
+}
+
+// 대표 상품 하나를 크게, 배경 없이(누끼처럼): 배경을 흰색으로 올린 뒤 배너 바탕과 곱하기(multiply)로 합성하면 사진 배경이 사라진다.
+// 슬라이드가 보일 때 아래에서 살짝 기울어진 채 떠오르고, 이후 천천히 위아래로 떠 있는다
+function HeroProduct({ product, active }: { product: BestProduct; active: boolean }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [lift, setLift] = useState(1);
+  // 이미지가 React 준비 전에 이미 로드됐으면 onLoad가 오지 않으므로, 연결되는 시점에도 한 번 계산한다
+  // 바로 읽히면 바로, 아직 그려지지 않았으면 decode()가 끝난 뒤에 잰다
+  const measure = useCallback((image: HTMLImageElement | null) => {
+    if (!image?.complete || image.naturalWidth === 0) return;
+    const value = backgroundLift(image);
+    if (value !== null) return setLift(value);
+    const retry = () => setLift(backgroundLift(image) ?? 1);
+    image.decode().then(retry, retry);
+  }, []);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element || !active || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let float: Animation | undefined;
+    const enter = element.animate(
+      [
+        { opacity: 0, transform: "translateY(36px) scale(0.92) rotate(-4deg)" },
+        { opacity: 1, transform: "translateY(0) scale(1) rotate(0deg)" },
+      ],
+      { duration: 1000, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
+    );
+    enter.onfinish = () => {
+      float = element.animate([{ transform: "translateY(0)" }, { transform: "translateY(-12px)" }], {
+        duration: 3200,
+        direction: "alternate",
+        iterations: Infinity,
+        easing: "ease-in-out",
+      });
+    };
+    return () => {
+      enter.cancel();
+      float?.cancel();
+    };
+  }, [active]);
+
+  return (
+    <Link href={`/products/${product.id}`} draggable={false} className="group relative mx-auto block w-full">
+      {/* 움직이는 상자는 배너와 같은 색을 깔아야 곱하기 합성이 배너 바탕 기준으로 된다 (보이지 않음) */}
+      <span ref={ref} className="relative block h-[220px] md:h-[360px]" style={{ backgroundColor: BAND_COLOR }}>
+        {product.thumbnailUrl && (
+          // 합성(multiply)은 감싼 상자에, 밝기 필터는 이미지에 따로 건다 (한 요소에 같이 걸면 Chrome이 합성을 무시함)
+          <span className="absolute inset-0 overflow-hidden mix-blend-multiply">
+            <Image
+              src={product.thumbnailUrl}
+              alt={`${product.artist.name} ${product.name}`}
+              fill
+              sizes="(min-width: 768px) 40vw, 80vw"
+              priority={active}
+              ref={measure}
+              onLoad={(event) => measure(event.currentTarget)}
+              style={{ filter: `brightness(${lift})` }}
+              // 사진 속 여백만큼 키워서 상품 자체가 배너를 크게 차지하도록
+              className="scale-[1.18] object-contain transition-transform duration-700 group-hover:scale-[1.24] motion-reduce:transition-none"
+            />
+          </span>
+        )}
+      </span>
+      {/* 바닥 그림자: 상품이 떠 있는 느낌 */}
+      <span aria-hidden="true" className="mx-auto -mt-2 block h-3 w-1/2 rounded-[50%] bg-black/10 blur-md" />
+      {/* 모바일은 옆 설명 대신 이미지 아래 한 줄 */}
+      <span className="mt-2 block text-center text-xs text-neutral-500 md:hidden">
+        <span className="text-neutral-900">{product.name}</span> · <span className="tabular-nums">{formatPrice(product.price)}</span>
+      </span>
+    </Link>
+  );
+}
+
 function Slide({ artist, active, video }: { artist: SpotlightArtist; active: boolean; video?: HeroVideo }) {
-  // 영상 슬라이드는 영상을 가리지 않도록 상품 카드를 띄우지 않는다
-  const stack = video ? [] : artist.products.slice(0, STACK_COUNT);
+  // 영상 슬라이드는 영상을 가리지 않도록 상품을 띄우지 않는다
+  const product = video ? undefined : artist.products[0];
   return (
     <li aria-roledescription="slide" aria-label={artist.name} aria-hidden={!active} inert={!active} style={artistThemeStyle(artist.themeColor)} className="w-full shrink-0">
       <div className="content-shell">
-        <div className="grid items-center gap-6 pt-4 pb-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:gap-10 md:pt-6 md:pb-10">
-          <div className={`flex flex-col gap-2.5 md:gap-3.5 ${video ? "text-white text-shadow-[0_1px_10px_rgb(0_0_0/0.5)]" : ""}`}>
-            <span style={{ color: video ? video.accent : "color-mix(in srgb, var(--artist-color) 55%, #111214)" }} className="text-xs font-bold tracking-[0.14em] md:text-sm">{artist.name} · OFFICIAL GOODS</span>
-            <h2 style={video?.titleColor ? { color: video.titleColor } : undefined} className="text-[22px] leading-tight font-bold break-keep md:text-[44px]">
+        <div className="grid items-center gap-4 pt-4 pb-6 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-10 md:pt-2 md:pb-6">
+          <div className={`flex flex-col gap-3 md:gap-4 ${video ? "text-white text-shadow-[0_1px_10px_rgb(0_0_0/0.5)]" : ""}`}>
+            <span style={video ? { color: video.accent } : undefined} className={`text-[11px] font-semibold tracking-[0.22em] md:text-xs ${video ? "" : "text-neutral-500"}`}>
+              {artist.name} · OFFICIAL GOODS
+            </span>
+            <h2
+              style={video?.titleColor ? { color: video.titleColor } : undefined}
+              className={`text-[26px] leading-[1.25] font-medium tracking-[-0.02em] break-keep md:text-[44px] ${video ? "" : "text-neutral-900"}`}
+            >
               {video?.title ?? artist.tagline ?? `${artist.nameKo} 공식 굿즈`}
             </h2>
-            <p className={`text-sm md:text-base ${video ? "max-w-md leading-relaxed break-keep text-white/90" : "text-foreground/80"}`}>
+            <p className={`text-sm md:text-base ${video ? "max-w-md leading-relaxed break-keep text-white/90" : "text-neutral-500"}`}>
               {video?.description ?? "앨범부터 응원봉, 한정 굿즈까지 한 곳에서"}
             </p>
+            {product && (
+              // 대표 상품 설명: 가는 선 아래 카테고리 · 상품명 · 가격 · 상품 보기
+              <div className="mt-2 hidden max-w-sm border-t border-neutral-300 pt-4 md:block">
+                <p className="text-[11px] tracking-[0.18em] text-neutral-500">{chipLabel(product)}</p>
+                <p className={`mt-1.5 line-clamp-2 text-base font-normal break-keep text-neutral-900 md:text-lg`}>{product.name}</p>
+                <p className="mt-1 text-sm text-neutral-500 tabular-nums">{formatPrice(product.price)}</p>
+                <Link href={`/products/${product.id}`} draggable={false} className="mt-4 inline-flex items-center gap-2 border-b border-neutral-900 pb-0.5 text-sm text-neutral-900 transition-[gap] duration-200 hover:gap-3">
+                  상품 보기 <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            )}
             {video && (
               <Link
                 href={`/artists/${artist.slug}?category=album`}
@@ -92,22 +193,7 @@ function Slide({ artist, active, video }: { artist: SpotlightArtist; active: boo
             )}
           </div>
 
-          {stack.length > 0 && (
-            <div className="relative mx-auto aspect-[16/11] w-full max-w-md md:max-w-xl">
-              <span aria-hidden="true" className="absolute top-1/2 left-1/2 aspect-square h-[92%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/55" />
-              {stack.map((product, i) => (
-                <Link
-                  key={product.id}
-                  href={`/products/${product.id}`}
-                  draggable={false}
-                  className={`absolute aspect-square overflow-hidden rounded-[18px] bg-[#ededed] shadow-[0_18px_36px_-12px_rgb(40_30_90/0.35)] transition-transform duration-300 hover:-translate-y-1 hover:rotate-0 motion-reduce:transition-none ${STACK_POSITION[i]}`}
-                >
-                  {product.thumbnailUrl && <Image src={product.thumbnailUrl} alt={`${product.artist.name} ${product.name}`} fill sizes="(min-width: 768px) 22vw, 45vw" priority={active && i === 0} className="object-cover" />}
-                  <span className="absolute top-2.5 left-2.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold shadow-sm md:text-xs">{chipLabel(product)}</span>
-                </Link>
-              ))}
-            </div>
-          )}
+          {product && <HeroProduct product={product} active={active} />}
         </div>
 
       </div>
@@ -167,7 +253,12 @@ function VideoBackdrop({ video: config, active, playing, onStart, onEnded, onErr
 
 // 메인 배너 (시안 C · 파스텔 스포트라이트) 슬라이드: 아티스트마다 한 장 (문구 + 겹친 인기 상품 3개).
 // 4초마다 자동으로 넘어가고, 마우스로 끌거나 손가락으로 밀어서·위 버튼으로 넘김. 배경 톤도 아티스트 색으로 바뀜
-export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
+export function HomeSpotlight({ artists: allArtists }: { artists: SpotlightArtist[] }) {
+  // 영상 배너 아티스트를 맨 앞에 (heroVideos.ts에 적은 순서대로), 나머지는 받은 순서 그대로
+  const artists = [
+    ...Object.keys(HERO_VIDEOS).flatMap((slug) => allArtists.filter((artist) => artist.slug === slug)),
+    ...allArtists.filter((artist) => !(artist.slug in HERO_VIDEOS)),
+  ];
   const count = artists.length;
   const loop = count > 1;
   // 무한 루프: 앞에 마지막 복제, 뒤에 첫 번째 복제를 붙여 [마지막', 1..N, 1'] 로 그림.
@@ -230,7 +321,7 @@ export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
       aria-roledescription="carousel"
       aria-label="메인 배너"
       style={{ ...artistThemeStyle(artist?.themeColor ?? null), ...(activeVideo ? videoBandStyle(activeVideo) : bandStyle) }}
-      className="relative transition-[background-color] duration-700"
+      className={`relative transition-[background-color] duration-700 ${displayFont}`}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
@@ -250,6 +341,8 @@ export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
           />
         ) : null;
       })}
+
+      <link rel="stylesheet" href={PRETENDARD_CSS} precedence="default" />
 
       {/* 영상 위에서는 헤더 로고·아이콘·로그인 버튼을 흰색으로. 모바일 메뉴(흰 패널 dialog)는 원래 색 유지 */}
       <div className={`relative ${videoActive ? "text-white [&_.border-line]:border-white/45 [&_.border-line]:bg-white/10 [&_.border-line]:backdrop-blur-sm [&_a]:text-white [&_button]:text-white [&_img]:brightness-0 [&_img]:invert [&_dialog]:text-foreground [&_dialog_a]:text-foreground [&_dialog_button]:text-foreground [&_dialog_.border-line]:border-line [&_dialog_.border-line]:bg-transparent [&_dialog_.border-line]:backdrop-blur-none" : ""}`}>
@@ -271,10 +364,10 @@ export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
       {count > 1 && (
         // 진행 막대: 어두운 막대 위 흰 구간이 현재 배너 위치. 구간마다 투명 버튼이 겹쳐 있어 눌러서 이동
         <div className="content-shell relative pb-6 md:pb-8">
-          <div className={`relative mx-auto h-1 w-40 rounded-full md:w-60 ${videoActive ? "bg-white/30" : "bg-foreground/80"}`} role="group" aria-label="배너 선택">
+          <div className={`relative mx-auto h-0.5 w-40 md:w-60 ${videoActive ? "bg-white/30" : "bg-neutral-300"}`} role="group" aria-label="배너 선택">
             <span
               aria-hidden="true"
-              className="absolute inset-y-0 left-0 rounded-full bg-white transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+              className={`absolute inset-y-0 left-0 transition-transform duration-700 ${videoActive ? "bg-white" : "bg-neutral-900"} ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none`}
               style={{ width: `${100 / count}%`, transform: `translateX(${index * 100}%)` }}
             />
             <div className="absolute inset-x-0 -inset-y-2 flex">
