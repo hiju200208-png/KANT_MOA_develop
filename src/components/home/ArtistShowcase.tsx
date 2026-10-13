@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Skeleton } from "@/components/ui";
 import { getProducts } from "@/services/products";
 import type { Artist, ProductSummary } from "@/types/app";
-import { artistThemeStyle } from "./artistTheme";
-import { LoadError } from "./LoadError";
-import { ProductCarousel } from "./ProductCarousel";
+import { artistThemeStyle } from "@/components/artist/artistTheme";
+import { LoadError } from "@/components/product/LoadError";
+import { ProductCarousel } from "@/components/product/ProductCarousel";
 
 const SHOWCASE_LIMIT = 12; // 4개씩 최대 3페이지
 

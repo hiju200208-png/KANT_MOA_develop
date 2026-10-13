@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { ArtistMember } from "@/types/app";
-import { ProductImage } from "./ProductImage";
+import { ProductImage } from "@/components/product/ProductImage";
 
 // 멤버 컬러는 데이터(artist_members.color)라 CSS 변수로만 넘깁니다. 없으면 아티스트 색 → 브랜드 색 순서로 대체
 const memberColorStyle = (color: string | null) =>

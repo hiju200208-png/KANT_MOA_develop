@@ -5,7 +5,7 @@ import { useState } from "react";
 import { SearchIcon } from "@/components/layout/Icons";
 import { Input, Modal } from "@/components/ui";
 import type { Artist } from "@/types/app";
-import { ArtistLogo } from "./ArtistLogo";
+import { ArtistLogo } from "@/components/artist/ArtistLogo";
 
 // 로고 타일 + 이름. 마우스를 올리면 살짝 떠오른다
 function ArtistTile({ artist }: { artist: Artist }) {

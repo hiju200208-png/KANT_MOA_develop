@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { TopBar } from "@/components/layout/TopBar";
 import type { Artist, BestProduct } from "@/types/app";
-import { artistThemeStyle } from "./artistTheme";
-import { formatPrice } from "./formatPrice";
+import { artistThemeStyle } from "@/components/artist/artistTheme";
+import { formatPrice } from "@/components/product/formatPrice";
 import { HERO_VIDEOS, type HeroVideo } from "./heroVideos";
-import { useSwipe } from "./useSwipe";
+import { useSwipe } from "@/components/product/useSwipe";
 
 // 배너 글꼴(배너 전체): 위버스샵과 같은 Pretendard (오픈 폰트, OFL). 사이트 글꼴 목록에 이름은 있지만 불러오지는 않아서
 // 배너에서 웹폰트(쓰인 글자만 내려받는 dynamic subset)를 불러온다. React 19가 <link>를 <head>로 올려 준다
