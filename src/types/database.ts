@@ -86,6 +86,39 @@ export type Database = {
           },
         ]
       }
+      artist_likes: {
+        Row: {
+          artist_id: number
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          artist_id: number
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          artist_id?: number
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_likes_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artist_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artist_banners: {
         Row: {
           artist_id: number
@@ -722,6 +755,13 @@ export type Database = {
           p_variant_id: number
         }
         Returns: string
+      }
+      get_artist_like_counts: {
+        Args: never
+        Returns: {
+          artist_id: number
+          like_count: number
+        }[]
       }
       get_best_products: {
         Args: { artist_slug?: string; days?: number; limit_count?: number }
