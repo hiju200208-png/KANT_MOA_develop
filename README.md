@@ -154,9 +154,15 @@ npm test           # 단위 테스트 (tests/*.test.ts)
 |---|---|
 | ![상품 상세](docs/screenshots/desktop-product.webp) | ![장바구니](docs/screenshots/desktop-cart.webp) |
 
-| 모바일 메인 | 모바일 메뉴 | 모바일 상품 목록 |
+**모바일**
+
+| 메인 | 메뉴 | 아티스트 | 상품 상세 |
+|---|---|---|---|
+| <img src="docs/screenshots/mobile-home.webp" width="200" alt="모바일 메인"> | <img src="docs/screenshots/mobile-menu.webp" width="200" alt="모바일 메뉴"> | <img src="docs/screenshots/mobile-artist.webp" width="200" alt="모바일 아티스트 페이지"> | <img src="docs/screenshots/mobile-product.webp" width="200" alt="모바일 상품 상세"> |
+
+| 로그인 | 주문서 | 결제 완료 |
 |---|---|---|
-| <img src="docs/screenshots/mobile-home.webp" width="240" alt="모바일 메인"> | <img src="docs/screenshots/mobile-menu.webp" width="240" alt="모바일 메뉴"> | <img src="docs/screenshots/mobile-artist.webp" width="240" alt="모바일 상품 목록"> |
+| <img src="docs/screenshots/mobile-login.webp" width="200" alt="모바일 로그인"> | <img src="docs/screenshots/mobile-checkout.webp" width="200" alt="모바일 주문서"> | <img src="docs/screenshots/mobile-order-complete.webp" width="200" alt="모바일 결제 완료"> |
 
 ---
 
@@ -169,7 +175,7 @@ RootLayout (app/layout.tsx)
 │                                       (home)은 배너 안에, (shop)·(auth)는 흰색 헤더로
 ├─ <main> (각 페이지)
 ├─ Footer                               사업자 정보 (shop_settings)
-└─ FloatingButtons                      최근 본 상품 · 칸트봇 (장바구니·주문서에서는 숨김)
+└─ FloatingButtons                      최근 본 상품 · 칸트봇 (장바구니·주문서는 둘 다, 상품 상세는 최근 본 상품만 숨김)
 
 메인 /
 ├─ HomeSpotlight                        배너·영상 슬라이드, 진행 막대, 무한 루프
