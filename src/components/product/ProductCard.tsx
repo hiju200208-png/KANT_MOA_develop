@@ -23,9 +23,9 @@ export function ProductCard({ product }: { product: ProductSummary }) {
       </div>
       {/* 캡션: 위버스샵 상품 카드 figcaption 기준 (여백 8px 4px 0, 13px/17px, 이름 굵게 검정 · 보조 텍스트 #484848) */}
       <div className="px-1 pt-2">
-        <h3 className="mb-0.5 line-clamp-2 text-[13px] leading-[17px] font-bold text-black">{product.name}</h3>
-        <p className="truncate text-[13px] leading-[17px] text-[#484848]">{product.artist.name}</p>
-        <p className="mt-1 text-sm font-bold text-black">{formatPrice(product.price)}</p>
+        <h3 className="mb-0.5 line-clamp-2 text-[12px] leading-[16px] font-bold text-black md:text-[13px] md:leading-[17px]">{product.name}</h3>
+        <p className="truncate text-[11px] leading-[15px] text-[#484848] md:text-[13px] md:leading-[17px]">{product.artist.name}</p>
+        <p className="mt-1 text-[12px] font-bold text-black md:text-sm">{formatPrice(product.price)}</p>
       </div>
     </Link>
   );

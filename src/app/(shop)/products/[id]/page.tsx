@@ -54,9 +54,9 @@ async function ProductContent({ params }: ProductPageProps) {
             {product.artist.name}
             <span aria-hidden="true">›</span>
           </Link>
-          <h1 className="mt-1.5 mb-1 text-[15px] leading-[21px] font-normal break-all text-[#484848]">{product.name}</h1>
+          <h1 className="mt-1.5 mb-1 text-[14px] leading-[20px] font-normal md:text-[15px] md:leading-[21px] break-all text-[#484848]">{product.name}</h1>
           <div className="mt-3 flex items-center gap-2">
-            <p className="text-xl leading-[26px] font-extrabold text-black">{formatPrice(product.price)}</p>
+            <p className="text-lg leading-[24px] font-extrabold text-black md:text-xl md:leading-[26px]">{formatPrice(product.price)}</p>
             {product.isSoldOut && <Badge className="bg-neutral-100 text-muted">품절</Badge>}
           </div>
           <div className="mt-5">
