@@ -202,7 +202,23 @@ function Slide({ artist, active, video }: { artist: SpotlightArtist; active: boo
 }
 
 // 배너 전체(헤더 포함) 뒤에 깔리는 영상. 세로를 꽉 채우고 가로는 16:9 비율로 가운데 정렬
-function VideoBackdrop({ video: config, active, playing, onStart, onEnded, onError }: { video: HeroVideo; active: boolean; playing: boolean; onStart: () => void; onEnded: () => void; onError: () => void }) {
+function VideoBackdrop({
+  video: config,
+  active,
+  playing,
+  onStart,
+  onEnded,
+  onBlocked,
+  onError,
+}: {
+  video: HeroVideo;
+  active: boolean;
+  playing: boolean;
+  onStart: () => void;
+  onEnded: () => void;
+  onBlocked: () => void;
+  onError: () => void;
+}) {
   const ref = useRef<HTMLVideoElement>(null);
   const ambientRef = useRef<HTMLCanvasElement>(null);
 
@@ -226,17 +242,33 @@ function VideoBackdrop({ video: config, active, playing, onStart, onEnded, onErr
     };
   }, [active, config.ambient]);
 
-  // 이 슬라이드가 보일 때만 처음부터 재생하고, 넘어가면 멈춘다
+  // 이 슬라이드가 보일 때만 처음부터 재생하고, 넘어가면 멈춘다.
+  // 페이지를 열자마자 첫 슬라이드에서 재생하면 브라우저가 막거나(자동재생 정책) 백그라운드 탭이라 멈출 수 있어서
+  // - 소리 끔을 재생 직전에 다시 확실히 하고
+  // - 탭이 다시 보이면 이어서 재생하고
+  // - 그래도 막히면 건너뛰지 않고 첫 장면을 보통 슬라이드처럼 4초 보여준다
   useEffect(() => {
     const video = ref.current;
     if (!video) return;
-    if (active && playing) {
-      onStart(); // 다시 돌아왔을 때 이전에 끝난 기록을 지운다
-      video.currentTime = 0;
-      video.play().catch(onEnded); // 재생이 막히면(자동재생 차단 등) 끝난 것으로 보고 넘긴다
-    } else {
+    if (!active || !playing) {
       video.pause();
+      return;
     }
+    onStart(); // 다시 돌아왔을 때 이전에 끝난·막힌 기록을 지운다
+    video.muted = true;
+    video.currentTime = 0;
+    const play = () => {
+      video.muted = true;
+      video.play().catch((error: DOMException) => {
+        if (error.name === "NotAllowedError") onBlocked(); // AbortError(넘기면서 멈춤)는 무시
+      });
+    };
+    play();
+    const resume = () => {
+      if (!document.hidden && video.paused && !video.ended) play();
+    };
+    document.addEventListener("visibilitychange", resume);
+    return () => document.removeEventListener("visibilitychange", resume);
   }, [active, playing]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -272,6 +304,7 @@ export function HomeSpotlight({ artists: allArtists }: { artists: SpotlightArtis
   const { dragX, dragging, handlers } = useSwipe({ enabled: loop, onSwipe: move });
   const [failedVideos, setFailedVideos] = useState<string[]>([]);
   const [endedPos, setEndedPos] = useState<number | null>(null); // 영상이 끝까지 재생된 슬라이드 위치
+  const [blockedPos, setBlockedPos] = useState<number | null>(null); // 브라우저가 자동재생을 막은 슬라이드 위치
   const [reducedMotion, setReducedMotion] = useState(false);
   const videoOf = (item: SpotlightArtist | undefined) => (item && !failedVideos.includes(item.slug) ? HERO_VIDEOS[item.slug] : undefined);
   const artist = artists[index];
@@ -289,7 +322,8 @@ export function HomeSpotlight({ artists: allArtists }: { artists: SpotlightArtis
   // 영상 슬라이드는 4초 대신 영상이 끝나면 넘어간다 (동작 줄이기 설정이면 영상을 재생하지 않으므로 4초)
   const playingVideo = videoActive && !reducedMotion;
   const videoEnded = endedPos === pos;
-  const autoSlideMs = !playingVideo ? AUTO_SLIDE_MS : videoEnded ? AFTER_VIDEO_MS : VIDEO_MAX_WAIT_MS;
+  const videoBlocked = blockedPos === pos;
+  const autoSlideMs = !playingVideo || videoBlocked ? AUTO_SLIDE_MS : videoEnded ? AFTER_VIDEO_MS : VIDEO_MAX_WAIT_MS;
   useEffect(() => {
     if (!loop || paused || dragging) return;
     const timer = window.setTimeout(() => {
@@ -335,8 +369,12 @@ export function HomeSpotlight({ artists: allArtists }: { artists: SpotlightArtis
             video={video}
             active={i === index}
             playing={!reducedMotion}
-            onStart={() => setEndedPos(null)}
+            onStart={() => {
+              setEndedPos(null);
+              setBlockedPos(null);
+            }}
             onEnded={() => setEndedPos(pos)}
+            onBlocked={() => setBlockedPos(pos)}
             onError={() => setFailedVideos((list) => [...list, item.slug])}
           />
         ) : null;
