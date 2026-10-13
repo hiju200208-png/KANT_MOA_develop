@@ -105,7 +105,7 @@ export function RecentlyViewedButton() {
       href="/recently-viewed"
       aria-label={`최근 본 상품 ${products.length}개 보기`}
       title="최근 본 상품"
-      className="fixed right-4 bottom-[calc(5rem+68px+env(safe-area-inset-bottom))] z-44 block size-14 transition-transform hover:-translate-y-0.5 md:right-6 md:bottom-23"
+      className="fixed right-4 bottom-[calc(1rem+68px+env(safe-area-inset-bottom))] z-44 block size-14 transition-transform hover:-translate-y-0.5 md:right-6 md:bottom-23"
     >
       <span className="relative block size-full overflow-hidden rounded-full border-2 border-white bg-neutral-100 shadow-[0_12px_30px_-8px_rgb(17_18_20/0.45)]">
         {latest.thumbnailUrl && <Image src={latest.thumbnailUrl} alt="" fill sizes="56px" className="object-cover" />}
