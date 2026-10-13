@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { formatPrice } from "@/components/product/formatPrice";
+import { formatPrice } from "@/lib/formatPrice";
 import { LoadError } from "@/components/product/LoadError";
 import { ProductImage } from "@/components/product/ProductImage";
 import { ProductPurchasePanel } from "@/components/product/ProductPurchasePanel";

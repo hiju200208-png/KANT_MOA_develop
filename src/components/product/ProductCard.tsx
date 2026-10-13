@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ProductSummary } from "@/types/app";
-import { formatPrice } from "./formatPrice";
+import { formatPrice } from "@/lib/formatPrice";
 import { ProductImage } from "./ProductImage";
 
 // 마우스를 올리면 카드가 살짝 뜨고 이미지가 확대된다 (터치 기기는 hover 없음)

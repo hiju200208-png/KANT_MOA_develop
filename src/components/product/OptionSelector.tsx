@@ -1,5 +1,5 @@
 import type { Variant } from "@/types/app";
-import { formatPrice } from "./formatPrice";
+import { formatPrice } from "@/lib/formatPrice";
 
 interface OptionSelectorProps {
   variants: Variant[];

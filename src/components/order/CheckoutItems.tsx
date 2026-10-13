@@ -1,4 +1,5 @@
 import type { CartItem } from "@/types/app";
+import { formatPrice } from "@/lib/formatPrice";
 
 // 주문서의 주문 상품 목록 (썸네일 · 상품명 · 옵션 · 수량 · 금액)
 export function CheckoutItems({ items }: { items: CartItem[] }) {
@@ -16,7 +17,7 @@ export function CheckoutItems({ items }: { items: CartItem[] }) {
             <p className="truncate font-bold">{item.product.name}</p>
             <p className="mt-1 text-xs text-muted">{item.optionName} · {item.quantity}개</p>
           </div>
-          <p className="shrink-0 font-bold tabular-nums">{(item.unitPrice * item.quantity).toLocaleString("ko-KR")}원</p>
+          <p className="shrink-0 font-bold tabular-nums">{formatPrice(item.unitPrice * item.quantity)}</p>
         </li>
       ))}
     </ul>

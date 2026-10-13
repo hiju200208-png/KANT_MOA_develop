@@ -131,7 +131,9 @@ type Profile = {
 };
 ```
 
-## 2. 카탈로그 — `services/products.ts`
+## 2. 카탈로그 — `services/artists.ts` · `services/products.ts`
+
+`getArtists`·`getArtist`·`getArtistBanners`·`getArtistMembers`는 `services/artists.ts`, 나머지(카테고리·상품·검색·인기·홈 배너)는 `services/products.ts`.
 
 | 함수 | 입력 | 반환 | 호출 위치 | 에러 |
 |---|---|---|---|---|

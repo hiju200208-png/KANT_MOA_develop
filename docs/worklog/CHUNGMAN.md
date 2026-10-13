@@ -1,3 +1,31 @@
+## 2026-10-13 | dev/chunga: formatPrice → lib, PageTitle → ui, 주문서 페이지 200줄 이하로 분리
+
+- 작업자: chungman
+- 브랜치: dev/chunga (develop `be2ebd5` 반영)
+- 관련 이슈 / PR: - / (PR 예정)
+- 에이전트 사용: O (Claude, Cowork)
+
+### 요청한 작업
+- 코드 리뷰 B 항목 중 3·4·5번: formatPrice 공용화, PageTitle 공용 UI로 이동, `checkout/page.tsx` 분리
+
+### 한 일
+- `components/product/formatPrice.ts` → `src/lib/formatPrice.ts`. 가격을 `toLocaleString("ko-KR")원`으로 직접 쓰던 곳(장바구니·주문서·주문 목록/상세·CartItemRow·CheckoutItems)을 모두 `formatPrice`로 교체 (표시 결과 동일)
+- `components/order/PageTitle.tsx` → `components/ui/PageTitle.tsx`, `ui/index.ts`에서 export. 쓰던 8개 페이지 import를 `@/components/ui`로 합침
+- `checkout/page.tsx` 302줄 → 199줄. 동작은 그대로 두고 나눔
+  - `order/useDirectItem.ts`: 바로 구매 파라미터(parseDirect)·상품 불러오기
+  - `order/useCheckoutAddresses.ts`: 저장된 배송지 불러오기·다시 불러오기
+  - `order/CheckoutAddressCard.tsx`: 1단계 배송지 카드
+  - `order/CheckoutSummary.tsx`: 결제 금액 카드·결제 버튼
+  - `order/CheckoutEmpty.tsx`: 주문할 상품 없음 / 바로 구매 불가 화면 (장바구니로 가기는 버튼 클릭 이동 → 링크)
+  - `order/StepNumber.tsx`
+- 확인: 옛 경로 import 0건, eslint 통과, `tsc --noEmit` 에러 없음, 미머지 dev 브랜치 중 같은 파일 수정 중인 곳 없음
+
+### 멈춘 지점 / 보고한 내용
+- [STOP 2] sungho(장바구니·주문·마이페이지)·jina(`components/ui`) 영역 수정 → 사용자 승인 후 진행, 두 사람에게 공유 필요
+
+### 남은 일 / TODO
+- Windows에서 `npm run build`, 주문서(장바구니 주문·바로 구매·배송지 없음/있음) 직접 확인
+
 ## 2026-10-13 | dev/chunga: 컴포넌트 폴더 정리 (product → home·artist 분리, 안 쓰는 배너 코드 삭제)
 
 - 작업자: chungman

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PageTitle } from "@/components/order/PageTitle";
+import { PageTitle } from "@/components/ui";
 import { RecentlyViewedList } from "@/components/product/RecentlyViewedProducts";
 
 export const metadata: Metadata = { title: "최근 본 상품" };
