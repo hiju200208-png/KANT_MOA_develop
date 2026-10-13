@@ -95,6 +95,7 @@ export function RecentlyViewedList() {
 }
 
 // 칸트봇 버튼 위 동그라미: 가장 최근 본 상품 사진, 누르면 최근 본 상품 페이지로. 본 상품이 없으면 숨김
+// 모바일 bottom = 칸트봇 아래 여백 1rem + 칸트봇 높이(640px 미만 3rem, 이상 3.5rem) + 간격
 export function RecentlyViewedButton() {
   const products = useRecentlyViewed();
   const latest = products[0];
@@ -105,7 +106,7 @@ export function RecentlyViewedButton() {
       href="/recently-viewed"
       aria-label={`최근 본 상품 ${products.length}개 보기`}
       title="최근 본 상품"
-      className="fixed right-4 bottom-[calc(1rem+68px+env(safe-area-inset-bottom))] z-44 block size-14 transition-transform hover:-translate-y-0.5 md:right-6 md:bottom-23"
+      className="fixed right-4 bottom-[calc(4.5rem+8px+env(safe-area-inset-bottom))] z-44 block size-12 transition-transform md:size-14 hover:-translate-y-0.5 md:right-6 md:bottom-23"
     >
       <span className="relative block size-full overflow-hidden rounded-full border-2 border-white bg-neutral-100 shadow-[0_12px_30px_-8px_rgb(17_18_20/0.45)]">
         {latest.thumbnailUrl && <Image src={latest.thumbnailUrl} alt="" fill sizes="56px" className="object-cover" />}

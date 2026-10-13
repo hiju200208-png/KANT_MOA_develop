@@ -155,7 +155,7 @@ export function KantBot() {
         onClick={() => (open ? close() : setOpen(true))}
         aria-expanded={open}
         aria-label={open ? "칸트봇 닫기" : "칸트봇 열기"}
-        className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-[45] flex h-14 items-center gap-2 rounded-full bg-neutral-900 px-5 font-bold text-white shadow-[0_12px_30px_-8px_rgb(17_18_20/0.45)] transition-all hover:-translate-y-0.5 hover:bg-neutral-700 md:right-6 md:bottom-6"
+        className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-[45] flex size-12 items-center justify-center gap-2 rounded-full bg-neutral-900 font-bold sm:h-14 sm:w-auto sm:px-5 text-white shadow-[0_12px_30px_-8px_rgb(17_18_20/0.45)] transition-all hover:-translate-y-0.5 hover:bg-neutral-700 md:right-6 md:bottom-6"
       >
         <SparkleIcon className="size-5 text-white" />
         <span className="hidden text-sm text-white sm:inline">{open ? "닫기" : "칸트봇"}</span>
