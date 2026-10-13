@@ -31,11 +31,11 @@ export function CartItemRow({ item, busy, onQuantityChange, onRemove }: CartItem
 
   return (
     <li
-      className={`flex gap-4 rounded-lg p-4 shadow-card transition-all duration-200 ${item.isAvailable ? "bg-white" : "bg-neutral-50"} ${
+      className={`flex gap-3 rounded-lg p-3 shadow-card md:gap-4 md:p-4 transition-all duration-200 ${item.isAvailable ? "bg-white" : "bg-neutral-50"} ${
         removing ? "-translate-x-4 opacity-0" : ""
       }`}
     >
-      <Link href={`/products/${item.product.id}`} className="size-24 shrink-0 overflow-hidden rounded-md bg-neutral-100 md:size-28">
+      <Link href={`/products/${item.product.id}`} className="size-20 shrink-0 overflow-hidden rounded-md bg-neutral-100 md:size-28">
         {item.product.thumbnailUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -50,8 +50,8 @@ export function CartItemRow({ item, busy, onQuantityChange, onRemove }: CartItem
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <Link href={`/products/${item.product.id}`} className="line-clamp-2 text-sm font-bold md:text-base">{item.product.name}</Link>
-            <p className="mt-1 inline-block rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-muted">{item.optionName}</p>
+            <Link href={`/products/${item.product.id}`} className="line-clamp-2 text-[13px] leading-[18px] font-bold md:text-base">{item.product.name}</Link>
+            <p className="mt-1 inline-block rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] text-muted md:text-xs">{item.optionName}</p>
           </div>
           <button
             type="button"
@@ -65,13 +65,13 @@ export function CartItemRow({ item, busy, onQuantityChange, onRemove }: CartItem
             </svg>
           </button>
         </div>
-        <div className="mt-auto flex items-end justify-between gap-3 pt-3">
+        <div className="mt-auto flex items-end justify-between gap-3 pt-2 md:pt-3">
           {item.isAvailable ? (
             <QuantityStepper quantity={item.quantity} max={max} disabled={busy || removing} onChange={(quantity) => onQuantityChange(item.variantId, quantity)} />
           ) : (
             <Badge className="bg-red-50 text-danger">품절·재고 부족</Badge>
           )}
-          <p className="whitespace-nowrap text-base font-black tabular-nums">{(item.unitPrice * item.quantity).toLocaleString("ko-KR")}원</p>
+          <p className="whitespace-nowrap text-sm font-black tabular-nums md:text-base">{(item.unitPrice * item.quantity).toLocaleString("ko-KR")}원</p>
         </div>
       </div>
     </li>

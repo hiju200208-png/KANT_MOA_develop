@@ -5,7 +5,7 @@
 insert into public.artists (name, name_ko, slug, logo_path, hero_image_path, theme_color, sort_order) values
   ('ORBIT:ON', '오르빗온',   'orbit-on', 'orbit-on/logo.webp', 'orbit-on/hero.webp', '#B8A4FF', 1),
   ('DAYLOG',   '데이로그',   'daylog',   'daylog/logo.webp',   'daylog/hero.webp',   null,      2),  -- TODO: 색상
-  ('SODAFM',   '소다에프엠', 'sodafm',   'sodafm/logo.webp',   'sodafm/hero.webp',   null,      3);  -- TODO: 색상
+  ('SODAFM',   '소다에프엠', 'sodafm',   'sodafm/logo-v2.webp',   'sodafm/hero.webp',   null,      3);  -- TODO: 색상
 
 insert into public.categories (name, slug, sort_order) values
   ('앨범',     'album',      1),
