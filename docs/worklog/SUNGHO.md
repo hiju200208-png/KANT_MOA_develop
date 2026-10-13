@@ -21,12 +21,14 @@
   - 상품을 문구 쪽으로 붙이고 최대 440px, 제목 700·상품명 600 굵기
 - `src/components/home/heroCopy.ts`: 상품별 소제목(없으면 카테고리별 문구), `heroVideos.ts`: 영상별 소제목
 - develop 머지 시 chungman의 파일 이동(`product/` → `home/`)으로 import 3줄 충돌 → 새 경로로 정리, `heroCopy.ts`도 `home/`으로 이동
-- 확인: 1462px·375px 화면, 순서 TWS → ZICO → CORTIS → BTS → LE SSERAFIM → SEVENTEEN → TXT → BOYNEXTDOOR, `npm run build`·`eslint`·`tsc` 통과
+- 확인: 1462px·375px 화면, `npm run build`·`eslint`·`tsc` 통과
+- (수정) 순서: 영상 3개(COMEBACK)는 맨 앞 유지, 그 뒤 상품 슬라이드를 NEW·BEST 번갈아 → TWS · CORTIS · LE SSERAFIM → ZICO(NEW) → BTS(BEST) → SEVENTEEN(NEW) → TXT(BEST) → BOYNEXTDOOR(NEW)
+- (수정) NEW 후보: 발매일 신보가 없으면 등록 14일 이내 최신 상품 (실제 아티스트 상품엔 발매일이 없어서)
 
 ### 결정 사항 / 이유
 - NEW 기준을 `created_at`이 아닌 `release_date`로: 이번 주에 데이터를 한꺼번에 넣어 모든 상품의 등록일이 최근이라 구분이 안 됨
 - `Date.now()`는 react-hooks/purity 규칙 때문에 컴포넌트 밖 함수(`pickSpotlight`)에서 계산
-- 현재 실제 아티스트 중 발매일이 있는 상품이 없어 NEW는 표시되지 않음 (규칙은 유지)
+- NEW와 BEST가 같은 상품일 수 있음 (판매 기록이 없으면 BEST도 최신 등록 상품으로 정해지기 때문)
 
 ### 멈춘 지점 / 보고한 내용
 - `page.tsx`, `HomeSpotlight.tsx`는 chungman 담당 → PR 리뷰 요청

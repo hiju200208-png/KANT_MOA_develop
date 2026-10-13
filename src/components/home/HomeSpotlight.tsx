@@ -18,14 +18,14 @@ const displayFont = "font-['Pretendard_Variable',Pretendard,sans-serif]";
 
 // 배너에 오르는 이유: 영상(컴백) · 새로 나온 상품 · 판매 1위 상품
 export type SpotlightKind = "COMEBACK" | "NEW" | "BEST";
-// pick: 서버(page.tsx)에서 고른 대표 상품. 발매일이 최근 30일 안이거나 곧 발매되는 상품이 있으면 NEW, 없으면 최근 7일 판매 1위 BEST
+// pick: 서버(page.tsx)에서 고른 대표 상품. 상품 슬라이드는 NEW(신상품)와 BEST(최근 7일 판매 1위)를 번갈아 배정
 export type SpotlightArtist = Pick<Artist, "id" | "slug" | "name" | "nameKo" | "tagline" | "themeColor"> & {
   pick?: { kind: "NEW" | "BEST"; product: ProductSummary };
 };
 
 const KIND_STYLE: Record<SpotlightKind, { label: string; color: string; reason: string }> = {
   COMEBACK: { label: "COMEBACK", color: "#d63a32", reason: "" },
-  NEW: { label: "NEW", color: "#1f8a5f", reason: "최근 30일 안에 발매됐거나 곧 발매되는 신상품이에요." },
+  NEW: { label: "NEW", color: "#1f8a5f", reason: "새로 나온 상품이에요. 발매 예정·최근 발매 상품이 없으면 최근 14일 안에 등록된 상품을 보여줘요." },
   BEST: { label: "BEST", color: "#b9821a", reason: "최근 7일 판매량 1위 상품이에요. 판매 기록이 없으면 최근 등록한 상품을 보여줘요." },
 };
 
@@ -362,12 +362,11 @@ function VideoBackdrop({
 // 메인 배너 (시안 C · 파스텔 스포트라이트) 슬라이드: 아티스트마다 한 장 (문구 + 겹친 인기 상품 3개).
 // 4초마다 자동으로 넘어가고, 마우스로 끌거나 손가락으로 밀어서·위 버튼으로 넘김. 배경 톤도 아티스트 색으로 바뀜
 export function HomeSpotlight({ artists: allArtists }: { artists: SpotlightArtist[] }) {
-  // 순서: COMEBACK 영상(heroVideos.ts 순서)과 NEW·BEST 상품 슬라이드를 번갈아 → 영상, 상품, 영상, 상품 … 남는 건 뒤에
-  const videoArtists = Object.keys(HERO_VIDEOS).flatMap((slug) => allArtists.filter((artist) => artist.slug === slug));
-  const productArtists = allArtists.filter((artist) => !(artist.slug in HERO_VIDEOS));
-  const artists = Array.from({ length: Math.max(videoArtists.length, productArtists.length) }, (_, i) => [videoArtists[i], productArtists[i]])
-    .flat()
-    .filter((artist): artist is SpotlightArtist => artist !== undefined);
+  // 순서: COMEBACK 영상(heroVideos.ts 순서)이 맨 앞, 그 뒤로 NEW·BEST 상품 슬라이드(page.tsx에서 번갈아 배정한 순서 그대로)
+  const artists = [
+    ...Object.keys(HERO_VIDEOS).flatMap((slug) => allArtists.filter((artist) => artist.slug === slug)),
+    ...allArtists.filter((artist) => !(artist.slug in HERO_VIDEOS)),
+  ];
   const count = artists.length;
   const loop = count > 1;
   // 무한 루프: 앞에 마지막 복제, 뒤에 첫 번째 복제를 붙여 [마지막', 1..N, 1'] 로 그림.
