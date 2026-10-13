@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { QuantityStepper } from "@/components/cart/QuantityStepper";
 import { Button } from "@/components/ui";
@@ -17,6 +18,7 @@ function maxQuantity(variant: Variant) {
 }
 
 export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
+  const router = useRouter();
   const { addItem } = useCart();
   const [selectedId, setSelectedId] = useState<number | null>(product.hasOptions ? null : product.variants[0]?.id ?? null);
   const [quantity, setQuantity] = useState(1);
@@ -47,6 +49,12 @@ export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
     }
   }
 
+  // 장바구니에 담지 않고 이 옵션·수량만으로 주문서를 연다. 재고·구매 제한은 주문서와 서버에서 다시 확인한다.
+  function handleBuyNow() {
+    if (!selected) return;
+    router.push(`/checkout?variant=${selected.id}&qty=${quantity}`);
+  }
+
   return (
     <div className="space-y-4">
       {product.hasOptions && (
@@ -71,9 +79,20 @@ export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
         <span className="text-lg leading-[23px] font-extrabold whitespace-nowrap">{formatPrice(unitPrice * (selected ? quantity : 1))}</span>
       </div>
 
-      <Button size="md" fullWidth className="rounded-[8px]! text-[15px]!" loading={busy} disabled={!canBuy} onClick={handleAddToCart}>
-        {product.isSoldOut ? "품절" : selected ? "장바구니 담기" : "옵션을 선택해주세요"}
-      </Button>
+      {canBuy ? (
+        <div className="flex gap-2">
+          <Button variant="outline" size="md" className="flex-1 rounded-[8px]! text-[15px]!" loading={busy} onClick={handleAddToCart}>
+            장바구니 담기
+          </Button>
+          <Button size="md" className="flex-1 rounded-[8px]! text-[15px]!" disabled={busy} onClick={handleBuyNow}>
+            바로 구매
+          </Button>
+        </div>
+      ) : (
+        <Button size="md" fullWidth className="rounded-[8px]! text-[15px]!" disabled>
+          {product.isSoldOut || selected?.isSoldOut ? "품절" : "옵션을 선택해주세요"}
+        </Button>
+      )}
 
       {feedback && (
         <p role="status" className={`text-[13px] font-semibold ${feedback.type === "error" ? "text-danger" : "text-brand-strong"}`}>

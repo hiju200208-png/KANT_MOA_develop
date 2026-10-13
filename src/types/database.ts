@@ -426,6 +426,7 @@ export type Database = {
           cancelled_at: string | null
           created_at: string
           id: string
+          is_direct: boolean
           paid_at: string | null
           recipient_name: string
           recipient_phone: string
@@ -439,6 +440,7 @@ export type Database = {
           cancelled_at?: string | null
           created_at?: string
           id?: string
+          is_direct?: boolean
           paid_at?: string | null
           recipient_name: string
           recipient_phone: string
@@ -452,6 +454,7 @@ export type Database = {
           cancelled_at?: string | null
           created_at?: string
           id?: string
+          is_direct?: boolean
           paid_at?: string | null
           recipient_name?: string
           recipient_phone?: string
@@ -707,6 +710,16 @@ export type Database = {
           p_address: string
           p_recipient_name: string
           p_recipient_phone: string
+        }
+        Returns: string
+      }
+      create_direct_order: {
+        Args: {
+          p_address: string
+          p_quantity: number
+          p_recipient_name: string
+          p_recipient_phone: string
+          p_variant_id: number
         }
         Returns: string
       }
