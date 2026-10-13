@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { TopBar } from "@/components/layout/TopBar";
-import type { Artist, BestProduct } from "@/types/app";
+import type { Artist, ProductSummary } from "@/types/app";
 import { artistThemeStyle } from "@/components/artist/artistTheme";
 import { formatPrice } from "@/components/product/formatPrice";
 import { heroSubtitle } from "./heroCopy";
@@ -16,7 +16,28 @@ import { useSwipe } from "@/components/product/useSwipe";
 const PRETENDARD_CSS = "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css";
 const displayFont = "font-['Pretendard_Variable',Pretendard,sans-serif]";
 
-export type SpotlightArtist = Pick<Artist, "id" | "slug" | "name" | "nameKo" | "tagline" | "themeColor"> & { products: BestProduct[] };
+// 배너에 오르는 이유: 영상(컴백) · 새로 나온 상품 · 판매 1위 상품
+export type SpotlightKind = "COMEBACK" | "NEW" | "BEST";
+// pick: 서버(page.tsx)에서 고른 대표 상품. 발매일이 최근 30일 안이거나 곧 발매되는 상품이 있으면 NEW, 없으면 최근 7일 판매 1위 BEST
+export type SpotlightArtist = Pick<Artist, "id" | "slug" | "name" | "nameKo" | "tagline" | "themeColor"> & {
+  pick?: { kind: "NEW" | "BEST"; product: ProductSummary };
+};
+
+const KIND_STYLE: Record<SpotlightKind, { label: string; color: string; reason: string }> = {
+  COMEBACK: { label: "COMEBACK", color: "#d63a32", reason: "" },
+  NEW: { label: "NEW", color: "#1f8a5f", reason: "최근 30일 안에 발매됐거나 곧 발매되는 신상품이에요." },
+  BEST: { label: "BEST", color: "#b9821a", reason: "최근 7일 판매량 1위 상품이에요. 판매 기록이 없으면 최근 등록한 상품을 보여줘요." },
+};
+
+// 배너 오른쪽 위 기준 배지 (기준마다 색이 다름)
+function KindBadge({ kind }: { kind: SpotlightKind }) {
+  const { label, color } = KIND_STYLE[kind];
+  return (
+    <span style={{ backgroundColor: color }} className="absolute top-3 right-0 z-10 rounded-full px-3 py-1 text-[11px] font-bold tracking-[0.18em] text-white text-shadow-none shadow-[0_4px_12px_-4px_rgb(0_0_0/0.4)] md:top-5 md:text-xs">
+      {label}
+    </span>
+  );
+}
 
 const AUTO_SLIDE_MS = 4000;
 const VIDEO_MAX_WAIT_MS = 30000; // 영상이 멈추거나 끝 신호가 오지 않아도 배너가 멈춰 있지 않도록
@@ -54,7 +75,7 @@ const ambientMaskStyle: CSSProperties = {
 };
 const AMBIENT_FPS_MS = 120; // 배경 색을 영상 장면에 맞춰 다시 그리는 간격
 
-function chipLabel(product: BestProduct) {
+function chipLabel(product: ProductSummary) {
   if (product.isLimited) return "한정";
   if (product.isPreorder) return "예약 판매";
   return product.category.name;
@@ -112,7 +133,7 @@ function analyzeImage(image: HTMLImageElement): ImageFit | null {
 
 // 대표 상품 하나를 크게, 배경 없이(누끼처럼): 배경을 흰색으로 올린 뒤 배너 바탕과 곱하기(multiply)로 합성하면 사진 배경이 사라진다.
 // 슬라이드가 보일 때 아래에서 살짝 기울어진 채 떠오르고, 이후 천천히 위아래로 떠 있는다
-function HeroProduct({ product, active }: { product: BestProduct; active: boolean }) {
+function HeroProduct({ product, kind, active }: { product: ProductSummary; kind: SpotlightKind; active: boolean }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [fit, setFit] = useState<ImageFit>(NO_FIT);
   // 이미지가 React 준비 전에 이미 로드됐으면 onLoad가 오지 않으므로, 연결되는 시점에도 한 번 계산한다
@@ -191,7 +212,7 @@ function HeroProduct({ product, active }: { product: BestProduct; active: boolea
       <span aria-hidden="true" className="mx-auto -mt-4 block h-3 w-1/2 rounded-[50%] bg-black/10 blur-md" />
       {/* 모바일은 옆 설명 대신 이미지 아래 한 줄 */}
       <span className="mt-2 block text-center text-xs text-neutral-500 md:hidden">
-        <span className="font-semibold text-neutral-900">BEST 1</span> · <span className="font-medium text-neutral-900">{product.name}</span> ·{" "}
+        <span className="font-semibold" style={{ color: KIND_STYLE[kind].color }}>{KIND_STYLE[kind].label}</span> · <span className="font-medium text-neutral-900">{product.name}</span> ·{" "}
         <span className="tabular-nums">{formatPrice(product.price)}</span>
       </span>
     </Link>
@@ -199,11 +220,13 @@ function HeroProduct({ product, active }: { product: BestProduct; active: boolea
 }
 
 function Slide({ artist, active, video }: { artist: SpotlightArtist; active: boolean; video?: HeroVideo }) {
-  // 영상 슬라이드는 영상을 가리지 않도록 상품을 띄우지 않는다
-  const product = video ? undefined : artist.products[0];
+  // 영상 슬라이드는 COMEBACK(영상을 가리지 않도록 상품은 띄우지 않음), 나머지는 서버에서 고른 NEW·BEST 상품
+  const product = video ? undefined : artist.pick?.product;
+  const kind: SpotlightKind | undefined = video ? "COMEBACK" : artist.pick?.kind;
   return (
     <li aria-roledescription="slide" aria-label={artist.name} aria-hidden={!active} inert={!active} style={artistThemeStyle(artist.themeColor)} className="w-full shrink-0">
-      <div className="content-shell">
+      <div className="content-shell relative">
+        {kind && <KindBadge kind={kind} />}
         <div className="grid items-center gap-4 pt-4 pb-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-6 md:pt-2 md:pb-6">
           <div className={`flex flex-col gap-3 md:gap-4 ${video ? "text-white text-shadow-[0_1px_10px_rgb(0_0_0/0.5)]" : ""}`}>
             <span style={video ? { color: video.accent } : undefined} className={`text-[11px] font-semibold tracking-[0.22em] md:text-xs ${video ? "" : "text-neutral-500"}`}>
@@ -219,18 +242,18 @@ function Slide({ artist, active, video }: { artist: SpotlightArtist; active: boo
               {video?.description ?? heroSubtitle(artist.name, product)}
             </p>
             {product && (
-              // 대표 상품 설명: 가는 선 아래 BEST 1 · 카테고리 · 상품명 · 가격 · 상품 보기 + 선정 기준
+              // 대표 상품 설명: 가는 선 아래 NEW·BEST · 카테고리 · 상품명 · 가격 · 상품 보기 + 선정 기준
               <div className="mt-2 hidden max-w-sm border-t border-neutral-300 pt-4 md:block">
                 <p className="text-[11px] tracking-[0.18em] text-neutral-500">
-                  <span className="font-bold text-neutral-900">BEST 1</span> · {chipLabel(product)}
+                  <span className="font-bold" style={{ color: kind ? KIND_STYLE[kind].color : undefined }}>{kind === "BEST" ? "BEST 1" : kind}</span> · {chipLabel(product)}
                 </p>
                 <p className={`mt-1.5 line-clamp-2 text-base font-semibold break-keep text-neutral-900 md:text-lg`}>{product.name}</p>
                 <p className="mt-1 text-sm font-medium text-neutral-600 tabular-nums">{formatPrice(product.price)}</p>
                 <Link href={`/products/${product.id}`} draggable={false} className="mt-4 inline-flex items-center gap-2 border-b border-neutral-900 pb-0.5 text-sm font-semibold text-neutral-900 transition-[gap] duration-200 hover:gap-3">
                   상품 보기 <span aria-hidden="true">→</span>
                 </Link>
-                {/* 배너 상품 선정 기준 (services getBestProducts · DB get_best_products) */}
-                <p className="mt-4 text-[11px] leading-4 text-neutral-400">최근 7일 판매량 1위 상품이에요. 판매 기록이 없으면 최근 등록한 상품을 보여줘요.</p>
+                {/* 배너 상품 선정 기준 (page.tsx MainHero) */}
+                {kind && <p className="mt-4 text-[11px] leading-4 text-neutral-400">{KIND_STYLE[kind].reason}</p>}
               </div>
             )}
             {video && (
@@ -246,7 +269,7 @@ function Slide({ artist, active, video }: { artist: SpotlightArtist; active: boo
             )}
           </div>
 
-          {product && <HeroProduct product={product} active={active} />}
+          {product && kind && <HeroProduct product={product} kind={kind} active={active} />}
         </div>
 
       </div>
@@ -339,11 +362,12 @@ function VideoBackdrop({
 // 메인 배너 (시안 C · 파스텔 스포트라이트) 슬라이드: 아티스트마다 한 장 (문구 + 겹친 인기 상품 3개).
 // 4초마다 자동으로 넘어가고, 마우스로 끌거나 손가락으로 밀어서·위 버튼으로 넘김. 배경 톤도 아티스트 색으로 바뀜
 export function HomeSpotlight({ artists: allArtists }: { artists: SpotlightArtist[] }) {
-  // 영상 배너 아티스트를 맨 앞에 (heroVideos.ts에 적은 순서대로), 나머지는 받은 순서 그대로
-  const artists = [
-    ...Object.keys(HERO_VIDEOS).flatMap((slug) => allArtists.filter((artist) => artist.slug === slug)),
-    ...allArtists.filter((artist) => !(artist.slug in HERO_VIDEOS)),
-  ];
+  // 순서: COMEBACK 영상(heroVideos.ts 순서)과 NEW·BEST 상품 슬라이드를 번갈아 → 영상, 상품, 영상, 상품 … 남는 건 뒤에
+  const videoArtists = Object.keys(HERO_VIDEOS).flatMap((slug) => allArtists.filter((artist) => artist.slug === slug));
+  const productArtists = allArtists.filter((artist) => !(artist.slug in HERO_VIDEOS));
+  const artists = Array.from({ length: Math.max(videoArtists.length, productArtists.length) }, (_, i) => [videoArtists[i], productArtists[i]])
+    .flat()
+    .filter((artist): artist is SpotlightArtist => artist !== undefined);
   const count = artists.length;
   const loop = count > 1;
   // 무한 루프: 앞에 마지막 복제, 뒤에 첫 번째 복제를 붙여 [마지막', 1..N, 1'] 로 그림.

@@ -1,6 +1,6 @@
-import type { BestProduct } from "@/types/app";
+import type { ProductSummary } from "@/types/app";
 
-// 메인 배너 소제목: 지금 배너에 오른 대표 상품(아티스트별 최근 7일 판매 1위)에 맞춘 문구.
+// 메인 배너 소제목: 지금 배너에 오른 대표 상품(아티스트별 NEW 신보 또는 최근 7일 판매 1위)에 맞춘 문구.
 // 상품 id별 문구가 없으면(순위가 바뀌어 새 상품이 오르면) 카테고리별 문구로 대신한다.
 const BY_PRODUCT: Record<number, string> = {
   751: "‘HOME’의 문을 여는 첫 정규 앨범, 포켓 버전 세트로 간직해 보세요.", // BOYNEXTDOOR 1st Studio Album HOME (POCKET HOME Ver. 세트)
@@ -11,6 +11,10 @@ const BY_PRODUCT: Record<number, string> = {
   259: "BTS BABY 캐릭터를 담은 클로젯 세트, 곁에 두고 매일 함께하세요.", // BTS BABY 23 클로젯 세트
   479: "CARAT을 위한 멤버십 키트로 열세 명과 한 팀이 되는 첫걸음.", // SEVENTEEN CARAT 멤버십 키트
   669: "MOA를 위한 멤버십 키트와 함께 꿈의 다음 장을 넘겨 보세요.", // TOMORROW X TOGETHER MOA 멤버십 키트
+  // NEW (발매일 기준 신보)
+  1: "궤도를 향해 날아오르는 첫 미니앨범 [LIFTOFF], 발매 전에 먼저 만나보세요.", // ORBIT:ON 1st Mini Album [LIFTOFF] (10/16 발매)
+  50: "하루의 끝을 물들이는 두 번째 EP [Afterglow], 발매에 앞서 미리 만나보세요.", // DAYLOG 2nd EP Afterglow (11/5 발매)
+  17: "청량한 너에게 보내는 SODAFM의 첫 미니앨범, 발매 전에 먼저 만나보세요.", // SODAFM 1st Mini Album [청량한 너에게] (10/30 발매)
 };
 
 const BY_CATEGORY: Record<string, (artist: string) => string> = {
@@ -25,7 +29,7 @@ const BY_CATEGORY: Record<string, (artist: string) => string> = {
 
 const FALLBACK = "앨범부터 응원봉, 한정 굿즈까지 한 곳에서";
 
-export function heroSubtitle(artistName: string, product: BestProduct | undefined) {
+export function heroSubtitle(artistName: string, product: ProductSummary | undefined) {
   if (!product) return FALLBACK;
   return BY_PRODUCT[product.id] ?? BY_CATEGORY[product.category.slug]?.(artistName) ?? FALLBACK;
 }
