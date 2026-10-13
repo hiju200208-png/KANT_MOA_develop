@@ -89,6 +89,17 @@ export async function getCart(): Promise<Cart> {
   return toCart(guest.filter((g) => byId.has(g.variant_id)).map((g) => toItem(byId.get(g.variant_id)!, g.quantity)));
 }
 
+// 바로 구매 주문서용: 장바구니에 담지 않고 옵션 하나를 장바구니 항목 모양으로 불러온다. 없거나 숨김이면 null
+export async function getDirectItem(variantId: number, quantity: number): Promise<CartItem | null> {
+  const { data, error } = await createClient()
+    .from('product_variants')
+    .select(VARIANT_COLUMNS)
+    .eq('id', variantId)
+    .maybeSingle();
+  if (error) throw toAppError(error);
+  return data ? toItem(data as unknown as VariantRow, quantity) : null;
+}
+
 // 담기 단계 체크는 안내용. 최종 검증은 pay_order
 async function checkQuantity(variantId: number, quantity: number, userId: string | null) {
   const supabase = createClient();

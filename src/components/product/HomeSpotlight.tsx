@@ -2,15 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { TopBar } from "@/components/layout/TopBar";
 import type { Artist, BestProduct } from "@/types/app";
 import { artistThemeStyle } from "./artistTheme";
+import { HERO_VIDEOS, type HeroVideo } from "./heroVideos";
 import { useSwipe } from "./useSwipe";
 
 export type SpotlightArtist = Pick<Artist, "id" | "slug" | "name" | "nameKo" | "tagline" | "themeColor"> & { products: BestProduct[] };
 
 const AUTO_SLIDE_MS = 4000;
+const VIDEO_MAX_WAIT_MS = 30000; // 영상이 멈추거나 끝 신호가 오지 않아도 배너가 멈춰 있지 않도록
+const AFTER_VIDEO_MS = 1000; // 영상이 끝난 뒤 마지막 장면을 잠깐 보여주고 넘김
 const SLIDE_MS = 700; // 슬라이드 넘김 애니메이션 길이 (아래 duration-700과 맞춤)
 const STACK_COUNT = 3; // 오른쪽에 겹쳐 놓는 상품 수
 
@@ -20,6 +23,33 @@ const bandStyle: CSSProperties = {
   backgroundImage:
     "radial-gradient(1100px 560px at 72% 42%, color-mix(in srgb, var(--artist-color) 10%, white) 0%, color-mix(in srgb, var(--artist-color) 22%, white) 55%, color-mix(in srgb, var(--artist-color) 16%, #eef2fb) 100%)",
 };
+
+// 영상 배너: 바탕은 영상 분위기 색(base), 영상 네 면을 같은 색으로 은은하게 녹이고 왼쪽 문구 뒤는 조금 더 어둡게
+const videoBandStyle = (video: HeroVideo): CSSProperties => ({ backgroundColor: `rgb(${video.base})`, backgroundImage: "none" });
+const videoEdgeFade = ({ base }: HeroVideo) =>
+  [
+    `linear-gradient(to right, rgb(${base}) 0%, rgb(${base} / 0) 12%)`,
+    `linear-gradient(to left, rgb(${base}) 0%, rgb(${base} / 0) 12%)`,
+    `linear-gradient(to bottom, rgb(${base} / 0.8) 0%, rgb(${base} / 0) 14%)`,
+    `linear-gradient(to top, rgb(${base} / 0.8) 0%, rgb(${base} / 0) 14%)`,
+  ].join(", ");
+const videoTextShade = ({ base, ambient }: HeroVideo) =>
+  ambient
+    ? // 뮤비 색 배경은 밝고 화려해서, 문구와 헤더가 읽히도록 왼쪽·위쪽만 살짝 어둡게
+      "linear-gradient(90deg, rgb(0 0 0 / 0.35) 0%, rgb(0 0 0 / 0) 45%), linear-gradient(to bottom, rgb(0 0 0 / 0.25) 0%, rgb(0 0 0 / 0) 22%)"
+    : `linear-gradient(90deg, rgb(${base} / 0.5) 0%, rgb(${base} / 0) 40%)`;
+// ambient 영상: 가장자리를 투명하게 만들어 뒤의 뮤비 색 배경에 녹인다
+const AMBIENT_MASK = [
+  "linear-gradient(to right, transparent 0%, #000 20%, #000 80%, transparent 100%)",
+  "linear-gradient(to bottom, transparent 0%, #000 14%, #000 86%, transparent 100%)",
+].join(", ");
+const ambientMaskStyle: CSSProperties = {
+  maskImage: AMBIENT_MASK,
+  maskComposite: "intersect",
+  WebkitMaskImage: AMBIENT_MASK,
+  WebkitMaskComposite: "source-in",
+};
+const AMBIENT_FPS_MS = 120; // 배경 색을 영상 장면에 맞춰 다시 그리는 간격
 
 // 상품 카드를 부채꼴로 겹쳐 놓는 위치 (가운데 → 오른쪽 위 → 왼쪽 아래)
 const STACK_POSITION = [
@@ -34,16 +64,32 @@ function chipLabel(product: BestProduct) {
   return product.category.name;
 }
 
-function Slide({ artist, active }: { artist: SpotlightArtist; active: boolean }) {
-  const stack = artist.products.slice(0, STACK_COUNT);
+function Slide({ artist, active, video }: { artist: SpotlightArtist; active: boolean; video?: HeroVideo }) {
+  // 영상 슬라이드는 영상을 가리지 않도록 상품 카드를 띄우지 않는다
+  const stack = video ? [] : artist.products.slice(0, STACK_COUNT);
   return (
     <li aria-roledescription="slide" aria-label={artist.name} aria-hidden={!active} inert={!active} style={artistThemeStyle(artist.themeColor)} className="w-full shrink-0">
       <div className="content-shell">
         <div className="grid items-center gap-6 pt-4 pb-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:gap-10 md:pt-6 md:pb-10">
-          <div className="flex flex-col gap-2.5 md:gap-3.5">
-            <span style={{ color: "color-mix(in srgb, var(--artist-color) 55%, #111214)" }} className="text-xs font-bold tracking-[0.14em] md:text-sm">{artist.name} · OFFICIAL GOODS</span>
-            <h2 className="text-[26px] leading-tight font-bold break-keep md:text-[44px]">{artist.tagline ?? `${artist.nameKo} 공식 굿즈`}</h2>
-            <p className="text-sm text-foreground/80 md:text-base">앨범부터 응원봉, 한정 굿즈까지 한 곳에서</p>
+          <div className={`flex flex-col gap-2.5 md:gap-3.5 ${video ? "text-white text-shadow-[0_1px_10px_rgb(0_0_0/0.5)]" : ""}`}>
+            <span style={{ color: video ? video.accent : "color-mix(in srgb, var(--artist-color) 55%, #111214)" }} className="text-xs font-bold tracking-[0.14em] md:text-sm">{artist.name} · OFFICIAL GOODS</span>
+            <h2 style={video?.titleColor ? { color: video.titleColor } : undefined} className="text-[22px] leading-tight font-bold break-keep md:text-[44px]">
+              {video?.title ?? artist.tagline ?? `${artist.nameKo} 공식 굿즈`}
+            </h2>
+            <p className={`text-sm md:text-base ${video ? "max-w-md leading-relaxed break-keep text-white/90" : "text-foreground/80"}`}>
+              {video?.description ?? "앨범부터 응원봉, 한정 굿즈까지 한 곳에서"}
+            </p>
+            {video && (
+              <Link
+                href={`/artists/${artist.slug}?category=album`}
+                draggable={false}
+                // 전역 a { color: inherit }가 바깥 글자색을 물려받지 않도록 색을 직접 지정
+                style={video.cta}
+                className="mt-3 inline-flex h-12 items-center gap-1.5 self-start rounded-full px-6 text-[15px] font-extrabold text-shadow-none shadow-[0_8px_24px_-8px_rgb(0_0_0/0.5)] transition-transform duration-200 hover:-translate-y-0.5 motion-reduce:transition-none"
+              >
+                앨범 보러가기 <span aria-hidden="true">→</span>
+              </Link>
+            )}
           </div>
 
           {stack.length > 0 && (
@@ -69,6 +115,56 @@ function Slide({ artist, active }: { artist: SpotlightArtist; active: boolean })
   );
 }
 
+// 배너 전체(헤더 포함) 뒤에 깔리는 영상. 세로를 꽉 채우고 가로는 16:9 비율로 가운데 정렬
+function VideoBackdrop({ video: config, active, playing, onStart, onEnded, onError }: { video: HeroVideo; active: boolean; playing: boolean; onStart: () => void; onEnded: () => void; onError: () => void }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const ambientRef = useRef<HTMLCanvasElement>(null);
+
+  // ambient: 재생 중인 장면을 아주 작은 캔버스에 계속 옮겨 그리고, 그 캔버스를 크게 늘려 흐리게 깔면 뮤비 색 그라데이션이 된다
+  useEffect(() => {
+    const video = ref.current;
+    const canvas = ambientRef.current;
+    const context = canvas?.getContext("2d");
+    if (!config.ambient || !active || !video || !canvas || !context) return;
+    const draw = () => {
+      if (video.readyState >= 2) context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    };
+    draw();
+    video.addEventListener("loadeddata", draw);
+    video.addEventListener("seeked", draw);
+    const timer = window.setInterval(draw, AMBIENT_FPS_MS);
+    return () => {
+      window.clearInterval(timer);
+      video.removeEventListener("loadeddata", draw);
+      video.removeEventListener("seeked", draw);
+    };
+  }, [active, config.ambient]);
+
+  // 이 슬라이드가 보일 때만 처음부터 재생하고, 넘어가면 멈춘다
+  useEffect(() => {
+    const video = ref.current;
+    if (!video) return;
+    if (active && playing) {
+      onStart(); // 다시 돌아왔을 때 이전에 끝난 기록을 지운다
+      video.currentTime = 0;
+      video.play().catch(onEnded); // 재생이 막히면(자동재생 차단 등) 끝난 것으로 보고 넘긴다
+    } else {
+      video.pause();
+    }
+  }, [active, playing]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div aria-hidden="true" className={`pointer-events-none absolute inset-0 flex justify-center overflow-hidden transition-opacity duration-700 motion-reduce:transition-none ${active ? "opacity-100" : "opacity-0"}`}>
+      {config.ambient && <canvas ref={ambientRef} width={32} height={18} className="absolute inset-0 size-full scale-125 blur-[56px] saturate-150" />}
+      <div className="relative aspect-video h-full flex-none" style={config.ambient ? ambientMaskStyle : undefined}>
+        <video ref={ref} src={config.src} muted playsInline preload="metadata" onEnded={onEnded} onError={onError} className="absolute inset-0 size-full object-cover" />
+        {!config.ambient && <div className="absolute inset-0" style={{ background: videoEdgeFade(config) }} />}
+      </div>
+      <div className="absolute inset-0" style={{ background: videoTextShade(config) }} />
+    </div>
+  );
+}
+
 // 메인 배너 (시안 C · 파스텔 스포트라이트) 슬라이드: 아티스트마다 한 장 (문구 + 겹친 인기 상품 3개).
 // 4초마다 자동으로 넘어가고, 마우스로 끌거나 손가락으로 밀어서·위 버튼으로 넘김. 배경 톤도 아티스트 색으로 바뀜
 export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
@@ -83,14 +179,33 @@ export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
   const index = loop ? (pos - 1 + count) % count : 0;
   const move = (step: number) => setPos((current) => Math.min(Math.max(current + step, 0), count + 1));
   const { dragX, dragging, handlers } = useSwipe({ enabled: loop, onSwipe: move });
+  const [failedVideos, setFailedVideos] = useState<string[]>([]);
+  const [endedPos, setEndedPos] = useState<number | null>(null); // 영상이 끝까지 재생된 슬라이드 위치
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const videoOf = (item: SpotlightArtist | undefined) => (item && !failedVideos.includes(item.slug) ? HERO_VIDEOS[item.slug] : undefined);
+  const artist = artists[index];
+  const activeVideo = videoOf(artist);
+  const videoActive = Boolean(activeVideo);
 
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  // 영상 슬라이드는 4초 대신 영상이 끝나면 넘어간다 (동작 줄이기 설정이면 영상을 재생하지 않으므로 4초)
+  const playingVideo = videoActive && !reducedMotion;
+  const videoEnded = endedPos === pos;
+  const autoSlideMs = !playingVideo ? AUTO_SLIDE_MS : videoEnded ? AFTER_VIDEO_MS : VIDEO_MAX_WAIT_MS;
   useEffect(() => {
     if (!loop || paused || dragging) return;
     const timer = window.setTimeout(() => {
       if (!document.hidden) move(1);
-    }, AUTO_SLIDE_MS);
+    }, autoSlideMs);
     return () => window.clearTimeout(timer);
-  }, [pos, loop, paused, dragging]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pos, loop, paused, dragging, autoSlideMs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 순간 이동이 그려진 다음 프레임에 다시 애니메이션 켜기
   useEffect(() => {
@@ -110,36 +225,53 @@ export function HomeSpotlight({ artists }: { artists: SpotlightArtist[] }) {
     return () => window.clearTimeout(timer);
   }, [pos, loop, count, dragging]);
 
-  const artist = artists[index];
   return (
     <section
       aria-roledescription="carousel"
       aria-label="메인 배너"
-      style={{ ...artistThemeStyle(artist?.themeColor ?? null), ...bandStyle }}
-      className="transition-[background-color] duration-700"
+      style={{ ...artistThemeStyle(artist?.themeColor ?? null), ...(activeVideo ? videoBandStyle(activeVideo) : bandStyle) }}
+      className="relative transition-[background-color] duration-700"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
     >
-      <TopBar showBack={false} />
+      {artists.map((item, i) => {
+        const video = videoOf(item);
+        return video ? (
+          <VideoBackdrop
+            key={item.id}
+            video={video}
+            active={i === index}
+            playing={!reducedMotion}
+            onStart={() => setEndedPos(null)}
+            onEnded={() => setEndedPos(pos)}
+            onError={() => setFailedVideos((list) => [...list, item.slug])}
+          />
+        ) : null;
+      })}
 
-      <div className="overflow-hidden">
+      {/* 영상 위에서는 헤더 로고·아이콘·로그인 버튼을 흰색으로. 모바일 메뉴(흰 패널 dialog)는 원래 색 유지 */}
+      <div className={`relative ${videoActive ? "text-white [&_.border-line]:border-white/45 [&_.border-line]:bg-white/10 [&_.border-line]:backdrop-blur-sm [&_a]:text-white [&_button]:text-white [&_img]:brightness-0 [&_img]:invert [&_dialog]:text-foreground [&_dialog_a]:text-foreground [&_dialog_button]:text-foreground [&_dialog_.border-line]:border-line [&_dialog_.border-line]:bg-transparent [&_dialog_.border-line]:backdrop-blur-none" : ""}`}>
+        <TopBar showBack={false} />
+      </div>
+
+      <div className="relative overflow-hidden">
         <ul
           className={`flex touch-pan-y select-none ${dragging ? "cursor-grabbing" : instant ? "" : "transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"}`}
           style={{ transform: `translateX(calc(-${pos * 100}% + ${dragX}px))` }}
           {...handlers}
         >
           {slides.map((item, i) => (
-            <Slide key={`${i}-${item.id}`} artist={item} active={i === pos} />
+            <Slide key={`${i}-${item.id}`} artist={item} active={i === pos} video={videoOf(item)} />
           ))}
         </ul>
       </div>
 
       {count > 1 && (
         // 진행 막대: 어두운 막대 위 흰 구간이 현재 배너 위치. 구간마다 투명 버튼이 겹쳐 있어 눌러서 이동
-        <div className="content-shell pb-6 md:pb-8">
-          <div className="relative mx-auto h-1 w-40 rounded-full bg-foreground/80 md:w-60" role="group" aria-label="배너 선택">
+        <div className="content-shell relative pb-6 md:pb-8">
+          <div className={`relative mx-auto h-1 w-40 rounded-full md:w-60 ${videoActive ? "bg-white/30" : "bg-foreground/80"}`} role="group" aria-label="배너 선택">
             <span
               aria-hidden="true"
               className="absolute inset-y-0 left-0 rounded-full bg-white transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"

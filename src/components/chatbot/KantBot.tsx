@@ -72,7 +72,7 @@ export function KantBot() {
           role="dialog"
           aria-label="칸트봇"
           onKeyDown={(event) => event.key === "Escape" && close()}
-          className="fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[45] flex h-[min(70dvh,560px)] flex-col overflow-hidden rounded-3xl bg-white shadow-[0_24px_60px_-12px_rgb(17_18_20/0.35)] md:inset-x-auto md:right-6 md:bottom-24 md:w-[380px]"
+          className="fixed inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-[45] flex h-[min(70dvh,560px)] flex-col overflow-hidden rounded-3xl bg-white shadow-[0_24px_60px_-12px_rgb(17_18_20/0.35)] md:inset-x-auto md:right-6 md:bottom-24 md:w-[380px]"
         >
           <header className="flex items-center gap-3 bg-[linear-gradient(135deg,var(--brand-strong),#8a70df)] px-5 py-4 text-white">
             <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white/20">
@@ -155,7 +155,7 @@ export function KantBot() {
         onClick={() => (open ? close() : setOpen(true))}
         aria-expanded={open}
         aria-label={open ? "칸트봇 닫기" : "칸트봇 열기"}
-        className="fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[45] flex h-14 items-center gap-2 rounded-full bg-neutral-900 px-5 font-bold text-white shadow-[0_12px_30px_-8px_rgb(17_18_20/0.45)] transition-all hover:-translate-y-0.5 hover:bg-neutral-700 md:right-6 md:bottom-6"
+        className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-[45] flex size-12 items-center justify-center gap-2 rounded-full bg-neutral-900 font-bold sm:h-14 sm:w-auto sm:px-5 text-white shadow-[0_12px_30px_-8px_rgb(17_18_20/0.45)] transition-all hover:-translate-y-0.5 hover:bg-neutral-700 md:right-6 md:bottom-6"
       >
         <SparkleIcon className="size-5 text-white" />
         <span className="hidden text-sm text-white sm:inline">{open ? "닫기" : "칸트봇"}</span>

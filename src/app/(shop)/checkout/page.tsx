@@ -1,7 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { AddressFields } from "@/components/address/AddressFields";
 import { AddressPickerModal } from "@/components/address/AddressPickerModal";
 import { AddressSummary } from "@/components/address/AddressSummary";
@@ -24,18 +25,73 @@ import { getErrorCode, getErrorMessage } from "@/constants/error-messages";
 import { useCart } from "@/hooks/useCart";
 import { useShippingFee } from "@/hooks/useShippingFee";
 import { createAddress, getAddresses } from "@/services/addresses";
-import { createOrder, payOrder } from "@/services/orders";
-import type { Address, AddressInput } from "@/types/app";
+import { getDirectItem } from "@/services/cart";
+import { createDirectOrder, createOrder, payOrder } from "@/services/orders";
+import type { Address, AddressInput, CartItem } from "@/types/app";
 
 // 결과를 사용자 id와 함께 보관해서, 다른 계정으로 바뀌면 이전 주소를 쓰지 않는다.
 type LoadedAddresses = { userId: string; addresses: Address[]; error: string | null };
 
+// 바로 구매: /checkout?variant=12&qty=2. variant가 없으면 장바구니 전체를 주문한다.
+type DirectBuy = { variantId: number; quantity: number };
+type LoadedDirect = { key: string; item: CartItem | null; error: string | null };
+
+function parseDirect(params: URLSearchParams): DirectBuy | null {
+  const variantId = Number(params.get("variant"));
+  if (!Number.isInteger(variantId) || variantId <= 0) return null;
+  const quantity = Number(params.get("qty") ?? 1);
+  return { variantId, quantity: Number.isInteger(quantity) && quantity > 0 ? quantity : 1 };
+}
+
+// cacheComponents 사용 중이라 검색 파라미터를 읽는 클라이언트 컴포넌트는 Suspense로 감싼다.
 export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<CheckoutSkeleton />}>
+      <Checkout />
+    </Suspense>
+  );
+}
+
+function CheckoutSkeleton() {
+  return (
+    <div className="content-shell py-8 md:py-12">
+      <Skeleton className="h-64 w-full" />
+    </div>
+  );
+}
+
+function Checkout() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const direct = parseDirect(searchParams);
+  const directKey = direct ? `${direct.variantId}:${direct.quantity}` : null;
+  const checkoutPath = direct ? `/checkout?variant=${direct.variantId}&qty=${direct.quantity}` : "/checkout";
+
   const { profile, initialized } = useAuth();
-  const { items, totalQuantity, totalPrice, loaded, refresh } = useCart();
-  const { shippingFee, total } = useShippingFee(totalPrice);
+  const cart = useCart();
   const userId = profile?.id ?? null;
+
+  const [directState, setDirectState] = useState<LoadedDirect | null>(null);
+  useEffect(() => {
+    if (!direct || !directKey) return;
+    let active = true;
+    getDirectItem(direct.variantId, direct.quantity)
+      .then((item) => active && setDirectState({ key: directKey, item, error: null }))
+      .catch((error) => active && setDirectState({ key: directKey, item: null, error: getErrorMessage(error) }));
+    return () => {
+      active = false;
+    };
+    // directKey가 같으면 direct도 같은 값이다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [directKey]);
+
+  const currentDirect = directState?.key === directKey ? directState : null;
+  const directItem = currentDirect?.item ?? null;
+  const items = direct ? (directItem ? [directItem] : []) : cart.items;
+  const totalQuantity = direct ? (directItem?.quantity ?? 0) : cart.totalQuantity;
+  const totalPrice = direct ? (directItem ? directItem.unitPrice * directItem.quantity : 0) : cart.totalPrice;
+  const loaded = direct ? currentDirect !== null : cart.loaded;
+  const { shippingFee, total } = useShippingFee(totalPrice);
 
   const [addressState, setAddressState] = useState<LoadedAddresses | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -94,9 +150,9 @@ export default function CheckoutPage() {
     setSubmitting(true);
     let orderId: string;
     try {
-      orderId = await createOrder(recipient);
+      orderId = direct ? await createDirectOrder(direct.variantId, direct.quantity, recipient) : await createOrder(recipient);
     } catch (error) {
-      if (getErrorCode(error) === "NOT_AUTHENTICATED") return router.push("/login?next=/checkout");
+      if (getErrorCode(error) === "NOT_AUTHENTICATED") return router.push(`/login?next=${encodeURIComponent(checkoutPath)}`);
       setSubmitError(getErrorMessage(error));
       setSubmitting(false);
       return;
@@ -110,24 +166,39 @@ export default function CheckoutPage() {
     } catch {
       // 결제가 실패하면 주문은 결제 대기로 남는다. 주문 상세에서 다시 결제하거나 취소할 수 있다.
     }
-    // 결제된 상품은 서버에서 장바구니에서 빠지므로 다시 불러온다.
-    await refresh().catch(() => {});
+    // 장바구니 주문은 결제된 상품이 서버에서 장바구니에서 빠지므로 다시 불러온다. (바로 구매는 장바구니 그대로)
+    if (!direct) await cart.refresh().catch(() => {});
     router.push(`/orders/${orderId}`);
   }
 
   if (!initialized || !loaded || (userId && !current)) {
-    return (
-      <div className="content-shell py-8 md:py-12">
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
+    return <CheckoutSkeleton />;
   }
 
   if (!profile) {
     return (
       <div className="content-shell py-8 md:py-12">
         <PageTitle title="주문서" />
-        <LoginRequired next="/checkout" description="로그인하면 담아둔 상품이 그대로 장바구니에 남아 있어요." />
+        <LoginRequired
+          next={checkoutPath}
+          description={direct ? "로그인하면 선택한 상품을 바로 주문할 수 있어요." : "로그인하면 담아둔 상품이 그대로 장바구니에 남아 있어요."}
+        />
+      </div>
+    );
+  }
+
+  if (direct && !submitting && (!directItem || !directItem.isAvailable)) {
+    return (
+      <div className="content-shell py-8 md:py-12">
+        <EmptyState
+          title="지금은 구매할 수 없는 상품이에요"
+          description={currentDirect?.error ?? (directItem ? "판매가 중지되었거나 재고가 부족해요." : "상품을 찾을 수 없어요.")}
+          action={
+            <Link href={directItem ? `/products/${directItem.product.id}` : "/"}>
+              <Button>{directItem ? "상품으로 돌아가기" : "홈으로 가기"}</Button>
+            </Link>
+          }
+        />
       </div>
     );
   }
@@ -146,7 +217,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="content-shell py-8 md:py-12">
-      <CheckoutSteps current={1} />
+      <CheckoutSteps current={1} direct={direct !== null} />
       <PageTitle title="주문서" description="배송 정보를 확인하고 결제해주세요." />
       <form onSubmit={handleSubmit} noValidate className="grid gap-6 lg:grid-cols-[1fr_360px] lg:items-start">
         <div className="space-y-6">
