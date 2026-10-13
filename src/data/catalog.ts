@@ -27,7 +27,7 @@ export const artists: Artist[] = [
     name: 'SODAFM',
     nameKo: '소다에프엠',
     slug: 'sodafm',
-    logoUrl: 'https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/artists/sodafm/logo.webp',
+    logoUrl: 'https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/artists/sodafm/logo-v2.webp',
     heroImageUrl: 'https://rhnogvfrqoxgtcminuwa.supabase.co/storage/v1/object/public/artists/sodafm/hero.webp',
     themeColor: '#87CEEB',
     tagline: '청량한 주파수로 너에게',
