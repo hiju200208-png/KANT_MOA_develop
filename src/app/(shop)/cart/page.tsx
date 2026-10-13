@@ -5,11 +5,11 @@ import { useState } from "react";
 import { CartEmpty } from "@/components/cart/CartEmpty";
 import { CartItemRow } from "@/components/cart/CartItemRow";
 import { CheckoutSteps } from "@/components/order/CheckoutSteps";
-import { PageTitle } from "@/components/order/PageTitle";
-import { Button, Card, Skeleton } from "@/components/ui";
+import { Button, Card, PageTitle, Skeleton } from "@/components/ui";
 import { getErrorMessage } from "@/constants/error-messages";
 import { useCart } from "@/hooks/useCart";
 import { useShippingFee } from "@/hooks/useShippingFee";
+import { formatPrice } from "@/lib/formatPrice";
 
 export default function CartPage() {
   const { items, totalQuantity, totalPrice, loaded, updateQuantity, removeItem } = useCart();
@@ -61,11 +61,11 @@ export default function CartPage() {
             <h2 className="text-base font-black md:text-lg">주문 예상 금액</h2>
             <dl className="mt-4 space-y-2.5 text-[13px] md:mt-5 md:space-y-3 md:text-sm">
               <div className="flex justify-between"><dt className="text-muted">상품 수량</dt><dd className="font-bold">{totalQuantity}개</dd></div>
-              <div className="flex justify-between"><dt className="text-muted">상품 금액</dt><dd className="font-bold tabular-nums">{totalPrice.toLocaleString("ko-KR")}원</dd></div>
-              <div className="flex justify-between"><dt className="text-muted">배송비</dt><dd className="font-bold tabular-nums">{shippingFee === 0 ? "무료" : `${shippingFee.toLocaleString("ko-KR")}원`}</dd></div>
+              <div className="flex justify-between"><dt className="text-muted">상품 금액</dt><dd className="font-bold tabular-nums">{formatPrice(totalPrice)}</dd></div>
+              <div className="flex justify-between"><dt className="text-muted">배송비</dt><dd className="font-bold tabular-nums">{shippingFee === 0 ? "무료" : formatPrice(shippingFee)}</dd></div>
               <div className="flex items-baseline justify-between border-t border-line pt-4">
                 <dt className="font-bold">합계</dt>
-                <dd className="text-xl font-black tabular-nums md:text-2xl">{total.toLocaleString("ko-KR")}원</dd>
+                <dd className="text-xl font-black tabular-nums md:text-2xl">{formatPrice(total)}</dd>
               </div>
             </dl>
             {hasUnavailable && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-xs leading-5 text-danger">품절·재고 부족 상품은 합계에서 제외됐어요. 삭제 후 주문해주세요.</p>}

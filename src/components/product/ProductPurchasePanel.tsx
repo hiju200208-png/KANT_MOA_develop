@@ -8,7 +8,7 @@ import { Button } from "@/components/ui";
 import { getErrorMessage } from "@/constants/error-messages";
 import { useCart } from "@/hooks/useCart";
 import type { ProductDetail, Variant } from "@/types/app";
-import { formatPrice } from "./formatPrice";
+import { formatPrice } from "@/lib/formatPrice";
 import { OptionSelector } from "./OptionSelector";
 
 type Feedback = { type: "success" | "error"; text: string } | null;

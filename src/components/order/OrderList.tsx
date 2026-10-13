@@ -10,6 +10,7 @@ import { Button, Card, EmptyState, Skeleton } from "@/components/ui";
 import { getErrorMessage } from "@/constants/error-messages";
 import { getOrders } from "@/services/orders";
 import type { OrderStatus, OrderSummary } from "@/types/app";
+import { formatPrice } from "@/lib/formatPrice";
 
 type Tab = "all" | OrderStatus;
 
@@ -121,7 +122,7 @@ export function OrderList() {
                       </div>
                       <p className="mt-2 truncate font-bold">{orderTitle(order)}</p>
                     </div>
-                    <p className="shrink-0 text-base font-black">{order.totalPrice.toLocaleString("ko-KR")}원</p>
+                    <p className="shrink-0 text-base font-black">{formatPrice(order.totalPrice)}</p>
                   </Card>
                 </Link>
               </li>
