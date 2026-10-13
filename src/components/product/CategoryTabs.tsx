@@ -2,7 +2,8 @@ import Link from "next/link";
 import type { Category } from "@/types/app";
 
 interface CategoryTabsProps {
-  categories: Pick<Category, "slug" | "name">[];
+  // href가 있으면 그 주소로 이동 ("전체" → /products), 없으면 /category/{slug}
+  categories: (Pick<Category, "slug" | "name"> & { href?: string })[];
   current: string;
 }
 
@@ -15,7 +16,7 @@ export function CategoryTabs({ categories, current }: CategoryTabsProps) {
           return (
             <li key={category.slug}>
               <Link
-                href={`/category/${category.slug}`}
+                href={category.href ?? `/category/${category.slug}`}
                 aria-current={active ? "page" : undefined}
                 className={`inline-flex h-10 items-center rounded-full border px-4 text-sm font-semibold transition-all ${active ? "border-foreground bg-foreground" : "brand-gradient-soft-hover border-line bg-white hover:border-neutral-400"}`}
               >
