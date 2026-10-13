@@ -50,7 +50,7 @@ export function MobileMenu() {
         aria-label="메뉴"
         // 배경(backdrop)을 누르면 닫기: 클릭 대상이 dialog 자신이면 바깥 영역
         onClick={(event) => event.target === event.currentTarget && close()}
-        className="m-0 ml-auto h-dvh max-h-none w-[min(80vw,320px)] max-w-none bg-white p-0 backdrop:bg-black/40 motion-safe:open:animate-[menu-in_200ms_ease-out] md:hidden"
+        className="mobile-menu m-0 ml-auto h-dvh max-h-none w-[min(80vw,320px)] max-w-none bg-white p-0 md:hidden"
       >
         <div className="flex h-full flex-col px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <div className="flex h-11 items-center justify-between">
