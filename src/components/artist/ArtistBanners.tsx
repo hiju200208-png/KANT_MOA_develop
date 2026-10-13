@@ -1,5 +1,6 @@
 import { Skeleton } from "@/components/ui";
-import { getArtistBanners, getArtistMembers, getProducts } from "@/services/products";
+import { getArtistBanners, getArtistMembers } from "@/services/artists";
+import { getProducts } from "@/services/products";
 import type { Artist, ArtistPromoBanner, ProductSummary } from "@/types/app";
 import { ArtistBannerCarousel, type ArtistBanner } from "./ArtistBannerCarousel";
 import { artistThemeStyle } from "./artistTheme";

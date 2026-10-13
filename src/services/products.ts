@@ -1,9 +1,5 @@
 import { publicClient as supabase } from '@/lib/supabase/client';
-import type { Database } from '@/types/database';
 import type {
-  Artist,
-  ArtistMember,
-  ArtistPromoBanner,
   BestProduct,
   Category,
   HomeBanner,
@@ -16,99 +12,12 @@ import type {
 } from '@/types/app';
 import { toAppError } from './errors';
 import {
-  fallbackArtist,
-  fallbackArtists,
   fallbackCategories,
   fallbackProduct,
   fallbackProducts,
   warnFallback,
 } from './fallback';
 import { getImageUrl } from './storage';
-
-type ArtistRow = Database['public']['Tables']['artists']['Row'];
-
-const DAYLOG_MEMBER_BIRTHDAYS: Record<string, string> = {
-  지아: '2006-02-08',
-  희수: '2008-08-18',
-  혜주: '2007-01-18',
-  서연: '2009-05-22',
-};
-
-const DAYLOG_MEMBER_MASCOTS: Record<string, string> = {
-  지아: "하늘빛 여우 '지야'",
-  희수: "하트 강아지 '희봉'",
-  혜주: "별빛 고양이 '주야'",
-  서연: "리본 토끼 '연이'",
-};
-
-const toArtist = (a: ArtistRow): Artist => ({
-  id: a.id,
-  name: a.name,
-  nameKo: a.name_ko,
-  slug: a.slug,
-  logoUrl: getImageUrl('artists', a.logo_path),
-  heroImageUrl: getImageUrl('artists', a.hero_image_path),
-  themeColor: a.theme_color,
-  tagline: a.tagline,
-});
-
-export async function getArtists(): Promise<Artist[]> {
-  const { data, error } = await supabase.from('artists').select('*').order('sort_order');
-  if (error) {
-    warnFallback('getArtists', error);
-    return fallbackArtists();
-  }
-  return data.map(toArtist);
-}
-
-export async function getArtist(slug: string): Promise<Artist | null> {
-  const { data, error } = await supabase.from('artists').select('*').eq('slug', slug).maybeSingle();
-  if (error) {
-    warnFallback('getArtist', error);
-    return fallbackArtist(slug);
-  }
-  return data && toArtist(data);
-}
-
-// 등록된 배너가 없거나 없는 slug면 빈 배열
-export async function getArtistBanners(slug: string): Promise<ArtistPromoBanner[]> {
-  const { data, error } = await supabase
-    .from('artist_banners')
-    .select('id, title, subtitle, image_path, link_path, artists!inner(slug)')
-    .eq('artists.slug', slug)
-    .order('sort_order');
-  if (error) throw toAppError(error);
-  return data.map((b) => ({
-    id: b.id,
-    title: b.title,
-    subtitle: b.subtitle,
-    imageUrl: getImageUrl('artists', b.image_path)!,
-    href: b.link_path,
-  }));
-}
-
-// 없는 slug면 빈 배열
-export async function getArtistMembers(slug: string): Promise<ArtistMember[]> {
-  const { data, error } = await supabase
-    .from('artist_members')
-    .select('*, artists!inner(slug)')
-    .eq('artists.slug', slug)
-    .order('sort_order');
-  if (error) throw toAppError(error);
-  return data.map((m) => ({
-    id: m.id,
-    name: m.name,
-    nameEn: m.name_en,
-    position: m.position,
-    color: m.color,
-    mascot: slug === 'daylog' ? (DAYLOG_MEMBER_MASCOTS[m.name] ?? m.mascot) : m.mascot,
-    birthday: slug === 'daylog' ? (DAYLOG_MEMBER_BIRTHDAYS[m.name] ?? m.birthday) : m.birthday,
-    mbti: m.mbti,
-    description: m.description,
-    tags: m.tags,
-    imageUrl: getImageUrl('artists', m.image_path),
-  }));
-}
 
 export async function getCategories(): Promise<Category[]> {
   const { data, error } = await supabase

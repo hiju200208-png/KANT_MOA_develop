@@ -5,7 +5,8 @@ import { LoadError } from "@/components/product/LoadError";
 import { HomeSpotlight, type SpotlightArtist } from "@/components/home/HomeSpotlight";
 import { HERO_VIDEOS } from "@/components/home/heroVideos";
 import { EmptyState, Skeleton } from "@/components/ui";
-import { getArtists, getBestProducts, getProducts } from "@/services/products";
+import { getArtists } from "@/services/artists";
+import { getBestProducts, getProducts } from "@/services/products";
 import type { Artist, BestProduct, ProductSummary } from "@/types/app";
 
 export default function HomePage() {

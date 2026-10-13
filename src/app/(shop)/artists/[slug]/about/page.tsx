@@ -7,7 +7,7 @@ import { artistThemeStyle } from "@/components/artist/artistTheme";
 import { LoadError } from "@/components/product/LoadError";
 import { MemberGallery } from "@/components/artist/MemberGallery";
 import { EmptyState, Skeleton } from "@/components/ui";
-import { getArtist, getArtistMembers } from "@/services/products";
+import { getArtist, getArtistMembers } from "@/services/artists";
 import type { Artist, ArtistMember } from "@/types/app";
 
 // 아티스트 이름 워드마크용 (패션 매거진 느낌의 디도 세리프)
