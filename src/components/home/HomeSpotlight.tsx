@@ -279,11 +279,21 @@ function Slide({ artist, active, video }: { artist: SpotlightArtist; active: boo
   );
 }
 
+function SoundIcon({ on }: { on: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" />
+      {on ? <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" /> : <path d="m16 9 6 6m0-6-6 6" />}
+    </svg>
+  );
+}
+
 // 배너 전체(헤더 포함) 뒤에 깔리는 영상. 세로를 꽉 채우고 가로는 16:9 비율로 가운데 정렬
 function VideoBackdrop({
   video: config,
   active,
   playing,
+  sound,
   onStart,
   onEnded,
   onBlocked,
@@ -292,6 +302,7 @@ function VideoBackdrop({
   video: HeroVideo;
   active: boolean;
   playing: boolean;
+  sound: boolean; // 사용자가 소리 버튼을 눌렀을 때만 true
   onStart: () => void;
   onEnded: () => void;
   onBlocked: () => void;
@@ -299,6 +310,16 @@ function VideoBackdrop({
 }) {
   const ref = useRef<HTMLVideoElement>(null);
   const ambientRef = useRef<HTMLCanvasElement>(null);
+  const soundRef = useRef(sound);
+
+  // 소리 버튼: 누르는 순간(사용자 동작)이라 브라우저가 소리 재생을 허용한다. 멈춰 있으면(자동재생 차단) 이때 다시 재생
+  useEffect(() => {
+    soundRef.current = sound;
+    const video = ref.current;
+    if (!video) return;
+    video.muted = !sound;
+    if (sound && active && playing && video.paused && !video.ended) video.play().catch(() => {});
+  }, [sound]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ambient: 재생 중인 장면을 아주 작은 캔버스에 계속 옮겨 그리고, 그 캔버스를 크게 늘려 흐리게 깔면 뮤비 색 그라데이션이 된다
   useEffect(() => {
@@ -333,10 +354,10 @@ function VideoBackdrop({
       return;
     }
     onStart(); // 다시 돌아왔을 때 이전에 끝난·막힌 기록을 지운다
-    video.muted = true;
+    video.muted = !soundRef.current;
     video.currentTime = 0;
     const play = () => {
-      video.muted = true;
+      video.muted = !soundRef.current; // 소리를 켜 두지 않았으면 항상 음소거 (자동재생 허용 조건)
       video.play().catch((error: DOMException) => {
         if (error.name === "NotAllowedError") onBlocked(); // AbortError(넘기면서 멈춤)는 무시
       });
@@ -383,6 +404,7 @@ export function HomeSpotlight({ artists: allArtists }: { artists: SpotlightArtis
   const [failedVideos, setFailedVideos] = useState<string[]>([]);
   const [endedPos, setEndedPos] = useState<number | null>(null); // 영상이 끝까지 재생된 슬라이드 위치
   const [blockedPos, setBlockedPos] = useState<number | null>(null); // 브라우저가 자동재생을 막은 슬라이드 위치
+  const [sound, setSound] = useState(false); // 영상 소리 (처음엔 꺼짐, 버튼으로 켜면 다른 영상 슬라이드에도 유지)
   const [reducedMotion, setReducedMotion] = useState(false);
   const videoOf = (item: SpotlightArtist | undefined) => (item && !failedVideos.includes(item.slug) ? HERO_VIDEOS[item.slug] : undefined);
   const artist = artists[index];
@@ -447,6 +469,7 @@ export function HomeSpotlight({ artists: allArtists }: { artists: SpotlightArtis
             video={video}
             active={i === index}
             playing={!reducedMotion}
+            sound={sound}
             onStart={() => {
               setEndedPos(null);
               setBlockedPos(null);
@@ -476,6 +499,22 @@ export function HomeSpotlight({ artists: allArtists }: { artists: SpotlightArtis
           ))}
         </ul>
       </div>
+
+      {videoActive && !reducedMotion && (
+        // 영상 소리 켜기/끄기 (영상 슬라이드에서만)
+        <div className="content-shell pointer-events-none absolute inset-x-0 bottom-0 z-10">
+          <button
+            type="button"
+            aria-pressed={sound}
+            aria-label={sound ? "영상 소리 끄기" : "영상 소리 켜기"}
+            onClick={() => setSound((on) => !on)}
+            className="pointer-events-auto absolute right-0 bottom-4 flex h-10 items-center gap-2 rounded-full bg-black/40 px-4 text-xs font-semibold text-white backdrop-blur-sm transition-colors hover:bg-black/60 md:bottom-6"
+          >
+            <SoundIcon on={sound} />
+            {sound ? "소리 끄기" : "소리 켜기"}
+          </button>
+        </div>
+      )}
 
       {count > 1 && (
         // 진행 막대: 어두운 막대 위 흰 구간이 현재 배너 위치. 구간마다 투명 버튼이 겹쳐 있어 눌러서 이동
