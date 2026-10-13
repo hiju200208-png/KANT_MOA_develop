@@ -189,10 +189,12 @@ function HeroProduct({ product, kind, active }: { product: ProductSummary; kind:
   return (
     <Link href={`/products/${product.id}`} draggable={false} className="group relative mx-auto block w-full max-w-[280px] md:mx-0 md:max-w-[440px]">
       {/* 움직이는 상자는 배너와 같은 색을 깔아야 곱하기 합성이 배너 바탕 기준으로 된다 (보이지 않음) */}
-      <span ref={ref} className="relative block aspect-square" style={{ backgroundColor: BAND_COLOR }}>
+      {/* 마우스를 올리면 살짝 확대: 합성 영역이 아니라 배너 색 상자 전체를 키워야 사진 테두리가 드러나지 않는다.
+          scale 속성은 떠 있는 애니메이션(transform)과 따로 적용된다 */}
+      <span ref={ref} className="relative block aspect-square transition-[scale] duration-700 group-hover:scale-[1.04] motion-reduce:transition-none" style={{ backgroundColor: BAND_COLOR }}>
         {product.thumbnailUrl && (
           // 합성(multiply)은 감싼 상자에, 밝기 필터는 이미지에 따로 건다 (한 요소에 같이 걸면 Chrome이 합성을 무시함)
-          <span className="absolute inset-0 overflow-hidden mix-blend-multiply transition-transform duration-700 group-hover:scale-[1.04] motion-reduce:transition-none" style={EDGE_FEATHER}>
+          <span className="absolute inset-0 overflow-hidden mix-blend-multiply" style={EDGE_FEATHER}>
             <Image
               src={product.thumbnailUrl}
               alt={`${product.artist.name} ${product.name}`}
