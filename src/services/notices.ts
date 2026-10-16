@@ -1,3 +1,4 @@
+import { cacheLife } from 'next/cache';
 import { publicClient as supabase } from '@/lib/supabase/client';
 import type { Notice } from '@/types/app';
 import { toAppError } from './errors';
@@ -35,6 +36,8 @@ export function formatNoticeDate(iso: string): string {
 
 // 상단 고정 먼저, 그다음 최신순. artistSlug가 있으면 그 아티스트 공지만 (전체 공지 제외)
 export async function getNotices({ artistSlug, limit = 20 }: { artistSlug?: string; limit?: number } = {}): Promise<Notice[]> {
+  'use cache';
+  cacheLife('minutes');
   let query = supabase
     .from('notices')
     .select(artistSlug ? COLUMNS.replace('artists(slug)', 'artists!inner(slug)') : COLUMNS)
@@ -49,6 +52,8 @@ export async function getNotices({ artistSlug, limit = 20 }: { artistSlug?: stri
 
 // 공지 하나. artistSlug를 주면 다른 아티스트의 공지 번호로 들어왔을 때 null
 export async function getNotice(id: number, artistSlug?: string): Promise<Notice | null> {
+  'use cache';
+  cacheLife('minutes');
   const { data, error } = await supabase.from('notices').select(COLUMNS).eq('id', id).maybeSingle();
   if (error) throw toAppError(error);
   if (!data) return null;

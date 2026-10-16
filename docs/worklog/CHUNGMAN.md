@@ -1,3 +1,55 @@
+## 2026-10-13 | dev/chunga: 아티스트 좋아요 목 데이터 → 실제 DB 연결
+
+- 작업자: chungman
+- 브랜치: dev/chunga (develop `0140b33` 반영, JIN #167 아티스트 좋아요 백엔드 포함)
+- 관련 이슈 / PR: JIN #167 / (PR 예정)
+- 에이전트 사용: O (Claude, Cowork)
+
+### 한 일
+- `src/mocks/artistLikes.ts` 삭제, `services/artists.ts`의 `getArtistLikeCounts`(아티스트 id 기준 객체)·`isArtistLiked`·`toggleArtistLike`로 교체
+- `components/artist/sortByLikes.ts`: id 기준 좋아요 수로 정렬 (같으면 원래 순서)
+- 메인 배너·Recommended Artist·아티스트별 굿즈 패널: 실제 좋아요 수 순서 (못 불러오면 원래 순서)
+- `ArtistLikeButton`: 서버에서 센 좋아요 수(initialCount) + 내 좋아요 여부, 누르면 DB 저장
+- 확인: localhost `/artists/bts` 좋아요 0 → 1 → 0 (테스트 후 원래대로), eslint·tsc 통과
+
+### 남은 일 / TODO
+- 지금은 모든 아티스트 좋아요가 0이라 메인 순서는 원래 순서와 같음
+- Windows `npm run build`
+
+## 2026-10-13 | dev/chunga: 상품·아티스트 좋아요, 상품 공유, 상품 검색
+
+- 작업자: chungman
+- 브랜치: dev/chunga (develop `ec47430` 반영)
+- 관련 이슈 / PR: 아티스트 좋아요 backend-request (JIN, 등록 예정) / (PR 예정)
+- 에이전트 사용: O (Claude, Cowork)
+
+### 요청한 작업
+- 아티스트·상품 좋아요. 상품 좋아요는 최근 본 상품 옆 버튼으로 목록 보기, 아티스트 좋아요는 많은 순으로 메인 배너 노출
+- 상품 공유 링크 버튼, 상품 검색
+
+### 한 일
+- 상품 좋아요 (기존 `services/wishlist.ts` 사용)
+  - `LikeButton`: 상품 상세 가격 오른쪽 하트. 비로그인은 로그인 페이지로
+  - 최근 본 상품 동그라미를 누르면 오는 페이지(`/recently-viewed`)를 "내 상품"으로 바꾸고 탭 2개: 최근 본 상품 · 좋아요(`?tab=likes`, `LikedProductList`, 로그인 필요·빈 상태·오류 상태)
+  - 처음엔 동그라미 옆에 하트 버튼을 따로 만들었다가, 요청대로 버튼 없이 탭으로 수정. `/likes`는 좋아요 탭으로 이동
+  - 최근 본 상품 동그라미: 최근 본 상품이 없어도 좋아요한 상품이 있으면 하트로 보이고 좋아요 탭으로 이동 (`useLikedCount`, 상세에서 좋아요를 누르면 바로 반영)
+- 아티스트 좋아요 (목 데이터, `src/mocks/artistLikes.ts` TODO(mock))
+  - 아티스트 페이지 이름 옆 `ArtistLikeButton`(좋아요 수 표시, 로그인 필요, 이 브라우저에만 저장)
+  - 메인 배너: 아티스트를 좋아요 많은 순으로 정렬 (영상 슬라이드는 HomeSpotlight 규칙대로 맨 앞)
+  - 메인 Recommended Artist 줄과 아티스트별 굿즈 패널도 좋아요 많은 순으로 정렬
+- 상품 공유 `ShareButton`: 휴대폰은 기기 공유 창, 컴퓨터는 링크 복사 + "링크를 복사했어요" 안내
+- 상품 검색: `/search?q=` 페이지 (`searchProducts`, 상품명·아티스트명, 더 보기, 결과 없음 안내), `SearchForm`, 상단 줄에 검색 아이콘
+- 확인: localhost에서 검색(응원봉 18개), 상품 좋아요 → /likes 표시 → 취소(테스트 후 원래대로), 아티스트 좋아요 버튼, 모바일 390px 상세·메인, eslint·tsc 통과
+
+### 멈춘 지점 / 보고한 내용
+- [STOP 5] 아티스트 좋아요 테이블·집계 함수가 없음 → JIN에게 backend-request, 그동안 목 데이터
+- [STOP 2] `layout/TopBar.tsx`(검색 아이콘, jina 영역) 수정 → 사용자 요청, jina 공유 필요
+
+### 남은 일 / TODO
+- 아티스트 좋아요 백엔드 연결 후 `src/mocks/artistLikes.ts` 삭제, services로 교체
+- 상품 카드에도 하트 표시할지 팀과 결정
+- Windows `npm run build`
+
 ## 2026-10-13 | dev/chunga: 전체 상품 목록(/products)·상품 없음 404 (#93 #94)
 
 - 작업자: chungman

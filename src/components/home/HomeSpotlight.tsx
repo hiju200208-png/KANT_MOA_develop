@@ -200,7 +200,7 @@ function HeroProduct({ product, kind, active }: { product: ProductSummary; kind:
               alt={`${product.artist.name} ${product.name}`}
               fill
               sizes="(min-width: 768px) 440px, 280px"
-              priority={active}
+              fetchPriority={active ? "high" : "auto"}
               ref={measure}
               onLoad={(event) => measure(event.currentTarget)}
               // 사진마다 상품 영역을 재서 상자를 꽉 채우되 잘리지 않게 확대·이동 (분석 전에는 원래 크기)
@@ -292,6 +292,7 @@ function SoundIcon({ on }: { on: boolean }) {
 function VideoBackdrop({
   video: config,
   active,
+  load,
   playing,
   sound,
   onStart,
@@ -301,6 +302,7 @@ function VideoBackdrop({
 }: {
   video: HeroVideo;
   active: boolean;
+  load: boolean; // 지금·다음 슬라이드만 영상을 받는다 (첫 로딩 때 영상 3개가 동시에 받아져 상품 이미지를 밀어내던 문제)
   playing: boolean;
   sound: boolean; // 사용자가 소리 버튼을 눌렀을 때만 true
   onStart: () => void;
@@ -374,7 +376,7 @@ function VideoBackdrop({
     <div aria-hidden="true" className={`pointer-events-none absolute inset-0 flex justify-center overflow-hidden transition-opacity duration-700 motion-reduce:transition-none ${active ? "opacity-100" : "opacity-0"}`}>
       {config.ambient && <canvas ref={ambientRef} width={32} height={18} className="absolute inset-0 size-full scale-125 blur-[56px] saturate-150" />}
       <div className="relative aspect-video h-full flex-none" style={config.ambient ? ambientMaskStyle : undefined}>
-        <video ref={ref} src={config.src} muted playsInline preload="metadata" onEnded={onEnded} onError={onError} className="absolute inset-0 size-full object-cover" />
+        <video ref={ref} src={load ? config.src : undefined} muted playsInline preload={active ? "auto" : load ? "metadata" : "none"} onEnded={onEnded} onError={onError} className="absolute inset-0 size-full object-cover" />
         {!config.ambient && <div className="absolute inset-0" style={{ background: videoEdgeFade(config) }} />}
       </div>
       <div className="absolute inset-0" style={{ background: videoTextShade(config) }} />
@@ -468,6 +470,7 @@ export function HomeSpotlight({ artists: allArtists }: { artists: SpotlightArtis
             key={item.id}
             video={video}
             active={i === index}
+            load={i === index || i === (index + 1) % artists.length}
             playing={!reducedMotion}
             sound={sound}
             onStart={() => {

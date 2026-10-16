@@ -84,9 +84,9 @@ export function ArtistBannerCarousel({ banners, themeStyle }: ArtistBannerCarous
         onPointerDown={handlePointerDown}
         className={`-mx-2 flex overflow-x-auto select-none [scrollbar-width:none] ${dragging ? "cursor-grabbing" : settling ? "" : "snap-x snap-mandatory scroll-smooth"}`}
       >
-        {banners.map((banner) => (
+        {banners.map((banner, index) => (
           <li key={banner.key} className="shrink-0 basis-full snap-start px-2 md:basis-1/2">
-            <BannerCard banner={banner} />
+            <BannerCard banner={banner} first={index === 0} />
           </li>
         ))}
       </ul>
@@ -107,24 +107,25 @@ export function ArtistBannerCarousel({ banners, themeStyle }: ArtistBannerCarous
   );
 }
 
-function BannerCard({ banner }: { banner: ArtistBanner }) {
+function BannerCard({ banner, first }: { banner: ArtistBanner; first: boolean }) {
   const className = "group relative isolate flex aspect-video items-end overflow-hidden rounded-lg bg-linear-to-br from-(--artist-color) to-foreground p-6 md:p-8";
   return banner.href ? (
     <Link href={banner.href} className={className}>
-      <BannerContent banner={banner} />
+      <BannerContent banner={banner} first={first} />
     </Link>
   ) : (
     <div className={className}>
-      <BannerContent banner={banner} />
+      <BannerContent banner={banner} first={first} />
     </div>
   );
 }
 
-function BannerContent({ banner }: { banner: ArtistBanner }) {
+// first: 첫 배너는 페이지에서 가장 큰 첫 화면 이미지(LCP)라 높은 우선순위로 받는다
+function BannerContent({ banner, first }: { banner: ArtistBanner; first: boolean }) {
   return (
     <>
       {banner.imageUrl && banner.variant === "cover" && (
-        <Image src={banner.imageUrl} alt={banner.imageAlt} fill sizes="(min-width: 768px) 50vw, 100vw" loading="eager" className="-z-10 object-cover" />
+        <Image src={banner.imageUrl} alt={banner.imageAlt} fill sizes="(min-width: 768px) 50vw, 100vw" loading="eager" fetchPriority={first ? "high" : "auto"} className="-z-10 object-cover" />
       )}
       {banner.imageUrl && banner.variant === "product" && (
         // 정사각형 상품 이미지는 메인 배너처럼 띄우고 아래에 옅은 반사를 둔다 (위버스샵 배너 참고)

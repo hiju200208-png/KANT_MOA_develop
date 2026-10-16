@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/client';
 import type { ProductSummary } from '@/types/app';
 import { AppError, toAppError } from './errors';
-import { SUMMARY_COLUMNS, toSummary, type SummaryRow } from './products';
+import { SUMMARY_COLUMNS, toSummary, type SummaryRow } from './productRows';
 
 // 찜하기. 로그인 필요 (비로그인은 NOT_AUTHENTICATED). 판매 종료(hidden) 상품은 목록에서 빠짐
 

@@ -17,6 +17,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko" className={geist.variable}>
       <body>
+        {/* 브라우저에서 직접 부르는 Supabase(로그인 세션·장바구니·좋아요)의 첫 연결(DNS·TLS)을 미리 열어 둠. React가 <head>로 올려 줌 */}
+        <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="" />
         <a className="skip-link" href="#main-content">본문 바로가기</a>
         <AuthProvider>
           <div className="flex min-h-dvh flex-col">
