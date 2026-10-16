@@ -1,3 +1,51 @@
+## 2026-10-16 | 첫 로딩 이미지 느림 조사 · services 캐시 · 이미지 재압축 준비
+
+- 작업자: jin
+- 브랜치: dev/jin
+- 관련 이슈 / PR: - / (PR 예정)
+- 에이전트 사용: O (Claude Code)
+
+### 요청한 작업
+- 배포 Network 탭에서 이미지가 `/_next/image`로 0.5~3.2초, 304도 80~280ms, 로드 후 2~6초간 이미지 요청 없음 → 원인 조사 후 jin 범위 수정, 프론트 요청서 작성
+
+### 조사 결과
+- 데이터 로딩: 메인·아티스트·카테고리·상품 상세·전체 상품 모두 **Server Component**에서 services 호출 (클라이언트 로딩 아님). 2~6초 공백의 원인은 서버 대기: 메인 `MainHero`가 `getArtists` → `getLikeCounts` → 16개 쿼리(그중 8개는 상품 100개씩)를 순서대로 기다리고, services에 캐시가 없어 방문마다 DB 조회. HTML 첫 바이트 0.2~0.4초, 전체 1~7초(서버가 처음 깨어날 때 길어짐). 서버 지역은 icn1(서울)이라 거리 문제는 아님
+- `/_next/image` 캐시 미스: 1~10KB 이미지도 첫 바이트 2초 안팎 (변환 + Storage 원본 대기). 최적화 캐시 기본 4시간 → STALE·재검증 반복
+- 메인 배너 영상 3개(9.4MB)가 첫 로딩 2.4초에 동시에 내려받기 시작해 썸네일 응답을 밀어냄 (headless Chrome Network 기록)
+- 우선순위: 메인 배너 활성 슬라이드·헤더 로고·상품 상세 대표·아티스트 목록 첫 카드는 처리됨. 아티스트 페이지 첫 배너만 `eager`뿐. 상품 카드 `sizes`는 그리드(sm=640px)와 이미 일치
+- Storage: 1,847개 전부 webp, **전부 `max-age=3600`** (CLI `storage cp` 기본값, 저장소 안에 업로드 스크립트 없음). 기준 초과: 대표 47(DAYLOG만 1440px로 올라가 있음, 최대 411KB) · 상세 485(최대 1.2MB) · 배경 4(보넥도 713KB 등)
+- 136KB: 아티스트 페이지 첫 배너 대표 사진으로 추정 (SODAFM 1920px 최적화 결과 ≈ 138KB)
+- `public/`: `kant-moa-logo-black.png` 335KB(헤더, 지금은 최적화로 4KB 전달), `kant-moa-bubble-logo-v3.png` 1.08MB(미사용)
+
+### 한 일
+- services 카탈로그 조회에 `'use cache'` + `cacheLife('minutes')` (1분 백그라운드 갱신, 1시간 만료). DB 오류로 예비 데이터를 줄 때만 `cacheLife('seconds')`
+  - 대상: getArtists·getArtist·getArtistBanners·getArtistMembers·getCategories·getProducts·getProduct·getBestProducts·getHomeBanners·getNotices·getNotice
+  - 제외: 좋아요(로그인 사용자별·클라이언트 호출), searchProducts(검색어마다 다름), getShopSettings(클라이언트 훅), 장바구니·주문
+  - 클라이언트가 import하는 파일에는 함수 단위 `'use cache'`를 못 써서 분리: 아티스트 조회 → `artistCatalog.ts`(파일 단위 `'use cache'`, `artists.ts`가 다시 내보냄), 상품 행 변환 조각 → `productRows.ts`(`wishlist.ts`가 여기서 import). 페이지·컴포넌트 import 경로 변경 없음
+  - 빌드 결과 `/`·`/artists`·`/products`가 `1m 1h`로 데이터가 든 HTML을 미리 만듦
+- `docs/BACKEND.md`에 이미지 업로드 규칙: `--cache-control "public, max-age=31536000"`, 교체는 새 파일명, 종류별 크기·용량 기준
+- 기준 초과 536개를 로컬에서만 재압축 (대표 720px·상세 가로 1080px·배경 가로 1920px, webp 품질 78): 대표 7.6→1.5MB, 상세 137→96MB, 배경 1.9→1.3MB. **업로드는 확인 후**
+- 프론트 요청서 2건 작성 (chungman: 메인 배너 데이터 대기·첫 배너 우선순위·배너 영상 / jina: `next.config.ts` `minimumCacheTTL` 1년·preconnect)
+
+### 결정 사항 / 이유
+- `images.unoptimized`는 하지 않음: 끄면 브라우저가 원본을 그대로 받아 DAYLOG 대표 10KB→411KB, 헤더 로고 4KB→335KB로 무거워짐. 대신 최적화 유지 + `minimumCacheTTL` 1년 (jina 요청)
+- `next.config.ts`는 FRONTEND.md 1장에서 jina 수정 권한이라 직접 고치지 않고 요청서로 전달
+- Storage 전체 1년 캐시 재업로드는 안 함: 최적화를 유지하면 브라우저가 Storage를 직접 받지 않아 효과가 작음. 재압축하는 536개만 1년 캐시로 올리고, 앞으로 올리는 파일에 규칙 적용
+- 캐시 1년이면 같은 경로 덮어쓰기는 최대 1년간 예전 이미지가 보이므로 교체는 새 파일명 (Next 이미지 캐시는 지울 방법이 없음)
+
+### 멈춘 지점 / 보고한 내용
+- [STOP 3] `next.config.ts`는 jina 담당 핫스팟 → 요청서로 전달
+- 요청서가 읽으라고 한 `docs/DESIGN.md`는 저장소에 없음
+- 재압축본 업로드는 실행 전 확인 대기 (CLI에 덮어쓰기 옵션이 없어 1개 시험 → 안 되면 폴더별 삭제 후 업로드, 원본은 로컬 보관)
+
+### 남은 일 / TODO
+- 재압축본 536개 업로드 (확인 후)
+- 상세 246개는 재압축 후에도 150KB 초과: 가로 720 × 세로 1~1.4만 px짜리 긴 이미지라 품질로는 한계, 여러 장으로 나눠야 기준 충족
+- 배경 2개(보넥도 563KB·지코 448KB) 여전히 250KB 초과: 더 줄이려면 해상도(1600px)나 품질(70)을 낮춰야 함
+- jina·chungman 요청 반영 후 배포 Network 재측정
+
+---
+
 ## 2026-10-13 | 열린 이슈 검증 (#49 #89 #92 외) · 모바일 호버 잔류 수정
 
 - 작업자: jin

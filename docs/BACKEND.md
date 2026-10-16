@@ -191,6 +191,20 @@ export function getImageUrl(bucket: 'products' | 'artists', path: string | null)
 }
 ```
 
+### 이미지 업로드 규칙 (2026-10-16~)
+
+- **캐시 1년**: Supabase CLI는 기본값이 `max-age=3600`(1시간)이라 반드시 지정합니다.
+  ```bash
+  npx supabase storage cp -r --experimental --linked --cache-control "public, max-age=31536000" <로컬 폴더> ss:///products/<경로>
+  ```
+- **교체는 새 파일명으로**: 캐시가 1년이고 Next 이미지 최적화 캐시도 지울 방법이 없어서, 같은 경로에 덮어쓰면 방문자에게 최대 1년간 예전 이미지가 보입니다. 바꿀 때는 `logo-v2.webp`처럼 새 이름으로 올리고 DB 경로를 마이그레이션으로 바꿉니다. (같은 그림을 용량만 줄여 다시 올릴 때만 덮어쓰기 허용)
+- **용량·크기 기준** (webp, 품질 75~80):
+  | 종류 | 최대 크기(px) | 용량 기준 |
+  |---|---|---|
+  | 상품 대표(`main.webp`) | 720 × 720 | 60KB 이하 |
+  | 상품 상세(`detail-N.webp`) | 가로 1080 | 150KB 이하 |
+  | 아티스트 대표 사진(`hero`) | 가로 1920 | 250KB 이하 |
+
 ### 장바구니 (services/cart.ts) 요구사항
 
 - 로그인 여부에 따라 같은 인터페이스로 동작: `getCart()`, `addToCart(variantId, qty)`, `updateQuantity(...)`, `removeFromCart(...)`
