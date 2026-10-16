@@ -37,7 +37,7 @@ export default function HomePage() {
 const BANNER_EXCLUDED = ["orbit-on", "daylog", "sodafm"]; // 메인 배너에서 빼는 아티스트 (팀이 만든 가상 아티스트)
 const NEW_RELEASE_DAYS = 30; // 발매일이 이 기간 안이거나 앞으로 발매될 상품은 NEW
 const NEW_REGISTERED_DAYS = 14; // 발매일이 없으면 등록 후 이 기간까지 NEW (상품 카드 NEW 배지 badgeRules.ts와 같은 기준)
-const ARTIST_PRODUCTS_LIMIT = 100; // NEW 후보를 찾을 때 읽는 아티스트별 상품 수 (최신 등록 순)
+const ARTIST_PRODUCTS_LIMIT = 20; // NEW 후보를 찾을 때 읽는 아티스트별 상품 수 (최신 등록 순). 100이면 첫 배너가 상품 800개를 기다림
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 type Pick = NonNullable<SpotlightArtist["pick"]>;
@@ -56,13 +56,14 @@ function newCandidate(products: ProductSummary[]): Pick | undefined {
 // 나머지 상품 슬라이드는 NEW(신상품)와 BEST(최근 7일 판매 1위)가 번갈아 나오도록 배정한다. 대표 상품이 없는 아티스트는 빠짐
 async function MainHero() {
   let artists: Artist[];
+  let likeCounts: Record<number, number>;
   try {
-    artists = await getArtists();
+    // 아티스트와 좋아요 수는 서로 기다릴 필요가 없어 동시에 조회 (좋아요 수를 못 불러오면 원래 순서)
+    [artists, likeCounts] = await Promise.all([getArtists(), getLikeCounts()]);
   } catch {
     return null; // 배너는 부가 영역이라 실패 시 숨기고, 아래 상품 영역에서 에러를 안내합니다.
   }
-  // 좋아요 많은 아티스트부터 (좋아요 수를 못 불러오면 원래 순서)
-  const likeCounts = await getLikeCounts();
+  // 좋아요 많은 아티스트부터
   artists = sortByLikes(artists.filter((artist) => !BANNER_EXCLUDED.includes(artist.slug)), likeCounts);
   const [bests, catalogs] = await Promise.all([
     Promise.all(artists.map((artist) => getBestProducts({ limit: 1, artistSlug: artist.slug }).catch((): BestProduct[] => []))),
