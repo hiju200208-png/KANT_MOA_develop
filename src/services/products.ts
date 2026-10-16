@@ -1,3 +1,4 @@
+import { cacheLife } from 'next/cache';
 import { publicClient as supabase } from '@/lib/supabase/client';
 import type {
   BestProduct,
@@ -6,8 +7,6 @@ import type {
   ProductDetail,
   ProductList,
   ProductQuery,
-  ProductStatus,
-  ProductSummary,
   SearchQuery,
 } from '@/types/app';
 import { toAppError } from './errors';
@@ -18,53 +17,26 @@ import {
   warnFallback,
 } from './fallback';
 import { getImageUrl } from './storage';
+import { BASE_COLUMNS, SUMMARY_COLUMNS, toSummary, type SummaryRow } from './productRows';
+
+// 카탈로그 조회는 'use cache' + cacheLife('minutes'): 1분마다 백그라운드 갱신, 빌드 때 정적 뼈대에도 포함됨.
+// 매 방문마다 DB에 가지 않아 첫 화면이 빨라진다. 검색(searchProducts)은 검색어마다 달라 캐시하지 않음
 
 export async function getCategories(): Promise<Category[]> {
+  'use cache';
   const { data, error } = await supabase
     .from('categories')
     .select('id, name, slug')
     .order('sort_order');
   if (error) {
+    cacheLife('seconds'); // DB 오류 때 예비 데이터는 짧게만 캐시
     warnFallback('getCategories', error);
     return fallbackCategories();
   }
+  cacheLife('minutes');
   return data;
 }
 
-const BASE_COLUMNS =
-  'id, name, price, status, thumbnail_path, created_at, is_limited, is_preorder, release_date, artists!inner(slug, name, name_ko), categories!inner(slug, name)';
-// 찜 목록(wishlist.ts)도 같은 형태로 변환하려고 내보냄
-export const SUMMARY_COLUMNS = `${BASE_COLUMNS}, product_variants(stock)`;
-
-export type SummaryRow = {
-  id: number;
-  name: string;
-  price: number;
-  status: string;
-  thumbnail_path: string | null;
-  created_at: string;
-  is_limited: boolean;
-  is_preorder: boolean;
-  release_date: string | null;
-  artists: { slug: string; name: string; name_ko: string };
-  categories: { slug: string; name: string };
-  product_variants: { stock: number }[];
-};
-
-export const toSummary = (p: SummaryRow): ProductSummary => ({
-  id: p.id,
-  name: p.name,
-  price: p.price,
-  status: p.status as ProductStatus, // hidden은 RLS가 걸러냄
-  isSoldOut: p.status === 'sold_out' || p.product_variants.every((v) => v.stock === 0),
-  thumbnailUrl: getImageUrl('products', p.thumbnail_path),
-  artist: { slug: p.artists.slug, name: p.artists.name, nameKo: p.artists.name_ko },
-  category: { slug: p.categories.slug, name: p.categories.name },
-  isLimited: p.is_limited,
-  isPreorder: p.is_preorder,
-  releaseDate: p.release_date,
-  createdAt: p.created_at,
-});
 
 export async function getProducts({
   artistSlug,
@@ -74,6 +46,7 @@ export async function getProducts({
   offset = 0,
   excludeId,
 }: ProductQuery = {}): Promise<ProductList> {
+  'use cache';
   let query = supabase.from('products').select(SUMMARY_COLUMNS, { count: 'exact' });
   if (artistSlug) query = query.eq('artists.slug', artistSlug);
   if (categorySlug) query = query.eq('categories.slug', categorySlug);
@@ -85,13 +58,16 @@ export async function getProducts({
 
   const { data, count, error } = await query.range(offset, offset + limit - 1);
   if (error) {
+    cacheLife('seconds'); // DB 오류 때 예비 데이터는 짧게만 캐시
     warnFallback('getProducts', error);
     return fallbackProducts({ artistSlug, categorySlug, sort, limit, offset, excludeId });
   }
+  cacheLife('minutes');
   return { items: (data as SummaryRow[]).map(toSummary), total: count ?? 0 };
 }
 
 export async function getProduct(id: number): Promise<ProductDetail | null> {
+  'use cache';
   const { data, error } = await supabase
     .from('products')
     .select(
@@ -100,9 +76,11 @@ export async function getProduct(id: number): Promise<ProductDetail | null> {
     .eq('id', id)
     .maybeSingle();
   if (error) {
+    cacheLife('seconds'); // DB 오류 때 예비 데이터는 짧게만 캐시
     warnFallback('getProduct', error);
     return fallbackProduct(id);
   }
+  cacheLife('minutes');
   if (!data) return null;
 
   const row = data as unknown as SummaryRow & {
@@ -174,6 +152,8 @@ export async function getBestProducts({
   limit = 8,
   artistSlug,
 }: { days?: number; limit?: number; artistSlug?: string } = {}): Promise<BestProduct[]> {
+  'use cache';
+  cacheLife('minutes');
   const { data: ranks, error } = await supabase.rpc('get_best_products', {
     days,
     limit_count: limit,
@@ -197,6 +177,8 @@ export async function getBestProducts({
 
 // 메인 기획전 배너: 활성 + 노출 기간 안, sort_order 순
 export async function getHomeBanners(): Promise<{ main: HomeBanner[]; side: HomeBanner[] }> {
+  'use cache';
+  cacheLife('minutes');
   const { data: rows, error } = await supabase
     .from('home_banners')
     .select('id, slot, eyebrow, title, subtitle, badge, image_path, link_path, starts_at, ends_at')
