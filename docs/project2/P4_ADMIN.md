@@ -2,6 +2,8 @@
 
 담당: 장충만 · 작성일: 2026-10-23 · 상태: 초안 (팀 합의 후 확정)
 
+> 기준 문서: [`docs/PROJECT2.md`](../PROJECT2.md) (P1 공통 기반·개발 계약). 이 문서와 다르면 **PROJECT2.md가 우선**이에요.
+>
 > 인수 당시(`takeover-base` = `main` `f446b8a`) 칸트모아에는 **관리자 기능과 역할(role) 구분이 없었어요.**
 > 상품·공지는 마이그레이션 SQL로만 관리했어요. P4는 이 부분을 FastAPI로 **새로 만드는** 확장 기능이에요.
 
@@ -13,11 +15,11 @@
 |---|---|---|
 | **필수** | 관리자 상품 목록 (검색·필터·정렬·페이지네이션, 재고 합계·품절 표시) | 숨김(`hidden`) 상품도 보여요 |
 | **필수** | 상품 상세의 옵션별 재고 조회 | 옵션(`product_variants`) 단위 |
-| **필수** | 옵션 재고 조정 (입고 +, 수정 −) | 재고 규칙은 P2 상품 도메인 사용 |
+| **필수** | 옵션 재고 조정 (입고 +, 수정 −) | 재고 규칙은 P2 상품 도메인 `increase_stock` / `decrease_stock` 사용 |
 | **필수** | 판매 상태 변경 (`on_sale` / `sold_out` / `hidden`) | |
-| **필수** | 권한 검증: 비로그인 401, 일반 회원 403 | P1 인증 의존성 사용 |
+| **필수** | 권한 검증: 비로그인 401, 일반 회원 403 | P1 `require_admin` 의존성 사용 (P1 구현 후) |
 | 선택 | 재고 변경 이력 조회 | 시간이 남으면 |
-| 선택 | 상품 등록 + 대표 이미지 업로드 (`uploads/`) | 시간이 남으면 |
+| 선택 | 상품 등록 + 대표 이미지 업로드 (`backend/uploads/` → `/uploads/`) | 시간이 남으면. 업로드 검사(형식·용량·서버 생성 파일명)는 아직 아무도 구현 안 함 → 하게 되면 P4가 같이 구현 |
 | 선택 | 공지 등록·수정·삭제 | 시간이 남으면 |
 
 ---
@@ -37,17 +39,19 @@
 | `/admin/products/[id]` | 상품 정보, 판매 상태 선택, 옵션 표(옵션명·현재 재고·구매 제한), 옵션마다 "재고 조정" 입력(+/− 수량, 사유) | 저장 중 버튼 비활성, 성공 안내, 409·404 오류 메시지 |
 
 - 접근 처리: 비로그인 → `/login?next=/admin/...`, 일반 회원 → "접근 권한이 없어요" 화면
-- **화면에서 링크를 숨기는 것은 편의일 뿐**이고, 실제 권한 검증은 FastAPI가 매 요청마다 해요 (가이드: 인증은 서버에서).
+- **화면에서 링크를 숨기는 것은 편의일 뿐**이고, 실제 권한 검증은 FastAPI가 매 요청마다 해요. ADMIN 여부는 **서버가 검증한 사용자 정보** 기준이에요 (PROJECT2.md 인증 계약).
 - 관리자 API는 로그인 토큰이 필요하므로 **클라이언트 컴포넌트에서 호출**해요.
+- 프론트는 아직 Supabase에 연결돼 있어요. `NEXT_PUBLIC_API_URL` 연결·토큰 저장 방식이 정해지면(P1 후속) 관리자 화면을 그 방식에 맞춰 붙여요. 그 전에는 Swagger(`http://localhost:8000/docs`)로 API부터 검증해요.
 
 ---
 
 ## 3. 관리자 API 명세 (초안)
 
-공통
-- 기본 경로: `/admin` · 모든 API에 `Authorization: Bearer <JWT>` 필요 · `role = ADMIN`만 허용
-- 목록 응답: `{ "items": [...], "total": 0, "page": 1, "size": 20 }` (팀 합의)
-- 오류 응답: `{ "code": "...", "message": "..." }` (팀 합의)
+공통 (PROJECT2.md 공통 API 계약 따름)
+- 기본 주소 `http://localhost:8000`, 경로 접두사 `/admin` (`/api` 접두사 없음)
+- 모든 API에 `Authorization: Bearer <JWT>` 필요, `role = ADMIN`만 허용 (`Depends(require_admin)`)
+- 목록 응답: `core.schemas.PageResponse` → `{ "items": [...], "total": 0, "page": 1, "size": 20 }`. `total`은 필터 후·페이지 적용 전 개수
+- 오류 응답: `{ "code": "...", "message": "..." }`. 표현 계층에서 도메인 예외를 `core.errors.ApiError`로 바꿔 던져요
 
 ### 3-1. 상품 목록
 
@@ -86,6 +90,9 @@
   "size": 20
 }
 ```
+
+- `thumbnail_url`은 DB에 저장된 **상대 경로**(`/static/...` 또는 `/uploads/...`) 그대로 내려주고, 프론트가 API origin과 조합해요 (PROJECT2.md 이미지 계약).
+- 상품 `id` 타입(정수/UUID)은 P2 상품 테이블을 따라요. 위 예시는 정수로 가정했어요.
 
 ### 3-2. 상품 상세 (옵션별 재고)
 
@@ -139,17 +146,22 @@
 
 `GET /admin/products/{product_id}/stock-adjustments?page=&size=` → `{ items: [{ variant_id, change, before, after, reason, admin_id, created_at }], total, page, size }`
 
+- `admin_id`는 사용자 UUID (PROJECT2.md 인증 계약의 `users.id`)
+
 ### 3-6. 오류 코드
 
-| 상황 | 상태 | code |
-|---|---|---|
-| 토큰 없음·만료·로그아웃(블랙리스트) | 401 | `NOT_AUTHENTICATED` |
-| 일반 회원(USER)이 관리자 API 호출 | 403 | `FORBIDDEN` **(신규)** |
-| 없는 상품 / 다른 상품의 옵션 id | 404 | `PRODUCT_NOT_FOUND` / `VARIANT_NOT_FOUND` **(신규)** |
-| 조정 후 재고가 0 미만 | 409 | `INVALID_STOCK` **(신규)** |
-| `change` = 0, 범위 초과, 잘못된 `status`·`sort`·`page` | 422 | FastAPI 기본 검증 |
+PROJECT2.md 기준: 코드명은 기존 `src/constants/error-messages.ts` / `src/services/errors.ts`를 따르고, **신규 코드는 임의로 추가하지 않아요.** 없는 경우는 `UNKNOWN` + 의미 있는 메시지를 써요.
 
-> 신규 code 4개는 프론트 `src/constants/error-messages.ts`에도 문구를 추가해야 해요.
+| 상황 | 상태 | 지금 쓰는 code (현재 계약) | 추가 제안 code (합의 필요) |
+|---|---|---|---|
+| 토큰 없음·서명 실패·만료·블랙리스트·없는 사용자 | 401 | `NOT_AUTHENTICATED` (기존) | - |
+| 일반 회원(USER)이 관리자 API 호출 | 403 | `UNKNOWN` · "접근 권한이 없어요." | `FORBIDDEN` |
+| 없는 상품 / 다른 상품의 옵션 id | 404 | `UNKNOWN` · "상품을 찾을 수 없어요." / "옵션을 찾을 수 없어요." | `PRODUCT_NOT_FOUND` / `VARIANT_NOT_FOUND` |
+| 조정 후 재고가 0 미만 | 409 | `UNKNOWN` · "재고는 0개보다 적을 수 없어요." | `INVALID_STOCK` |
+| `change` = 0, 범위 초과, 잘못된 `status`·`sort`·`page` | 422 | `UNKNOWN` · "입력 형식을 확인해주세요." (P1 공통 핸들러) | - |
+
+> 추가 제안 code는 팀이 합의하면 `src/services/errors.ts`의 `APP_ERROR_CODES`, `src/constants/error-messages.ts`, 백엔드 코드를 **한 PR에서 같이** 바꿔요. 합의 전에는 위 "지금 쓰는 code"로 구현해요.
+> 기존 `OUT_OF_STOCK`("품절된 상품이 있어요")은 주문용 문구라 관리자 재고 조정 409에는 쓰지 않아요.
 
 ---
 
@@ -157,61 +169,81 @@
 
 | 규칙 | 어디서 | 위반 시 |
 |---|---|---|
-| 재고는 0 미만이 될 수 없다 | **P2 상품 도메인** (`increase_stock` / `decrease_stock`) | 409 `INVALID_STOCK` |
-| 조정 수량은 0이 아니어야 한다 | P4 `StockAdjustment` (요청 검증) | 422 |
+| 재고는 0 미만이 될 수 없다 | **P2 상품 도메인** (`increase_stock` / `decrease_stock`) | 409 |
+| 조정 수량은 0이 아니어야 하고 범위 안이어야 한다 | P4 `StockAdjustment` (도메인) + 요청 스키마 | 422 |
 | 옵션은 그 상품에 속해야 한다 | P4 서비스 (조회 후 확인) | 404 |
 | 판매 상태는 `on_sale`·`sold_out`·`hidden` 중 하나 | P2 상품 도메인 | 422 |
-| 관리자만 접근 | P1 관리자 확인 의존성 | 401 / 403 |
+| 관리자만 접근 | P1 `require_admin` | 401 / 403 |
 
-- 재고 조정은 **옵션 행을 잠그고(`SELECT ... FOR UPDATE`) → 도메인 규칙 → 저장 → commit**, 실패하면 rollback해요. P3 결제도 같은 행을 잠그므로 둘이 동시에 와도 순서대로 처리돼요.
+트랜잭션 (PROJECT2.md 구조·트랜잭션 계약)
+- `get_session`은 자동 commit하지 않아요. **commit/rollback은 P4 응용 서비스(`service.py`)가** 하나의 업무 단위에서 해요.
+- Repository는 commit하지 않고 필요하면 flush만 해요. ORM ↔ 도메인 객체 변환도 Repository가 해요.
+- 재고 조정 흐름: 옵션 행 잠금 조회 → 도메인 규칙(`increase_stock`/`decrease_stock`) → 저장 → commit, 실패하면 rollback.
+- 잠금 방식(`SELECT ... FOR UPDATE` 또는 조건부 갱신)은 **P2·P3·P4가 합의**해요 (5장 질문 4). P4 제안은 `FOR UPDATE`예요.
+- 도메인(`admin/domain/`)은 FastAPI·SQLAlchemy·Pydantic을 import하지 않아요.
 - 이전 팀 알려진 문제: "재고가 0이 돼도 `status`가 `sold_out`으로 자동으로 안 바뀜" → 자동 전환을 할지 P2와 정하기 (5장 질문 3).
 
 ---
 
 ## 5. 다른 담당과 맞출 것
 
-| 상대 | 필요한 것 | 질문 |
+| 상대 | 필요한 것 | 질문 / 상태 |
 |---|---|---|
-| **P1** | `users.role` (`USER`/`ADMIN`), 관리자 확인 의존성 (예: `get_current_admin`), 401/403 응답 형식 | 1. 관리자 계정은 시드로 만들까요? (예: `admin@kantmoa.local`, 비밀번호는 `.env`) |
-| **P2** | 상품·옵션 ORM 모델, 상품 도메인의 재고 규칙(`increase_stock`/`decrease_stock`), 이미지 URL 규칙(`/static/...`) | 2. 관리자 목록은 숨김 상품까지 보여야 해서 P2 공개 목록과 쿼리가 달라요. 관리자용 조회는 P4 Repository에 따로 둘게요. 괜찮을까요? |
-| **P2** | 판매 상태 규칙 | 3. 재고 합계가 0이 되면 `sold_out`으로 자동 전환할까요, 관리자가 직접 바꿀까요? |
-| **P3** | 같은 옵션 행 잠금 순서 | 4. 결제와 관리자 조정이 둘 다 `product_variants` 행을 `FOR UPDATE`로 잠그는 걸로 맞출까요? |
+| **P1 (희주)** | `auth.presentation.dependencies.require_admin`, `users.role`(USER/ADMIN), 사용자 UUID | 1. ~~관리자 계정 시드~~ → **PROJECT2.md로 확정**: 공개 회원가입으로는 관리자 불가, 별도 로컬 초기화 명령으로 생성, 고정 비밀번호는 저장소에 안 넣음. **남은 질문:** 초기화 명령은 언제쯤 나올까요? 그 전까지 P4는 테스트에서 `require_admin`을 가짜 의존성으로 바꿔 검증할게요. |
+| **P1 (희주)** | 공통 파일 `main.py`에 관리자 라우터 등록 | 5. `app.include_router(admin_router)` 한 줄 추가를 P4 PR에 포함해도 될까요, P1이 등록해 주실까요? |
+| **P2 (상재)** | 상품·옵션 ORM 모델, 상품 도메인 재고 규칙, 상품 id 타입 | 2. 관리자 목록은 숨김 상품까지 보여야 해서 P2 공개 목록과 쿼리가 달라요. 관리자용 조회는 P4 Repository에 따로 둘게요. 괜찮을까요? |
+| **P2 (상재)** | 판매 상태 규칙 | 3. 재고 합계가 0이 되면 `sold_out`으로 자동 전환할까요, 관리자가 직접 바꿀까요? |
+| **P2·P3 (상재·여름)** | 재고 잠금 방식 | 4. 결제(P3)와 관리자 조정(P4) 모두 `product_variants` 행을 `FOR UPDATE`로 잠그는 걸로 맞출까요? |
+| **전원** | 신규 오류 code | 6. `FORBIDDEN`, `PRODUCT_NOT_FOUND`, `VARIANT_NOT_FOUND`, `INVALID_STOCK` 추가할까요? (3-6) |
 
 ---
 
 ## 6. 4계층 파일 계획 (`backend/src/admin/`)
 
+PROJECT2.md 구조: `presentation/router.py + schemas.py → application/service.py → domain/ → infrastructure/models.py + repositories.py`
+
 | 계층 | 파일 | 하는 일 |
 |---|---|---|
-| presentation | `router.py` | `/admin/products` 라우터, `Depends(get_current_admin)`, 도메인 예외 → HTTP 상태 |
-| presentation | `schemas.py` | `AdminProductListItem`, `AdminProductDetail`, `StockAdjustmentRequest/Response`, `ProductStatusUpdate` |
+| presentation | `router.py` | `/admin/products` 라우터, `Depends(require_admin)`, `Depends(get_session)`, 도메인 예외 → `ApiError` |
+| presentation | `schemas.py` | `AdminProductListItem`, `AdminProductDetail`, `StockAdjustmentRequest/Response`, `ProductStatusUpdate`. 목록은 `PageResponse[AdminProductListItem]` |
 | application | `service.py` | 목록 조회, 상세 조회, 재고 조정(잠금 → 규칙 → 저장 → commit/rollback), 상태 변경 |
 | domain | `stock_adjustment.py` | `StockAdjustment` (change ≠ 0, 범위, 사유 길이), 관리자 도메인 예외 |
-| infrastructure | `repositories.py` | 관리자 상품 목록 쿼리(숨김 포함·재고 합계), 옵션 잠금 조회, (선택) 재고 이력 저장 |
+| infrastructure | `repositories.py` | 관리자 상품 목록 쿼리(숨김 포함·재고 합계), 옵션 잠금 조회, (선택) 재고 이력 저장. commit 안 함 |
+| infrastructure | `models.py` | (선택) 재고 이력 `stock_adjustments` 테이블만. 상품·옵션 모델은 P2 것을 import, `database.Base` 공유 |
 
 ---
 
 ## 7. 403·권한 검증 시나리오 (월요일 Swagger·화면으로 캡처)
 
+자동 테스트는 `backend`에서 `uv run pytest`. 실제 DB 확인은 `docker compose up -d db` 후 `http://localhost:8000/docs`.
+
 | # | 상황 | 기대 결과 |
 |---|---|---|
 | 1 | 토큰 없이 `GET /admin/products` | 401 `NOT_AUTHENTICATED` |
-| 2 | 일반 회원 토큰으로 `GET /admin/products` | 403 `FORBIDDEN` |
+| 2 | 일반 회원 토큰으로 `GET /admin/products` | 403 (code는 3-6 합의 결과에 따름) |
 | 3 | 관리자 토큰으로 `GET /admin/products` | 200, 숨김 상품 포함 |
 | 4 | 관리자 로그아웃 후 같은 토큰으로 재호출 | 401 (블랙리스트) |
-| 5 | 재고 37인 옵션에 `change: -40` | 409 `INVALID_STOCK`, 재고 37 그대로 (rollback 확인) |
+| 5 | 재고 37인 옵션에 `change: -40` | 409, 재고 37 그대로 (rollback 확인) |
 | 6 | `change: 0` | 422 |
-| 7 | 다른 상품의 옵션 id로 조정 | 404 `VARIANT_NOT_FOUND` |
+| 7 | 다른 상품의 옵션 id로 조정 | 404 |
 | 8 | `change: 10` 후 상세 재조회·새로고침 | 재고 47 유지 (DB 반영 확인) |
 | 9 | 일반 회원으로 `/admin/products` 화면 접속 | "접근 권한이 없어요" 화면 |
 
 ---
 
-## 8. 오늘(10/23) 완료 체크
+## 8. 진행 체크
 
+10/23
 - [x] `admin/` 4계층 폴더 구조 (`backend/src/admin/`, 각 `__init__.py`)
 - [x] 관리자 기능 범위 (1장)
 - [x] 관리자 화면 구성·이동 흐름 (2장)
 - [x] 관리자 API 요청·응답 명세 초안 (3장)
 - [x] 403 검증 시나리오 (7장)
-- [ ] P1·P2·P3와 5장 질문 1~4 합의 → 결과를 이 문서에 반영
+- [x] `docs/PROJECT2.md` 공통 계약 반영 (오류 code, `require_admin`, 트랜잭션, 이미지 경로, 관리자 생성 방식)
+- [ ] 5장 질문 합의 → 결과를 이 문서에 반영
+
+다음 (P1 인증·P2 상품 모델 의존)
+- [ ] 도메인 `StockAdjustment` + 단위 테스트 (의존 없음, 먼저 가능)
+- [ ] P2 상품 모델 나오면 Repository·Service
+- [ ] P1 `require_admin` 나오면 라우터 연결, 그 전엔 테스트에서 가짜 의존성 사용
+- [ ] 관리자 화면 (프론트 API 연결 방식 확정 후)
