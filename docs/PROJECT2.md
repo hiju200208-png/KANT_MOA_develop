@@ -81,7 +81,11 @@ lifespan에서 DB 연결을 검사하고 종료 시 engine을 dispose합니다. 
 
 ## 로컬 실행 (PowerShell)
 
-전제: Python 3.13+, uv, Docker Desktop(Linux 엔진)이 필요합니다. 현재 확인 환경은 Python 3.13.15, Docker CLI 29.8.0이며 uv는 PATH에 없고 Docker 엔진 연결은 실패했습니다.
+전제: Python 3.13+, uv, Docker Desktop(Linux 엔진)이 필요합니다. Python 3.13.15, Docker CLI 29.8.0 환경에서 확인했습니다. 2026-10-24 사용자 로컬에서 Docker PostgreSQL 정상 기동과 FastAPI 실제 DB 연결, `/health` 및 Swagger에서 200 응답을 확인했습니다.
+
+로컬 5432 포트 바인딩이 실패하여 호스트 포트를 5433으로 변경했습니다. 루트 `.env`의 `POSTGRES_PORT=5433`과 `backend/.env`의 `DATABASE_URL` 포트 5433을 일치시켰습니다. 컨테이너 내부 PostgreSQL 포트는 5432를 유지하며, 다른 팀원은 각자 사용 가능한 호스트 포트를 설정하면 됩니다.
+
+uv는 프로젝트 가상환경에 설치되어 있으며 전역 PATH에는 등록하지 않았습니다.
 
 1. Docker Desktop을 실행하고 Linux 엔진이 준비됐는지 `docker info`로 확인합니다.
 2. 루트 `.env.docker.example`을 `.env`로 복사해 로컬 POSTGRES_PASSWORD를 설정합니다. 비밀번호는 직접 정하고 URL 예약문자를 쓸 경우 DATABASE_URL에서 percent-encoding합니다.
@@ -105,7 +109,10 @@ uv run uvicorn main:app --app-dir src --reload --host 127.0.0.1 --port 8000
 
 - 작성: Docker DB 설정, 비동기 세션, lifespan, health/docs, CORS·로깅·공통 오류·목록 스키마, 이미지 서빙.
 - 설계: 역할·공통 계약, P1 사용자/블랙리스트 ERD 필드·API·권한 규칙.
-- 미완료: 실제 DB 기동/E2E, 인증 4계층·의존성, 테이블·시드, 프론트 전환, 이미지 원본 이관.
+- 10/24 추가 확인: Docker DB healthy, FastAPI `/health` DB 연결 성공, Swagger Execute에서 200 응답 확인.
+- 준비 완료: `auth/` 및 presentation/application/domain/infrastructure 패키지와 각 `__init__.py` (사용자 생성 완료 확인).
+- 미완료: 인증 4계층 기능·의존성 구현, 테이블·시드, 프론트 전환 및 기능별 E2E, 이미지 원본 이관.
+- 월요일(10/26) 우선 작업: 회원가입·로그인·JWT 발급, `get_current_user`, `require_admin`, 관리자 초기화 명령, 블랙리스트 로그아웃 및 동일 토큰 401 검증.
 - uv.lock 생성과 의존성 설치 완료. 검증 결과는 희주 작업일지에 기록합니다.
 
 ## 연결 자료
