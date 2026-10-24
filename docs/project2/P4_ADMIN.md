@@ -249,7 +249,8 @@ PROJECT2.md 구조: `presentation/router.py + schemas.py → application/service
   - Windows 앱 제어가 SQLAlchemy 속도용 `.pyd`를 차단 → `.venv\Lib\site-packages\sqlalchemy`의 `*.pyd`만 삭제(같은 기능의 `.py`로 동작), 서버는 `uv run --no-sync ...`로 실행
 
 다음 (P1 인증·P2 상품 모델 의존)
-- [ ] 도메인 `StockAdjustment` + 단위 테스트 (의존 없음, 먼저 가능)
+- [x] 도메인 `StockAdjustment`·`StockAdjustmentResult`·관리자 도메인 예외 + 단위 테스트 (10/25, `backend/tests/admin/`)
+- [x] 요청 스키마 `StockAdjustmentRequest`·`ProductStatusUpdate`, 응답 `StockAdjustmentResponse` + 422 검증 테스트 (10/25)
 - [ ] P2 상품 모델 나오면 Repository·Service
 - [ ] P1 `require_admin` 나오면 라우터 연결, 그 전엔 테스트에서 가짜 의존성 사용
 - [ ] 관리자 화면 (프론트 API 연결 방식 확정 후)
