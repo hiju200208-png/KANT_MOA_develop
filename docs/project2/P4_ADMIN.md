@@ -189,12 +189,12 @@ PROJECT2.md 기준: 코드명은 기존 `src/constants/error-messages.ts` / `src
 
 | 상대 | 필요한 것 | 질문 / 상태 |
 |---|---|---|
-| **P1 (희주)** | `auth.presentation.dependencies.require_admin`, `users.role`(USER/ADMIN), 사용자 UUID | 1. ~~관리자 계정 시드~~ → **PROJECT2.md로 확정**: 공개 회원가입으로는 관리자 불가, 별도 로컬 초기화 명령으로 생성, 고정 비밀번호는 저장소에 안 넣음. **남은 질문:** 초기화 명령은 언제쯤 나올까요? 그 전까지 P4는 테스트에서 `require_admin`을 가짜 의존성으로 바꿔 검증할게요. |
-| **P1 (희주)** | 공통 파일 `main.py`에 관리자 라우터 등록 | 5. `app.include_router(admin_router)` 한 줄 추가를 P4 PR에 포함해도 될까요, P1이 등록해 주실까요? |
+| **P1 (희주)** | `auth.presentation.dependencies.require_admin`, `users.role`(USER/ADMIN), 사용자 UUID | 1. **답변 완료 (10/24 희주)**: 관리자는 공개 회원가입 불가, 로컬 초기화 명령으로 생성(고정 비밀번호 저장소 금지). `get_current_user`·`require_admin`·초기화 명령은 **월요일(10/26)** 구현·공유. import 경로는 `from auth.presentation.dependencies import get_current_user, require_admin`으로 확정. 그 전까지 P4는 테스트에서 `require_admin`을 가짜 의존성으로 바꿔 검증하고, 실제 토큰 401·일반 회원 403·관리자 성공·로그아웃 토큰 차단은 인증 연결 후 검증. |
+| **P1 (희주)** | 공통 파일 `main.py`에 관리자 라우터 등록 | 5. **답변 완료 (10/24 희주)**: 관리자 라우터 import와 `app.include_router(...)`는 P4 구현 PR에 포함해도 됨(협의 완료). 인증 의존성이 main에 들어오기 전에는 import 때문에 서버 실행이 깨지지 않게 **통합 시점을 인증 PR 이후로** 맞추고, PR에서 희주님께 리뷰 요청. |
 | **P2 (상재)** | 상품·옵션 ORM 모델, 상품 도메인 재고 규칙, 상품 id 타입 | 2. 관리자 목록은 숨김 상품까지 보여야 해서 P2 공개 목록과 쿼리가 달라요. 관리자용 조회는 P4 Repository에 따로 둘게요. 괜찮을까요? |
 | **P2 (상재)** | 판매 상태 규칙 | 3. 재고 합계가 0이 되면 `sold_out`으로 자동 전환할까요, 관리자가 직접 바꿀까요? |
 | **P2·P3 (상재·여름)** | 재고 잠금 방식 | 4. 결제(P3)와 관리자 조정(P4) 모두 `product_variants` 행을 `FOR UPDATE`로 잠그는 걸로 맞출까요? |
-| **전원** | 신규 오류 code | 6. `FORBIDDEN`, `PRODUCT_NOT_FOUND`, `VARIANT_NOT_FOUND`, `INVALID_STOCK` 추가할까요? (3-6) |
+| **전원** | 신규 오류 code | 6. **P1 의견 (10/24 희주)**: 우선 현재 공통 계약대로 `UNKNOWN` + 상황별 메시지, HTTP 상태는 403·404·409·422로 구분. 신규 code(`FORBIDDEN` 등)는 필요하면 팀 합의 후 프론트 오류 매핑·백엔드·문서를 함께 수정. → P4는 3-6 "지금 쓰는 code"로 구현 |
 
 ---
 
@@ -240,7 +240,13 @@ PROJECT2.md 구조: `presentation/router.py + schemas.py → application/service
 - [x] 관리자 API 요청·응답 명세 초안 (3장)
 - [x] 403 검증 시나리오 (7장)
 - [x] `docs/PROJECT2.md` 공통 계약 반영 (오류 code, `require_admin`, 트랜잭션, 이미지 경로, 관리자 생성 방식)
-- [ ] 5장 질문 합의 → 결과를 이 문서에 반영
+- [x] 5장 질문 1·5·6 답변 반영 (P1)
+- [ ] 5장 질문 2·3·4 답변 대기 (P2·P3)
+
+10/24~25
+- [x] 로컬 실행 확인: Docker DB healthy, FastAPI 서버 시작 시 DB 연결 성공
+  - 5432 포트가 Windows에서 막혀 호스트 포트 5433 사용 (루트 `.env`·`backend/.env` 둘 다)
+  - Windows 앱 제어가 SQLAlchemy 속도용 `.pyd`를 차단 → `.venv\Lib\site-packages\sqlalchemy`의 `*.pyd`만 삭제(같은 기능의 `.py`로 동작), 서버는 `uv run --no-sync ...`로 실행
 
 다음 (P1 인증·P2 상품 모델 의존)
 - [ ] 도메인 `StockAdjustment` + 단위 테스트 (의존 없음, 먼저 가능)
