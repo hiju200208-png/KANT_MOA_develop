@@ -207,12 +207,14 @@ PROJECT2.md 구조: `presentation/router.py + schemas.py → application/service
 
 | 계층 | 파일 | 하는 일 |
 |---|---|---|
-| presentation | `router.py` | `/admin/products` 라우터, `Depends(require_admin)`, `Depends(get_session)`, 도메인 예외 → `ApiError` |
+| presentation | `router.py` | `/admin` 라우터, 라우터 전체에 `Depends(require_admin)`. **재고 조정 `POST .../stock-adjustments` 구현 (10/25)**, 목록·상세·상태 변경은 P2 모델 후 |
+| presentation | `errors.py` | 도메인 예외 → `ApiError(상태, "UNKNOWN", 메시지)`: 잘못된 조정 422, 상품·옵션 없음 404, 재고 부족 409 |
+| presentation | `dependencies.py` | P1 `require_admin` 사용(통합 전엔 모든 요청 401로 차단하는 대체 함수), `get_admin_stock_service`(P2 연결 전엔 503) |
 | presentation | `schemas.py` | `AdminProductListItem`, `AdminProductDetail`, `StockAdjustmentRequest/Response`, `ProductStatusUpdate`. 목록은 `PageResponse[AdminProductListItem]` |
 | application | `ports.py` | 바깥에 기대하는 모양: `VariantStockPort`(잠금 조회·증감), `TransactionPort`(commit/rollback). 실제 연결은 infrastructure에서 P2 함수로 |
 | application | `stock_service.py` | **재고 조정** `AdminStockService.adjust`: 잠금 조회 → 상품 소속 확인 → P2 증감 → commit, 실패 시 rollback (10/25 구현) |
 | application | `service.py` | 목록 조회, 상세 조회, 상태 변경 (P2 모델 확정 후) |
-| domain | `stock_adjustment.py` | `StockAdjustment` (change ≠ 0, 범위, 사유 길이), 관리자 도메인 예외 |
+| domain | `stock_adjustment.py` | `StockAdjustment` (change ≠ 0, 범위, 사유 길이), 관리자 도메인 예외(`InvalidStockAdjustment`·`ProductNotFound`·`VariantNotFound`·`InsufficientStock`) |
 | infrastructure | `repositories.py` | 관리자 상품 목록 쿼리(숨김 포함·재고 합계, 조회 전용), (선택) 재고 이력 저장. 옵션 잠금 조회는 P2 `get_variants_for_update` 사용. commit 안 함 |
 | infrastructure | `models.py` | (선택) 재고 이력 `stock_adjustments` 테이블만. 상품·옵션 모델은 P2 것을 import, `database.Base` 공유 |
 
@@ -260,5 +262,7 @@ PROJECT2.md 구조: `presentation/router.py + schemas.py → application/service
 - [x] 재고 조정 서비스 `AdminStockService` + 가짜 저장소 테스트 5개 (10/25: 증가·감소 commit, 0 미만 rollback·재고 유지, 없는 옵션·다른 상품 옵션 404 rollback)
 - [ ] P2 `get_variants_for_update`·`increase_stock`/`decrease_stock` 나오면 `VariantStockPort` 실제 연결
 - [ ] P2 상품 모델 나오면 관리자 목록·상세 Repository·Service
-- [ ] P1 `require_admin` 나오면 라우터 연결, 그 전엔 테스트에서 가짜 의존성 사용
+- [x] 재고 조정 라우터·오류 변환·의존성 + API 테스트 10개 (10/25: 관리자 200, 비로그인 401, 일반 회원 403, 0 미만 409·rollback, 다른 상품 옵션 404, 잘못된 입력 422, 통합 전 대체 의존성 차단) → `uv run pytest` 47 passed
+- [ ] P1 `require_admin` main 반영 후 `main.py`에 `app.include_router(admin_router)` 추가, 희주님 리뷰 요청
+- [ ] P2 재고 부족 예외 → `InsufficientStock`(409)로 바꾸는 연결부 작성
 - [ ] 관리자 화면 (프론트 API 연결 방식 확정 후)

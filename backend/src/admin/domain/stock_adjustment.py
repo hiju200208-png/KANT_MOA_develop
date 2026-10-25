@@ -22,6 +22,16 @@ class AdminDomainError(Exception):
         self.message = message or self.message
 
 
+class InsufficientStock(AdminDomainError):
+    """줄인 뒤 재고가 0보다 작아짐 → 409.
+
+    재고 규칙 자체는 P2 decrease_stock이 판단하고, infrastructure 연결부가
+    P2의 재고 부족 예외를 이 예외로 바꿔 올린다.
+    """
+
+    message = "재고는 0개보다 적을 수 없어요."
+
+
 class InvalidStockAdjustment(AdminDomainError):
     """조정 수량·사유가 규칙에 맞지 않음 → 422."""
 
