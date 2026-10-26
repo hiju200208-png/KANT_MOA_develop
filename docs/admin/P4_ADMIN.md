@@ -92,6 +92,8 @@
 ```
 
 - `thumbnail_url`은 DB에 저장된 **상대 경로**(`/static/...` 또는 `/uploads/...`) 그대로 내려주고, 프론트가 API origin과 조합해요 (PROJECT2.md 이미지 계약).
+- `is_sold_out` 계산 (10/26 상재님 확정): `status`가 `sold_out`이면 true, `on_sale`이고 옵션 재고 합계가 0이면 true, 그 밖(`hidden` 포함)은 false. DB `status`는 재고 때문에 자동으로 바뀌지 않아요.
+- `stock=low` 필터는 옵션 중 하나라도 재고가 5 이하인 상품이에요 (`LOW_STOCK_THRESHOLD = 5`).
 - 상품 `id` 타입(정수/UUID)은 P2 상품 테이블을 따라요. 위 예시는 정수로 가정했어요.
 
 ### 3-2. 상품 상세 (옵션별 재고)
@@ -184,7 +186,7 @@ PROJECT2.md 기준: 코드명은 기존 `src/constants/error-messages.ts` / `src
   - 여러 옵션을 잠글 때는 **항상 id 오름차순**(`ORDER BY id`)으로 잠가 데드락을 막아요.
   - 잠금은 commit/rollback 때 풀리므로 트랜잭션은 각 서비스에서 짧게 가져가요.
 - 도메인(`admin/domain/`)은 FastAPI·SQLAlchemy·Pydantic을 import하지 않아요.
-- 이전 팀 알려진 문제: "재고가 0이 돼도 `status`가 `sold_out`으로 자동으로 안 바뀜" → 5장 질문 3 (여름님 의견: 조회 시 재고 합계 0이면 품절로 계산, 상재님 확정 대기).
+- 이전 팀 알려진 문제: "재고가 0이 돼도 `status`가 `sold_out`으로 자동으로 안 바뀜" → **10/26 확정**: DB status는 자동으로 바꾸지 않고, 조회할 때 `is_sold_out`을 계산해서 내려준다 (5장 질문 3).
 
 ---
 
@@ -194,9 +196,9 @@ PROJECT2.md 기준: 코드명은 기존 `src/constants/error-messages.ts` / `src
 |---|---|---|
 | **P1 (희주)** | `auth.presentation.dependencies.require_admin`, `users.role`(USER/ADMIN), 사용자 UUID | 1. **답변 완료 (10/24 희주)**: 관리자는 공개 회원가입 불가, 로컬 초기화 명령으로 생성(고정 비밀번호 저장소 금지). `get_current_user`·`require_admin`·초기화 명령은 **월요일(10/26)** 구현·공유. import 경로는 `from auth.presentation.dependencies import get_current_user, require_admin`으로 확정. 그 전까지 P4는 테스트에서 `require_admin`을 가짜 의존성으로 바꿔 검증하고, 실제 토큰 401·일반 회원 403·관리자 성공·로그아웃 토큰 차단은 인증 연결 후 검증. |
 | **P1 (희주)** | 공통 파일 `main.py`에 관리자 라우터 등록 | 5. **답변 완료 (10/24 희주)**: 관리자 라우터 import와 `app.include_router(...)`는 P4 구현 PR에 포함해도 됨(협의 완료). 인증 의존성이 main에 들어오기 전에는 import 때문에 서버 실행이 깨지지 않게 **통합 시점을 인증 PR 이후로** 맞추고, PR에서 희주님께 리뷰 요청. |
-| **P2 (상재)** | 상품·옵션 ORM 모델, 상품 도메인 재고 규칙, 상품 id 타입 | 2. 관리자 목록은 숨김 상품까지 보여야 해서 P2 공개 목록과 쿼리가 달라요. 관리자용 조회는 P4 Repository에 따로 둘게요. 괜찮을까요? → **여름님 의견 (10/25)**: 숨김 포함 조회는 P4 조회 전용으로 두고, 재고·상태 변경만 P2 도메인을 거치면 OK. **상재님 확정 대기** |
-| **P2 (상재)** | 판매 상태 규칙 | 3. 재고 합계가 0이 되면 `sold_out`으로 자동 전환할까요, 관리자가 직접 바꿀까요? → **여름님 의견 (10/25)**: `sold_out`은 저장하지 않고 조회 시 "옵션 재고 합계 0이면 품절"로 계산. 꼭 저장한다면 `increase_stock`/`decrease_stock` 안에서만 바꾸고, 관리자가 숨긴(`hidden`) 상품은 재입고돼도 자동으로 판매중으로 바꾸지 않기. **상재님 확정 대기** |
-| **P2·P3 (상재·여름)** | 재고 잠금 방식 | 4. **답변 완료 (10/25 여름)**: `FOR UPDATE` 찬성. 잠금 조회 함수는 P2 repository `get_variants_for_update(variant_ids)` 한 곳에 두고 P3·P4가 같이 사용, 여러 옵션은 id 오름차순으로 잠금. (상재님 함수 구현 필요) |
+| **P2 (상재)** | 상품·옵션 ORM 모델, 상품 도메인 재고 규칙, 상품 id 타입 | 2. **답변 완료 (10/26 상재, PR #1)**: 숨김 포함 관리자 조회는 P4 Repository에 **조회 전용**으로 둔다. 상품·옵션 ORM 모델은 **P2 모델을 재사용**(P4가 따로 만들지 않음). |
+| **P2 (상재)** | 판매 상태 규칙 | 3. **답변 완료 (10/26 상재, PR #1)**: 재고 0이어도 DB `status`는 **자동 변경하지 않음**. 품절은 **조회 시 계산**: 판매 중(`on_sale`)인데 옵션 재고 합계 0이면 `is_sold_out=true`. 관리자가 정한 `hidden`·수동 `sold_out`은 유지. → `admin/domain/product_view.py`의 `is_sold_out`으로 구현 |
+| **P2·P3 (상재·여름)** | 재고 잠금 방식 | 4. **답변 완료 (10/25 여름, 10/26 상재 확정)**: `FOR UPDATE`. P2가 `get_variants_for_update`와 도메인 재고 증감·저장을 제공하고, P4는 infrastructure에서 `VariantStockPort`에 연결하며 **같은 AsyncSession**을 쓴다. commit/rollback은 각 응용 서비스가 담당. 여러 옵션은 id 오름차순으로 잠금. |
 | **전원** | 신규 오류 code | 6. **P1 의견 (10/24 희주)**: 우선 현재 공통 계약대로 `UNKNOWN` + 상황별 메시지, HTTP 상태는 403·404·409·422로 구분. 신규 code(`FORBIDDEN` 등)는 필요하면 팀 합의 후 프론트 오류 매핑·백엔드·문서를 함께 수정. → P4는 3-6 "지금 쓰는 code"로 구현 |
 
 ---
@@ -210,11 +212,12 @@ PROJECT2.md 구조: `presentation/router.py + schemas.py → application/service
 | presentation | `router.py` | `/admin` 라우터, 라우터 전체에 `Depends(require_admin)`. **재고 조정 `POST .../stock-adjustments` 구현 (10/25)**, 목록·상세·상태 변경은 P2 모델 후 |
 | presentation | `errors.py` | 도메인 예외 → `ApiError(상태, "UNKNOWN", 메시지)`: 잘못된 조정 422, 상품·옵션 없음 404, 재고 부족 409 |
 | presentation | `dependencies.py` | P1 `require_admin` 사용(통합 전엔 모든 요청 401로 차단하는 대체 함수), `get_admin_stock_service`(P2 연결 전엔 503) |
-| presentation | `schemas.py` | `AdminProductListItem`, `AdminProductDetail`, `StockAdjustmentRequest/Response`, `ProductStatusUpdate`. 목록은 `PageResponse[AdminProductListItem]` |
+| presentation | `schemas.py` | 재고 조정 `StockAdjustmentRequest/Response`, `ProductStatusUpdate`, **목록·상세 응답 `AdminProductListItem`·`AdminProductDetail`·`AdminVariantItem`, 목록 쿼리 `AdminProductQuery` (10/26)**. 목록은 `PageResponse[AdminProductListItem]` |
 | application | `ports.py` | 바깥에 기대하는 모양: `VariantStockPort`(잠금 조회·증감), `TransactionPort`(commit/rollback). 실제 연결은 infrastructure에서 P2 함수로 |
 | application | `stock_service.py` | **재고 조정** `AdminStockService.adjust`: 잠금 조회 → 상품 소속 확인 → P2 증감 → commit, 실패 시 rollback (10/25 구현) |
 | application | `service.py` | 목록 조회, 상세 조회, 상태 변경 (P2 모델 확정 후) |
 | domain | `stock_adjustment.py` | `StockAdjustment` (change ≠ 0, 범위, 사유 길이), 관리자 도메인 예외(`InvalidStockAdjustment`·`ProductNotFound`·`VariantNotFound`·`InsufficientStock`) |
+| domain | `product_view.py` | 품절 계산 `is_sold_out(status, total_stock)`, 재고 요약 `summarize_stock`(합계·옵션 수·부족 여부) (10/26) |
 | infrastructure | `repositories.py` | 관리자 상품 목록 쿼리(숨김 포함·재고 합계, 조회 전용), (선택) 재고 이력 저장. 옵션 잠금 조회는 P2 `get_variants_for_update` 사용. commit 안 함 |
 | infrastructure | `models.py` | (선택) 재고 이력 `stock_adjustments` 테이블만. 상품·옵션 모델은 P2 것을 import, `database.Base` 공유 |
 
@@ -249,7 +252,7 @@ PROJECT2.md 구조: `presentation/router.py + schemas.py → application/service
 - [x] `docs/PROJECT2.md` 공통 계약 반영 (오류 code, `require_admin`, 트랜잭션, 이미지 경로, 관리자 생성 방식)
 - [x] 5장 질문 1·5·6 답변 반영 (P1)
 - [x] 5장 질문 4 답변 반영 (10/25 여름: FOR UPDATE, 잠금 조회 P2 한 곳, id 오름차순)
-- [ ] 5장 질문 2·3 상재님 확정 대기 (여름님 의견 기록)
+- [x] 5장 질문 2·3·4 상재님 답변 반영 (10/26, PR #1 댓글) → 5장 질문 1~6 모두 답변 완료
 
 10/24~25
 - [x] 로컬 실행 확인: Docker DB healthy, FastAPI 서버 시작 시 DB 연결 성공
@@ -261,7 +264,8 @@ PROJECT2.md 구조: `presentation/router.py + schemas.py → application/service
 - [x] 요청 스키마 `StockAdjustmentRequest`·`ProductStatusUpdate`, 응답 `StockAdjustmentResponse` + 422 검증 테스트 (10/25)
 - [x] 재고 조정 서비스 `AdminStockService` + 가짜 저장소 테스트 5개 (10/25: 증가·감소 commit, 0 미만 rollback·재고 유지, 없는 옵션·다른 상품 옵션 404 rollback)
 - [ ] P2 `get_variants_for_update`·`increase_stock`/`decrease_stock` 나오면 `VariantStockPort` 실제 연결
-- [ ] P2 상품 모델 나오면 관리자 목록·상세 Repository·Service
+- [x] 품절 계산·재고 요약 도메인, 관리자 목록·상세 응답과 목록 쿼리 스키마 + 테스트 11개 (10/26) → `uv run pytest` 58 passed
+- [ ] P2 상품 모델 나오면 관리자 목록·상세 Repository(조회 전용, P2 모델 재사용)·Service·라우터
 - [x] 재고 조정 라우터·오류 변환·의존성 + API 테스트 10개 (10/25: 관리자 200, 비로그인 401, 일반 회원 403, 0 미만 409·rollback, 다른 상품 옵션 404, 잘못된 입력 422, 통합 전 대체 의존성 차단) → `uv run pytest` 47 passed
 - [ ] P1 `require_admin` main 반영 후 `main.py`에 `app.include_router(admin_router)` 추가, 희주님 리뷰 요청
 - [ ] P2 재고 부족 예외 → `InsufficientStock`(409)로 바꾸는 연결부 작성
