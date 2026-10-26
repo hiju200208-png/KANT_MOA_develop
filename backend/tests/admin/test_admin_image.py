@@ -24,7 +24,8 @@ WEBP = b"RIFF\x00\x00\x00\x00WEBPVP8 " + b"\x00" * 8
 
 # --- 도메인 ---
 @pytest.mark.parametrize("ctype,data,ext", [("image/png", PNG, "png"), ("image/jpeg", JPG, "jpg"),
-                                            ("image/jpg", JPG, "jpg"), ("image/webp", WEBP, "webp")])
+                                            ("image/jpg", JPG, "jpg"), ("image/webp", WEBP, "webp")],
+                         ids=["png", "jpeg", "jpg-alias", "webp"])
 def test_allowed_images(ctype, data, ext):
     assert ImageUpload(ctype, data).extension == ext
 
@@ -35,7 +36,7 @@ def test_allowed_images(ctype, data, ext):
     ("text/html", b"<script>"),
     ("image/png", b""),                            # 빈 파일
     ("image/png", PNG + b"\x00" * MAX_IMAGE_BYTES),  # 5MB 초과
-])
+], ids=["gif", "content-mismatch", "html", "empty", "over-5mb"])  # 큰 바이트가 테스트 이름에 들어가지 않게 (Windows)
 def test_rejected_images(ctype, data):
     with pytest.raises(InvalidImage):
         ImageUpload(ctype, data)
@@ -149,7 +150,7 @@ def test_put_thumbnail_returns_detail_with_upload_url(tmp_path):
     ({"Content-Type": "image/png"}, JPG),
     ({"Content-Type": "application/json"}, b"{}"),
     ({"Content-Type": "image/png"}, b""),
-])
+], ids=["gif", "content-mismatch", "json", "empty"])
 def test_put_invalid_image_is_422(tmp_path, headers, body):
     client, tx = build(tmp_path)
     res = client.put("/admin/products/1/thumbnail", content=body, headers=headers)
