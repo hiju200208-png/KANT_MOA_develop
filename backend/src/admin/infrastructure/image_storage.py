@@ -3,11 +3,12 @@
 from pathlib import Path
 from uuid import uuid4
 
-from sqlalchemy import text
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from admin.domain.product_image import ImageUpload
 from core.config import BACKEND_ROOT
+from products.infrastructure.models import ProductModel
 
 UPLOAD_ROOT = BACKEND_ROOT / "uploads"
 PUBLIC_PREFIX = "/uploads"
@@ -36,14 +37,17 @@ class LocalImageStorage:
 
 
 class SqlThumbnailWriter:
-    """products.thumbnail_path만 바꾼다 (commit 없음)."""
+    """products.thumbnail_path만 바꾼다 (P2 ORM 모델 사용, commit 없음)."""
 
     def __init__(self, session: AsyncSession):
         self._session = session
 
     async def update_thumbnail(self, product_id: int, public_path: str) -> bool:
         result = await self._session.execute(
-            text("UPDATE products SET thumbnail_path = :path WHERE id = :id RETURNING id"),
-            {"path": public_path, "id": product_id},
+            update(ProductModel)
+            .where(ProductModel.id == product_id)
+            .values(thumbnail_path=public_path)
+            .returning(ProductModel.id)
+            .execution_options(synchronize_session=False)
         )
         return result.scalar_one_or_none() is not None

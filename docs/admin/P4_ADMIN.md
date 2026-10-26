@@ -262,7 +262,7 @@ PROJECT2.md 구조: `presentation/router.py + schemas.py → application/service
 | application | `product_service.py` | **목록·상세 조회 `AdminProductService` (10/26, 조회 전용, 없는 상품 404)**, **판매 상태 변경 `AdminProductStatusService` (변경 → 상세 조회 → commit, 실패 시 rollback, 10/26)** |
 | domain | `stock_adjustment.py` | `StockAdjustment` (change ≠ 0, 범위, 사유 길이), 관리자 도메인 예외(`InvalidStockAdjustment`·`ProductNotFound`·`VariantNotFound`·`InsufficientStock`) |
 | domain | `product_view.py` | 품절 계산 `is_sold_out(status, total_stock)`, 재고 요약 `summarize_stock`(합계·옵션 수·부족 여부) (10/26) |
-| infrastructure | `product_queries.py` | **관리자 상품 목록·상세 SQL(숨김 포함·재고 합계·검색/필터/정렬/페이지, 바인딩 파라미터만, 10/26)**. 테이블 기준 `backend/sql/001_create_tables.sql`, P2 ORM 모델 main 반영 후 ORM으로 바꿀 수 있음. (선택) 재고 이력 저장. 옵션 잠금 조회는 P2 `get_variants_for_update` 사용. commit 안 함 |
+| infrastructure | `product_queries.py` | **관리자 상품 목록·상세 조회(숨김 포함·재고 합계·검색/필터/정렬/페이지, 바인딩 파라미터만)** — P2 ORM 모델 재사용 (10/26). (선택) 재고 이력 저장. 옵션 잠금 조회는 P2 `get_variants_for_update` 사용. commit 안 함 |
 | infrastructure | `models.py` | (선택) 재고 이력 `stock_adjustments` 테이블만. 상품·옵션 모델은 P2 것을 import, `database.Base` 공유 |
 
 ---
@@ -314,7 +314,7 @@ PROJECT2.md 구조: `presentation/router.py + schemas.py → application/service
   - 이미지 경로 `thumbnail_path` → `/static/products/...` 변환은 잠정 규칙 (P2 이미지 이전 규칙 확정 후 맞춤)
 - [x] 판매 상태 변경 `PATCH /admin/products/{id}` 도메인·서비스·라우터 + 테스트 20개 (10/26: 상태 검증, commit·rollback, 200·401·403·404·422) + 로컬 DB 통합 테스트에 상태 변경 추가 → `uv run pytest` 97 passed, 1 skipped
   - 상태 저장은 `infrastructure/product_status.py`(SQL UPDATE). P2 상품 저장소에 상태 변경 함수가 생기면 이 어댑터만 바꿈
-- [ ] P2 상품 ORM 모델 main 반영 후 조회를 ORM 모델 재사용으로 정리 (결과 동일 유지)
+- [x] 관리자 조회·상태 변경·이미지 경로 변경을 P2 ORM 모델(`ProductModel`·`ArtistModel`·`CategoryModel`·`ProductVariantModel`) 재사용으로 정리 (10/26, 상재님 요청). 결과 동일: SQL 생성 테스트 5개 + 로컬 DB 통합 통과 (main 모델·`383acb9` 보완 모델 모두). 공지(`notices`)는 P2 ORM 모델이 없어 기존 SQL 유지
 - [x] (선택 #39) 상품 대표 이미지 교체 API + 상세 화면 "이미지 변경" 버튼 (10/26): 형식·크기·매직 바이트 검사, DB 실패 시 파일 삭제. 테스트 19개 + 로컬 DB 통합, 화면 업로드 후 `/uploads/...` 이미지 표시 확인
 - [x] (선택 #40) 공지 관리 API 등록·수정·삭제·목록·상세 + 테스트 28개(규칙, commit·rollback, 201·204·401·403·404·422) + 로컬 DB 통합 테스트 → `uv run pytest` 125 passed, 2 skipped
   - 사용자 화면 노출은 P2 공개 공지 API 전환 후 확인 (#40 완료 조건)

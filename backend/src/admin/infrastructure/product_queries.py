@@ -1,10 +1,10 @@
-"""관리자 상품 조회 저장소 (SQL, 조회 전용, commit/flush 없음).
+"""관리자 상품 조회 저장소 (조회 전용, commit/flush 없음).
 
-테이블 구조 기준: backend/sql/001_create_tables.sql (10/26 상재님 공용 DB).
-P2 ORM 모델이 main에 들어오면 같은 결과를 내는 ORM 조회로 바꿀 수 있다.
+P2 ORM 모델(products.infrastructure.models)을 재사용한다 (10/26 상재님 요청).
+숨김 상품까지 포함하는 관리자 전용 조회라 P4에 두고, 테이블 매핑은 P2 한 곳만 쓴다.
 """
 
-from sqlalchemy import text
+from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from admin.application.product_service import AdminProductFilters
@@ -14,68 +14,83 @@ from admin.domain.product_view import (
     AdminProductRow,
     AdminVariantRow,
 )
+from products.infrastructure.models import ArtistModel, CategoryModel, ProductModel, ProductVariantModel
 
-_BASE_FROM = """
-FROM products p
-JOIN artists a ON a.id = p.artist_id
-JOIN categories c ON c.id = p.category_id
-LEFT JOIN (
-    SELECT product_id,
-           COALESCE(SUM(stock), 0) AS total_stock,
-           COUNT(*) AS variant_count,
-           BOOL_OR(stock <= :low_threshold) AS has_low_stock
-    FROM product_variants
-    GROUP BY product_id
-) v ON v.product_id = p.id
-"""
+P, A, C, V = ProductModel, ArtistModel, CategoryModel, ProductVariantModel
 
-_SELECT_COLUMNS = """
-SELECT p.id, p.name, a.slug AS artist_slug, a.name AS artist_name,
-       c.slug AS category_slug, c.name AS category_name,
-       p.price, p.status, p.thumbnail_path,
-       COALESCE(v.total_stock, 0) AS total_stock,
-       COALESCE(v.variant_count, 0) AS variant_count
-"""
+# 상품별 옵션 재고 합계·옵션 수·재고 부족 옵션 존재 여부
+_variant_summary = (
+    select(
+        V.product_id.label("product_id"),
+        func.coalesce(func.sum(V.stock), 0).label("total_stock"),
+        func.count(V.id).label("variant_count"),
+        func.bool_or(V.stock <= LOW_STOCK_THRESHOLD).label("has_low_stock"),
+    )
+    .group_by(V.product_id)
+    .subquery("v")
+)
+_total_stock = func.coalesce(_variant_summary.c.total_stock, 0)
+_variant_count = func.coalesce(_variant_summary.c.variant_count, 0)
 
 _ORDER_BY = {
-    "latest": "p.created_at DESC, p.id DESC",
-    "stock_asc": "COALESCE(v.total_stock, 0) ASC, p.id ASC",
-    "name": "p.name ASC, p.id ASC",
+    "latest": (P.created_at.desc(), P.id.desc()),
+    "stock_asc": (_total_stock.asc(), P.id.asc()),
+    "name": (P.name.asc(), P.id.asc()),
 }
+
+
+def _joined(stmt: Select) -> Select:
+    return (
+        stmt.select_from(P)
+        .join(A, A.id == P.artist_id)
+        .join(C, C.id == P.category_id)
+        .outerjoin(_variant_summary, _variant_summary.c.product_id == P.id)
+    )
+
+
+def _row_select() -> Select:
+    return _joined(
+        select(
+            P.id, P.name,
+            A.slug.label("artist_slug"), A.name.label("artist_name"),
+            C.slug.label("category_slug"), C.name.label("category_name"),
+            P.price, P.status, P.thumbnail_path,
+            _total_stock.label("total_stock"), _variant_count.label("variant_count"),
+        )
+    )
 
 
 def _escape_like(value: str) -> str:
     return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
-def build_list_sql(filters: AdminProductFilters) -> tuple[str, str, dict]:
-    """(목록 SQL, 개수 SQL, 파라미터). 값은 모두 바인딩 파라미터로만 넣는다."""
-    where: list[str] = []
-    params: dict = {"low_threshold": LOW_STOCK_THRESHOLD}
-    if filters.q:
-        where.append("p.name ILIKE :q ESCAPE '\\'")
-        params["q"] = f"%{_escape_like(filters.q.strip())}%"
+def _conditions(filters: AdminProductFilters) -> list:
+    conditions = []
+    if filters.q and filters.q.strip():
+        conditions.append(P.name.ilike(f"%{_escape_like(filters.q.strip())}%", escape="\\"))
     if filters.artist:
-        where.append("a.slug = :artist")
-        params["artist"] = filters.artist
+        conditions.append(A.slug == filters.artist)
     if filters.category:
-        where.append("c.slug = :category")
-        params["category"] = filters.category
+        conditions.append(C.slug == filters.category)
     if filters.status:
-        where.append("p.status = :status")
-        params["status"] = filters.status
+        conditions.append(P.status == filters.status)
     if filters.stock == "out":
-        where.append("COALESCE(v.total_stock, 0) = 0")
+        conditions.append(_total_stock == 0)
     elif filters.stock == "low":
-        where.append("COALESCE(v.has_low_stock, false)")
+        conditions.append(func.coalesce(_variant_summary.c.has_low_stock, False))
+    return conditions
 
-    where_sql = f"WHERE {' AND '.join(where)}" if where else ""
-    order_sql = _ORDER_BY.get(filters.sort, _ORDER_BY["latest"])
-    params["limit"] = filters.size
-    params["offset"] = (filters.page - 1) * filters.size
-    list_sql = f"{_SELECT_COLUMNS} {_BASE_FROM} {where_sql} ORDER BY {order_sql} LIMIT :limit OFFSET :offset"
-    count_sql = f"SELECT COUNT(*) {_BASE_FROM} {where_sql}"
-    return list_sql, count_sql, params
+
+def build_list_query(filters: AdminProductFilters) -> tuple[Select, Select]:
+    """(목록 쿼리, 개수 쿼리). 사용자 입력은 모두 바인딩 파라미터로만 들어간다."""
+    conditions = _conditions(filters)
+    order_by = _ORDER_BY.get(filters.sort, _ORDER_BY["latest"])
+    list_stmt = (
+        _row_select().where(*conditions).order_by(*order_by)
+        .limit(filters.size).offset((filters.page - 1) * filters.size)
+    )
+    count_stmt = _joined(select(func.count(P.id))).where(*conditions)
+    return list_stmt, count_stmt
 
 
 def _to_row(m) -> AdminProductRow:
@@ -93,28 +108,20 @@ class SqlAdminProductQueries:
         self._session = session
 
     async def list_products(self, filters: AdminProductFilters) -> tuple[list[AdminProductRow], int]:
-        list_sql, count_sql, params = build_list_sql(filters)
-        count_params = {k: v for k, v in params.items() if k not in ("limit", "offset")}
-        total = (await self._session.execute(text(count_sql), count_params)).scalar_one()
-        rows = (await self._session.execute(text(list_sql), params)).mappings().all()
+        list_stmt, count_stmt = build_list_query(filters)
+        total = (await self._session.execute(count_stmt)).scalar_one()
+        rows = (await self._session.execute(list_stmt)).mappings().all()
         return [_to_row(m) for m in rows], int(total)
 
     async def get_product(self, product_id: int) -> AdminProductDetailRow | None:
-        sql = f"{_SELECT_COLUMNS} {_BASE_FROM} WHERE p.id = :product_id"
-        row = (
-            await self._session.execute(
-                text(sql), {"product_id": product_id, "low_threshold": LOW_STOCK_THRESHOLD}
-            )
-        ).mappings().first()
+        row = (await self._session.execute(_row_select().where(P.id == product_id))).mappings().first()
         if row is None:
             return None
         variants = (
             await self._session.execute(
-                text(
-                    "SELECT id, option_name, extra_price, stock, max_per_user "
-                    "FROM product_variants WHERE product_id = :product_id ORDER BY sort_order, id"
-                ),
-                {"product_id": product_id},
+                select(V.id, V.option_name, V.extra_price, V.stock, V.max_per_user)
+                .where(V.product_id == product_id)
+                .order_by(V.sort_order, V.id)
             )
         ).mappings().all()
         return AdminProductDetailRow(
