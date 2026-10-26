@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncSessionTransaction
 
 from products.domain.variant import ProductVariant
 from products.infrastructure.models import ProductVariantModel
@@ -12,7 +12,10 @@ class ProductRepository:
 
     def __init__(self, session: AsyncSession):
         self.session = session
-        self._locked: dict[int, tuple] = {}
+        self._locked: dict[int, tuple[
+            ProductVariant, ProductVariantModel,
+            AsyncSessionTransaction | None, AsyncSessionTransaction | None,
+        ]] = {}
 
     async def get_variants_for_update(self, variant_ids: Iterable[int]) -> list[ProductVariant]:
         ids = list(variant_ids)
@@ -35,7 +38,9 @@ class ProductRepository:
                 option_name=row.option_name, extra_price=row.extra_price,
                 max_per_user=row.max_per_user, sort_order=row.sort_order,
             )
-            self._locked[row.id] = (variant, row, self.session.get_transaction())
+            self._locked[row.id] = (
+                variant, row, self.session.get_transaction(), self.session.get_nested_transaction(),
+            )
             variants.append(variant)
         # 누락 ID는 반환하지 않음. 호출 서비스가 전체 ID와 비교하고 rollback한다.
         return variants
@@ -43,8 +48,9 @@ class ProductRepository:
     async def save_variant(self, variant: ProductVariant) -> None:
         locked = self._locked.get(variant.id)
         if (locked is None or locked[0] is not variant
-                or locked[2] is not self.session.get_transaction()):
-            raise ValueError("같은 트랜잭션에서 잠금 조회한 옵션만 저장할 수 있어요.")
+                or locked[2] is not self.session.get_transaction()
+                or locked[3] is not self.session.get_nested_transaction()):
+            raise ValueError("같은 트랜잭션·저장점에서 잠금 조회한 옵션만 저장할 수 있어요.")
         # 변환 과정에서 재고 불변식을 다시 검증한다.
         ProductVariant(id=variant.id, product_id=variant.product_id, stock=variant.stock)
         locked[1].stock = variant.stock
