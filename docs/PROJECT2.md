@@ -122,6 +122,8 @@ from auth.presentation.dependencies import CurrentUser, get_current_user, requir
 
 ## 10/26 검증 결과와 테스트 실행
 
+- 최신 팀 main `0e8cceb`을 heeju에 충돌 없이 병합한 뒤 재검증: **181 passed, 17 skipped, 1 warning (14.65s)**. `P1_RUN_LOCAL_DB_TESTS=1`을 사용했으며 관리자·상품의 선택 실행 DB 테스트는 건너뛰었습니다. `alembic check`도 추가 변경 없이 통과했고 단일 head는 `3f21520f9615`입니다. 아래 결과는 이전 검증 기록입니다.
+
 - 최초 P1 인증 단독 구성: 사용자 실행 결과 18 passed.
 - main의 P2·P4 코드 통합 후 전체 실행에서 가짜 DATABASE_URL 설정 충돌로 인증 DB 테스트 4개가 실패했습니다. 해당 4개만 별도 실행하면 통과했습니다.
 - `tests/conftest.py`에서 명시적 로컬 실행 플래그를 선택하면 테스트 수집 전에 backend/.env를 읽도록 정리했습니다. 로컬 호스트만 허용하며 실제 DB URL·비밀값을 테스트에 하드코딩하지 않습니다.
