@@ -114,6 +114,7 @@ async def _scenario():
                 # 판매 상태 변경: 서비스 commit은 savepoint까지만, 바깥 트랜잭션 rollback으로 모두 취소
                 changed = await client.patch(f"/admin/products/{on_sale}", json={"status": "hidden"})
                 assert changed.status_code == 200 and changed.json()["status"] == "hidden"
+                assert [v["stock"] for v in changed.json()["variants"]] == [10, 7]  # 상태 변경은 재고를 건드리지 않음
                 assert (await ids(status="hidden"))[0] == [hidden, on_sale]
                 reopened = await client.patch(f"/admin/products/{empty}", json={"status": "on_sale"})
                 assert reopened.json()["is_sold_out"] is True  # 재고 0이면 on_sale이어도 품절 표시

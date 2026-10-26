@@ -148,6 +148,9 @@
 - 세 상태 사이는 자유롭게 바꿀 수 있어요. 재고 0인 상품을 `on_sale`로 바꿔도 막지 않고 `is_sold_out: true`로 보여줘요 (상태 자동 변경 없음)
 - 없는 상품 404. 실패하면 rollback 해서 상태가 바뀌지 않아요
 - 같은 상태로 다시 보내도 200 (결과 동일)
+- 10/26 상재님 확인: `products.status` 변경은 데이터 수정이라 마이그레이션 불필요. P2 상태 변경 함수가 생기면 그 함수로 연결하고, 그전까지 P4 어댑터 UPDATE 사용
+  - 조건: 허용 상태 검증, `require_admin` 권한 검사, UPDATE는 `status`만 바꾸고 재고(`product_variants.stock`)는 건드리지 않음
+  - 트랜잭션: 저장소(`SqlProductStatusWriter`)는 commit 안 함, `AdminProductStatusService`가 commit·rollback
 
 ### 3-5. (선택) 재고 변경 이력
 
