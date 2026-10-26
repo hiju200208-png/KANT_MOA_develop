@@ -7,13 +7,16 @@ main.py 등록(app.include_router)은 P1 인증 PR이 main에 들어온 뒤 P4 P
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Depends, Path, Query, Response
 
+from admin.application.notice_service import AdminNoticeService
 from admin.application.product_service import AdminProductService, AdminProductStatusService
 from admin.application.stock_service import AdminStockService
+from admin.domain.notice import AdminNoticeRow, NoticeChanges, NoticeDraft
 from admin.domain.product_view import AdminProductDetailRow, AdminProductRow, to_public_image_path
 from admin.domain.stock_adjustment import AdminDomainError, StockAdjustment
 from admin.presentation.dependencies import (
+    get_admin_notice_service,
     get_admin_product_service,
     get_admin_product_status_service,
     get_admin_stock_service,
@@ -21,11 +24,15 @@ from admin.presentation.dependencies import (
 )
 from admin.presentation.errors import to_api_error
 from admin.presentation.schemas import (
+    AdminNoticeItem,
+    AdminNoticeQuery,
     AdminProductDetail,
     AdminProductListItem,
     AdminProductQuery,
     AdminVariantItem,
     NamedRef,
+    NoticeCreate,
+    NoticeUpdate,
     ProductStatusUpdate,
     StockAdjustmentRequest,
     StockAdjustmentResponse,
@@ -147,3 +154,80 @@ async def adjust_stock(
     return StockAdjustmentResponse(
         variant_id=result.variant_id, before=result.before, after=result.after, change=result.change
     )
+
+
+# --- 공지 관리 (선택 기능 #40). 사용자 화면 공지 조회는 P2 담당 ---
+
+
+def _to_notice(row: AdminNoticeRow) -> AdminNoticeItem:
+    return AdminNoticeItem(
+        id=row.id,
+        title=row.title,
+        body=row.body,
+        artist=NamedRef(slug=row.artist_slug, name=row.artist_name) if row.artist_slug else None,
+        product_id=row.product_id,
+        product_name=row.product_name,
+        is_pinned=row.is_pinned,
+        show_in_topbar=row.show_in_topbar,
+        published_at=row.published_at,
+    )
+
+
+@router.get("/notices", response_model=PageResponse[AdminNoticeItem], responses=_READ_ERRORS, summary="공지 목록")
+async def list_notices(
+    query: Annotated[AdminNoticeQuery, Query()],
+    service: AdminNoticeService = Depends(get_admin_notice_service),
+) -> PageResponse[AdminNoticeItem]:
+    rows, total = await service.list_notices(query.artist, query.page, query.size)
+    return PageResponse[AdminNoticeItem](
+        items=[_to_notice(r) for r in rows], total=total, page=query.page, size=query.size
+    )
+
+
+@router.get("/notices/{notice_id}", response_model=AdminNoticeItem, responses=_READ_ERRORS, summary="공지 상세")
+async def get_notice(
+    notice_id: int = Path(ge=1),
+    service: AdminNoticeService = Depends(get_admin_notice_service),
+) -> AdminNoticeItem:
+    try:
+        return _to_notice(await service.get_notice(notice_id))
+    except AdminDomainError as error:
+        raise to_api_error(error) from None
+
+
+@router.post(
+    "/notices", response_model=AdminNoticeItem, status_code=201, responses=_READ_ERRORS, summary="공지 등록"
+)
+async def create_notice(
+    body: NoticeCreate,
+    service: AdminNoticeService = Depends(get_admin_notice_service),
+) -> AdminNoticeItem:
+    try:
+        return _to_notice(await service.create(NoticeDraft(**body.model_dump())))
+    except AdminDomainError as error:
+        raise to_api_error(error) from None
+
+
+@router.patch("/notices/{notice_id}", response_model=AdminNoticeItem, responses=_READ_ERRORS, summary="공지 수정")
+async def update_notice(
+    body: NoticeUpdate,
+    notice_id: int = Path(ge=1),
+    service: AdminNoticeService = Depends(get_admin_notice_service),
+) -> AdminNoticeItem:
+    try:
+        changes = NoticeChanges(body.model_dump(exclude_unset=True))
+        return _to_notice(await service.update(notice_id, changes))
+    except AdminDomainError as error:
+        raise to_api_error(error) from None
+
+
+@router.delete("/notices/{notice_id}", status_code=204, responses=_READ_ERRORS, summary="공지 삭제")
+async def delete_notice(
+    notice_id: int = Path(ge=1),
+    service: AdminNoticeService = Depends(get_admin_notice_service),
+) -> Response:
+    try:
+        await service.delete(notice_id)
+    except AdminDomainError as error:
+        raise to_api_error(error) from None
+    return Response(status_code=204)

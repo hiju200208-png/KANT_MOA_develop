@@ -134,3 +134,75 @@ async def _scenario():
 
 def test_admin_product_queries_against_local_db():
     asyncio.run(_scenario())
+
+
+async def _notice_scenario():
+    import httpx
+    from fastapi import FastAPI
+    from sqlalchemy import text
+    from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+    from sqlalchemy.pool import NullPool
+
+    from admin.presentation.dependencies import require_admin
+    from admin.presentation.router import router
+    from core.errors import register_error_handlers
+    from database import get_session
+
+    tag = uuid.uuid4().hex[:8]
+    engine = create_async_engine(_local_database_url(), poolclass=NullPool)
+    async with engine.connect() as conn:
+        trans = await conn.begin()
+        session = AsyncSession(bind=conn, expire_on_commit=False, join_transaction_mode="create_savepoint")
+        try:
+            artist_id = (await session.execute(text(
+                "INSERT INTO artists (name, name_ko, slug) VALUES ('TEST', '테스트', :s) RETURNING id"
+            ), {"s": f"test-{tag}"})).scalar_one()
+            category_id = (await session.execute(text(
+                "INSERT INTO categories (name, slug) VALUES ('테스트분류', :s) RETURNING id"
+            ), {"s": f"cat-{tag}"})).scalar_one()
+            product_id = (await session.execute(text(
+                "INSERT INTO products (artist_id, category_id, name, price) VALUES (:a, :c, '공지상품', 1000) RETURNING id"
+            ), {"a": artist_id, "c": category_id})).scalar_one()
+
+            async def same_session():
+                yield session
+
+            async def fake_admin():
+                return None
+
+            app = FastAPI()
+            register_error_handlers(app)
+            app.include_router(router)
+            app.dependency_overrides[require_admin] = fake_admin
+            app.dependency_overrides[get_session] = same_session
+
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
+                created = await client.post("/admin/notices", json={
+                    "title": " 발매 안내 ", "body": "## 안내\n- 첫째", "artist_slug": f"test-{tag}",
+                    "product_id": product_id, "is_pinned": True})
+                assert created.status_code == 201, created.json()
+                notice = created.json()
+                assert notice["title"] == "발매 안내" and notice["product_name"] == "공지상품"
+                nid = notice["id"]
+
+                listed = (await client.get("/admin/notices", params={"artist": f"test-{tag}"})).json()
+                assert [n["id"] for n in listed["items"]] == [nid]
+
+                patched = await client.patch(f"/admin/notices/{nid}", json={"artist_slug": None, "product_id": None})
+                assert patched.json()["artist"] is None and patched.json()["product_id"] is None
+                bad = await client.post("/admin/notices", json={"title": "t", "artist_slug": f"none-{tag}"})
+                assert bad.status_code == 422
+
+                assert (await client.delete(f"/admin/notices/{nid}")).status_code == 204
+                assert (await client.get(f"/admin/notices/{nid}")).status_code == 404
+                assert (await client.delete(f"/admin/notices/{nid}")).status_code == 404
+        finally:
+            await session.close()
+            await trans.rollback()
+        left = (await conn.execute(text("SELECT count(*) FROM artists WHERE slug = :s"), {"s": f"test-{tag}"})).scalar_one()
+        assert left == 0
+    await engine.dispose()
+
+
+def test_admin_notices_against_local_db():
+    asyncio.run(_notice_scenario())

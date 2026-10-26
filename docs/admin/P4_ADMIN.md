@@ -158,6 +158,33 @@
 
 - `admin_id`는 사용자 UUID (PROJECT2.md 인증 계약의 `users.id`)
 
+### 3-7. (선택) 공지 관리 — #40
+
+사용자 화면의 공지 조회는 P2 담당이고, P4는 관리자 등록·수정·삭제만 맡아요. `notices` 테이블이 이미 있어서 DB 구조 변경은 없어요.
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/admin/notices?artist=&page=&size=` | 공지 목록 (고정 먼저, 최신순). `artist=all`이면 전체 공지만 |
+| GET | `/admin/notices/{id}` | 공지 상세 |
+| POST | `/admin/notices` | 공지 등록 → `201` |
+| PATCH | `/admin/notices/{id}` | 보낸 필드만 수정. `artist_slug`·`product_id`·`body`는 `null`로 보내면 연결/내용을 지움 |
+| DELETE | `/admin/notices/{id}` | 공지 삭제 → `204` |
+
+요청 예시
+```json
+{ "title": "응원봉 2차 판매 안내", "body": "## 안내\n- 10/30 20:00 오픈", "artist_slug": "bts", "product_id": 12, "is_pinned": true, "show_in_topbar": false }
+```
+
+| 필드 | 규칙 |
+|---|---|
+| `title` | 앞뒤 공백 제거 후 1~100자 |
+| `body` | 선택, 최대 5000자 (줄 단위 표시) |
+| `artist_slug` | 선택, 없으면 전체 공지. 없는 아티스트면 422 |
+| `product_id` | 선택, 없는 상품이면 422 |
+| `is_pinned`, `show_in_topbar` | true/false만 |
+
+응답: `{ id, title, body, artist: {slug, name} | null, product_id, product_name, is_pinned, show_in_topbar, published_at }`. 없는 공지 404.
+
 ### 3-6. 오류 코드
 
 PROJECT2.md 기준: 코드명은 기존 `src/constants/error-messages.ts` / `src/services/errors.ts`를 따르고, **신규 코드는 임의로 추가하지 않아요.** 없는 경우는 `UNKNOWN` + 의미 있는 메시지를 써요.
@@ -279,6 +306,8 @@ PROJECT2.md 구조: `presentation/router.py + schemas.py → application/service
 - [x] 판매 상태 변경 `PATCH /admin/products/{id}` 도메인·서비스·라우터 + 테스트 20개 (10/26: 상태 검증, commit·rollback, 200·401·403·404·422) + 로컬 DB 통합 테스트에 상태 변경 추가 → `uv run pytest` 97 passed, 1 skipped
   - 상태 저장은 `infrastructure/product_status.py`(SQL UPDATE). P2 상품 저장소에 상태 변경 함수가 생기면 이 어댑터만 바꿈
 - [ ] P2 상품 ORM 모델 main 반영 후 조회를 ORM 모델 재사용으로 정리 (결과 동일 유지)
+- [x] (선택 #40) 공지 관리 API 등록·수정·삭제·목록·상세 + 테스트 28개(규칙, commit·rollback, 201·204·401·403·404·422) + 로컬 DB 통합 테스트 → `uv run pytest` 125 passed, 2 skipped
+  - 사용자 화면 노출은 P2 공개 공지 API 전환 후 확인 (#40 완료 조건)
 - [x] 재고 조정 라우터·오류 변환·의존성 + API 테스트 10개 (10/25: 관리자 200, 비로그인 401, 일반 회원 403, 0 미만 409·rollback, 다른 상품 옵션 404, 잘못된 입력 422, 통합 전 대체 의존성 차단) → `uv run pytest` 47 passed
 - [ ] P1 `require_admin` main 반영 후 `main.py`에 `app.include_router(admin_router)` 추가, 희주님 리뷰 요청
 - [ ] P2 재고 부족 예외 → `InsufficientStock`(409)로 바꾸는 연결부 작성

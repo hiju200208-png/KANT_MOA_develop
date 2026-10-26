@@ -11,7 +11,9 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from admin.application.notice_service import AdminNoticeService
 from admin.application.product_service import AdminProductService, AdminProductStatusService
+from admin.infrastructure.notice_repository import SqlAdminNoticeRepository
 from admin.infrastructure.product_queries import SqlAdminProductQueries
 from admin.infrastructure.product_status import SessionTransaction, SqlProductStatusWriter
 from core.errors import ApiError
@@ -41,3 +43,7 @@ async def get_admin_product_status_service(
     return AdminProductStatusService(
         SqlAdminProductQueries(session), SqlProductStatusWriter(session), SessionTransaction(session)
     )
+
+
+async def get_admin_notice_service(session: AsyncSession = Depends(get_session)) -> AdminNoticeService:
+    return AdminNoticeService(SqlAdminNoticeRepository(session), SessionTransaction(session))
