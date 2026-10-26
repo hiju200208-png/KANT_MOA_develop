@@ -2,6 +2,20 @@
 
 기준일: 2026-10-23. GitHub가 원본이며 Notion·Redmine에는 요약과 이 문서 링크를 연결합니다.
 
+## 10/26 공용 서버·DB 적용 업데이트
+
+현재 서버 구성·적용 스키마·검증·후속 작업은 [STAGING.md](STAGING.md)를 먼저 확인합니다.
+아래 로컬 실행 방법은 개인 개발용이며, 공용 서버와 구분합니다.
+
+- 공용 서버의 기존 PostgreSQL 18 안에 `kant_moa` 전용 DB·계정을 만들고 테이블 18개를 적용했습니다.
+- `profiles`를 `users`로 대체하고 회원 FK를 연결했습니다. 일반 로그인과 Google 로그인 병행을 위해
+  `google_sub`와 nullable `password_hash`를 준비했습니다. 인증 기능 자체는 후속 구현입니다.
+- 서버 FastAPI의 DB 연결과 [외부 Swagger](https://letdown-kilometer-nutcase.ngrok-free.dev/docs)를 확인했습니다.
+  현재 OpenAPI 등록 경로는 `/health`뿐이며, 시드·기능 API·프론트 연동은 완료하지 않았습니다.
+- 공용 DB의 팀원 PC 직접 접속 경로와 ngrok 상시 실행은 아직 설정하지 않았습니다.
+- 테이블 생성 원본: [backend/sql/001_create_tables.sql](../backend/sql/001_create_tables.sql).
+  공용 서버에 이미 적용된 초기 SQL을 반복 실행하거나 기존 테이블을 초기화하지 않습니다.
+
 ## 인수 기준 및 확인한 사실
 
 - 원본: https://github.com/jin-park0115/KANT_MOA
@@ -39,7 +53,7 @@ FastAPI 루트는 `backend/src/`입니다. 각 기능은 `auth/`, `products/`, `
 
 `database.Base`를 모든 ORM 모델이 공유합니다. `get_session`은 요청당 AsyncSession을 제공하며 자동 commit하지 않습니다. 응용 서비스가 하나의 업무 단위에서 commit/rollback을 소유합니다. Repository는 commit하지 않고 필요 시 flush하며 ORM↔도메인 변환을 담당합니다. 실패 시 get_session에서도 미완료 트랜잭션을 rollback합니다.
 
-lifespan에서 DB 연결을 검사하고 종료 시 engine을 dispose합니다. 연결 실패 시 서버 시작에 실패합니다. 테이블 생성·시드 자동 덮어쓰기는 하지 않습니다. 현재 테이블·시드·마이그레이션은 미구현이며 최초 스키마/시드 준비 명령을 담당자 통합 후 추가합니다.
+lifespan에서 DB 연결을 검사하고 종료 시 engine을 dispose합니다. 연결 실패 시 서버 시작에 실패합니다. 테이블 생성·시드 자동 덮어쓰기는 하지 않습니다. 10/26 공용 DB에는 초기 SQL로 테이블 18개를 적용했습니다. ORM 모델·후속 마이그레이션·시드는 각 담당자의 후속 작업이며 적용 상태는 [STAGING.md](STAGING.md)를 확인합니다.
 
 ## 공통 API 계약
 
@@ -62,8 +76,8 @@ lifespan에서 DB 연결을 검사하고 종료 시 engine을 dispose합니다. 
 | GET `/auth/me` | Bearer 토큰 | id, email, nickname, role |
 | POST `/auth/logout` | Bearer 토큰 | 204, jti를 DB 블랙리스트에 저장 |
 
-- 사용자 ID: UUID 제안. P2·P3·P4의 사용자 FK는 이를 기준으로 공동 확정합니다.
-- `users`: id UUID PK, email unique, password_hash, nickname, role(USER/ADMIN), created_at.
+- 사용자 ID: 공용 DB에 UUID로 적용했습니다. P2·P3·P4의 사용자 FK는 `users.id`를 참조합니다.
+- `users`: id UUID PK, google_sub unique(nullable), email unique, password_hash(nullable), nickname, phone(nullable), role(USER/ADMIN), created_at. 일반 로그인 + Google 로그인 병행용 컬럼이며 P1의 인증 로직·계정 연결 정책·추가 제약 검증은 후속입니다.
 - `token_blacklist`: jti PK, expires_at(timezone-aware). 서버 재시작에도 로그아웃 차단 유지.
 - JWT: sub(사용자 UUID), jti, iat, exp, 알고리즘 HS256·30분 만료 제안. 비밀번호는 Argon2 해싱 제안.
 - 예정 의존성: `auth.presentation.dependencies.get_current_user` → 공개 사용자 객체(id/role 등, password_hash 제외). `require_admin` → 같은 객체 또는 403.
@@ -111,7 +125,8 @@ uv run uvicorn main:app --app-dir src --reload --host 127.0.0.1 --port 8000
 - 설계: 역할·공통 계약, P1 사용자/블랙리스트 ERD 필드·API·권한 규칙.
 - 10/24 추가 확인: Docker DB healthy, FastAPI `/health` DB 연결 성공, Swagger Execute에서 200 응답 확인.
 - 준비 완료: `auth/` 및 presentation/application/domain/infrastructure 패키지와 각 `__init__.py` (사용자 생성 완료 확인).
-- 미완료: 인증 4계층 기능·의존성 구현, 테이블·시드, 프론트 전환 및 기능별 E2E, 이미지 원본 이관.
+- 10/26 추가 확인: 공용 DB 테이블 18개·소유자 확인, 학원 서버 FastAPI healthy·DB 연결, ngrok 외부 health/docs 응답 확인. [상세 기록](STAGING.md).
+- 미완료: 인증 4계층 기능·의존성 통합, ORM 모델·시드·후속 마이그레이션, 프론트 전환 및 기능별 E2E, 이미지 원본 이관, 팀원 PC의 공용 DB 접속·ngrok 상시 실행.
 - 월요일(10/26) 우선 작업: 회원가입·로그인·JWT 발급, `get_current_user`, `require_admin`, 관리자 초기화 명령, 블랙리스트 로그아웃 및 동일 토큰 401 검증.
 - uv.lock 생성과 의존성 설치 완료. 검증 결과는 희주 작업일지에 기록합니다.
 
