@@ -98,7 +98,7 @@ def test_draft_trims_title_and_body():
     assert draft.title == "배송 안내" and draft.body == "첫 줄\n둘째 줄"
 
 
-@pytest.mark.parametrize("title", ["", "   ", "가" * 101])
+@pytest.mark.parametrize("title", ["", "   ", "가" * 101], ids=["empty", "spaces", "over-100"])
 def test_bad_title_rejected(title):
     with pytest.raises(InvalidNotice):
         NoticeDraft(title=title)
