@@ -311,4 +311,8 @@ PROJECT2.md 구조: `presentation/router.py + schemas.py → application/service
 - [x] 재고 조정 라우터·오류 변환·의존성 + API 테스트 10개 (10/25: 관리자 200, 비로그인 401, 일반 회원 403, 0 미만 409·rollback, 다른 상품 옵션 404, 잘못된 입력 422, 통합 전 대체 의존성 차단) → `uv run pytest` 47 passed
 - [ ] P1 `require_admin` main 반영 후 `main.py`에 `app.include_router(admin_router)` 추가, 희주님 리뷰 요청
 - [ ] P2 재고 부족 예외 → `InsufficientStock`(409)로 바꾸는 연결부 작성
-- [ ] 관리자 화면 (프론트 API 연결 방식 확정 후)
+- [x] (#38) 관리자 화면 10/26: `/admin/products`(목록·검색·필터·정렬·페이지·상태 변경), `/admin/products/[id]`(상태 변경·옵션별 재고 증감·적용 후 미리보기), `/admin/notices`(등록·수정·삭제 확인)
+  - 파일: `src/app/admin/`, `src/components/admin/`, `src/services/admin/`(API 주소 `NEXT_PUBLIC_API_URL`, 기본 `http://localhost:8000`), `src/types/admin.ts`, `tests/adminForm.test.ts`
+  - 확인: `tsc` 통과, eslint 통과, `node --test tests/adminForm.test.ts` 4개 통과, 로컬 화면→API→DB 클릭 테스트(목록 필터·검색, 상태 변경, 재고 3→13, 없는 상품 안내, 공지 등록·422 안내·수정·삭제) 통과
+  - 남은 연결: 로그인 토큰은 `src/services/admin/client.ts`의 `getAdminAccessToken` 한 곳만 P1 방식으로 교체, 헤더 MY 메뉴의 "관리자" 링크(ADMIN만)는 P1 사용자 정보 연동 후 추가
+  - 재고 조정 화면 테스트는 데모용 임시 연결로 확인. 실제 반영은 P2 재고 함수 연결 후
