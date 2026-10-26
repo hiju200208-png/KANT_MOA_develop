@@ -82,3 +82,14 @@ export function toNoticeInput(values: NoticeFormValues) {
     show_in_topbar: values.showInTopbar,
   };
 }
+
+export const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+// 업로드 전 형식·크기 확인 (서버가 파일 내용까지 다시 검사한다)
+export function checkImageFile(file: { type: string; size: number }): string | null {
+  if (!(IMAGE_TYPES as readonly string[]).includes(file.type)) return "JPG·PNG·WebP 이미지만 올릴 수 있어요.";
+  if (file.size <= 0) return "빈 파일이에요.";
+  if (file.size > MAX_IMAGE_BYTES) return "5MB 이하 이미지만 올릴 수 있어요.";
+  return null;
+}

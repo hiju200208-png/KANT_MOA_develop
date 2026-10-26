@@ -185,6 +185,15 @@
 
 응답: `{ id, title, body, artist: {slug, name} | null, product_id, product_name, is_pinned, show_in_topbar, published_at }`. 없는 공지 404.
 
+### 3-8. (선택) 상품 대표 이미지 교체 — #39
+
+`PUT /admin/products/{product_id}/thumbnail` — 요청 본문에 이미지 파일 그대로 (multipart 아님, 새 패키지 추가 없음)
+
+- `Content-Type`: `image/jpeg` / `image/png` / `image/webp`, 파일 앞부분(매직 바이트)도 형식과 일치해야 함, 5MB 이하 → 아니면 422
+- 저장: `backend/uploads/products/<새 이름>.<확장자>` (원본 파일명 안 씀, 교체도 항상 새 파일명), DB `products.thumbnail_path` = `/uploads/products/...`
+- 응답 `200` 상품 상세(3-2 형식, `thumbnail_url`이 새 경로). 없는 상품 404
+- DB 변경이 실패하면 rollback 하고 방금 저장한 파일도 지움. 이전 파일은 지우지 않음
+
 ### 3-6. 오류 코드
 
 PROJECT2.md 기준: 코드명은 기존 `src/constants/error-messages.ts` / `src/services/errors.ts`를 따르고, **신규 코드는 임의로 추가하지 않아요.** 없는 경우는 `UNKNOWN` + 의미 있는 메시지를 써요.
@@ -298,7 +307,7 @@ PROJECT2.md 구조: `presentation/router.py + schemas.py → application/service
 - [x] 도메인 `StockAdjustment`·`StockAdjustmentResult`·관리자 도메인 예외 + 단위 테스트 (10/25, `backend/tests/admin/`)
 - [x] 요청 스키마 `StockAdjustmentRequest`·`ProductStatusUpdate`, 응답 `StockAdjustmentResponse` + 422 검증 테스트 (10/25)
 - [x] 재고 조정 서비스 `AdminStockService` + 가짜 저장소 테스트 5개 (10/25: 증가·감소 commit, 0 미만 rollback·재고 유지, 없는 옵션·다른 상품 옵션 404 rollback)
-- [ ] P2 `get_variants_for_update`·`increase_stock`/`decrease_stock` 나오면 `VariantStockPort` 실제 연결
+- [x] P2 재고 연결 (10/26, PR #42 계약): `infrastructure/variant_stock.py` `P2VariantStockAdapter` — `get_variants_for_update([id])` → 누락·다른 상품 404 rollback → P2 `increase_stock/decrease_stock` → 같은 Repository `save_variant` → 서비스 commit. 테스트 5개 + 로컬 DB 통합(+5, 0 미만 409 후 재고 유지, 다른 상품 옵션 404)
 - [x] 품절 계산·재고 요약 도메인, 관리자 목록·상세 응답과 목록 쿼리 스키마 + 테스트 11개 (10/26) → `uv run pytest` 58 passed
 - [x] 관리자 목록·상세 조회 Repository(SQL, 조회 전용)·Service·라우터 + 테스트 (10/26: SQL 생성 5개, API 15개(200·401·403·404·422), 로컬 DB 통합 1개) → `uv run pytest` 77 passed, 1 skipped
   - 로컬 DB 통합 테스트: `$env:ADMIN_DB_TEST="1"; uv run --no-sync pytest tests/admin/test_admin_product_db.py -q` (테스트 데이터는 트랜잭션 rollback으로 남지 않음, 로컬 DB에서만 실행)
@@ -306,13 +315,14 @@ PROJECT2.md 구조: `presentation/router.py + schemas.py → application/service
 - [x] 판매 상태 변경 `PATCH /admin/products/{id}` 도메인·서비스·라우터 + 테스트 20개 (10/26: 상태 검증, commit·rollback, 200·401·403·404·422) + 로컬 DB 통합 테스트에 상태 변경 추가 → `uv run pytest` 97 passed, 1 skipped
   - 상태 저장은 `infrastructure/product_status.py`(SQL UPDATE). P2 상품 저장소에 상태 변경 함수가 생기면 이 어댑터만 바꿈
 - [ ] P2 상품 ORM 모델 main 반영 후 조회를 ORM 모델 재사용으로 정리 (결과 동일 유지)
+- [x] (선택 #39) 상품 대표 이미지 교체 API + 상세 화면 "이미지 변경" 버튼 (10/26): 형식·크기·매직 바이트 검사, DB 실패 시 파일 삭제. 테스트 19개 + 로컬 DB 통합, 화면 업로드 후 `/uploads/...` 이미지 표시 확인
 - [x] (선택 #40) 공지 관리 API 등록·수정·삭제·목록·상세 + 테스트 28개(규칙, commit·rollback, 201·204·401·403·404·422) + 로컬 DB 통합 테스트 → `uv run pytest` 125 passed, 2 skipped
   - 사용자 화면 노출은 P2 공개 공지 API 전환 후 확인 (#40 완료 조건)
 - [x] 재고 조정 라우터·오류 변환·의존성 + API 테스트 10개 (10/25: 관리자 200, 비로그인 401, 일반 회원 403, 0 미만 409·rollback, 다른 상품 옵션 404, 잘못된 입력 422, 통합 전 대체 의존성 차단) → `uv run pytest` 47 passed
 - [ ] P1 `require_admin` main 반영 후 `main.py`에 `app.include_router(admin_router)` 추가, 희주님 리뷰 요청
-- [ ] P2 재고 부족 예외 → `InsufficientStock`(409)로 바꾸는 연결부 작성
+- [x] P2 예외 변환: `InsufficientStock` → 409, `InvalidStock` → 422
 - [x] (#38) 관리자 화면 10/26: `/admin/products`(목록·검색·필터·정렬·페이지·상태 변경), `/admin/products/[id]`(상태 변경·옵션별 재고 증감·적용 후 미리보기), `/admin/notices`(등록·수정·삭제 확인)
   - 파일: `src/app/admin/`, `src/components/admin/`, `src/services/admin/`(API 주소 `NEXT_PUBLIC_API_URL`, 기본 `http://localhost:8000`), `src/types/admin.ts`, `tests/adminForm.test.ts`
   - 확인: `tsc` 통과, eslint 통과, `node --test tests/adminForm.test.ts` 4개 통과, 로컬 화면→API→DB 클릭 테스트(목록 필터·검색, 상태 변경, 재고 3→13, 없는 상품 안내, 공지 등록·422 안내·수정·삭제) 통과
   - 남은 연결: 로그인 토큰은 `src/services/admin/client.ts`의 `getAdminAccessToken` 한 곳만 P1 방식으로 교체, 헤더 MY 메뉴의 "관리자" 링크(ADMIN만)는 P1 사용자 정보 연동 후 추가
-  - 재고 조정 화면 테스트는 데모용 임시 연결로 확인. 실제 반영은 P2 재고 함수 연결 후
+  - 재고 조정 화면 테스트: 실제 P2 재고 연결로 37→42 확인 (10/26)

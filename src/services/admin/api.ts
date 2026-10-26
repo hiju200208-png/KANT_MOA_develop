@@ -34,6 +34,15 @@ export function adjustStock(productId: number, variantId: number, change: number
   });
 }
 
+// 대표 이미지 교체: 파일을 요청 본문 그대로 보낸다 (JPG·PNG·WebP, 5MB 이하)
+export function uploadProductThumbnail(productId: number, file: File) {
+  return adminFetch<AdminProductDetail>(`/admin/products/${productId}/thumbnail`, {
+    method: "PUT",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
+}
+
 export function listAdminNotices(page = 1, artist = "") {
   return adminFetch<Page<AdminNotice>>(`/admin/notices${toQueryString({ artist, page }, { page: 1 })}`);
 }

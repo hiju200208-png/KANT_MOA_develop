@@ -121,6 +121,41 @@ async def _scenario():
                 assert (await client.patch("/admin/products/999999999", json={"status": "hidden"})).status_code == 404
                 assert (await client.patch(f"/admin/products/{on_sale}", json={"status": "x"})).status_code == 422
 
+                # 재고 조정: 실제 P2 재고 규칙(get_variants_for_update → increase/decrease → save_variant) 연결
+                vids = [v["id"] for v in (await client.get(f"/admin/products/{on_sale}")).json()["variants"]]
+                other_vid = (await client.get(f"/admin/products/{empty}")).json()["variants"][0]["id"]
+                url = f"/admin/products/{on_sale}/variants/{vids[0]}/stock-adjustments"
+                ok = await client.post(url, json={"change": 5, "reason": "입고"})
+                assert ok.status_code == 200 and ok.json() == {"variant_id": vids[0], "before": 10, "after": 15, "change": 5}
+                too_many = await client.post(url, json={"change": -100})
+                assert too_many.status_code == 409
+                assert (await client.get(f"/admin/products/{on_sale}")).json()["variants"][0]["stock"] == 15  # rollback
+                wrong = await client.post(f"/admin/products/{on_sale}/variants/{other_vid}/stock-adjustments", json={"change": 1})
+                assert wrong.status_code == 404
+                down = await client.post(url, json={"change": -15})
+                assert down.json()["after"] == 0
+
+                # 대표 이미지 교체: 임시 폴더에 저장, DB thumbnail_path 변경
+                import tempfile
+                from pathlib import Path as _Path
+
+                from admin.application.image_service import AdminProductImageService
+                from admin.infrastructure.image_storage import LocalImageStorage, SqlThumbnailWriter
+                from admin.infrastructure.product_queries import SqlAdminProductQueries
+                from admin.infrastructure.product_status import SessionTransaction
+                from admin.presentation.dependencies import get_admin_image_service
+
+                with tempfile.TemporaryDirectory() as tmp:
+                    app.dependency_overrides[get_admin_image_service] = lambda: AdminProductImageService(
+                        SqlAdminProductQueries(session), SqlThumbnailWriter(session),
+                        LocalImageStorage(root=_Path(tmp)), SessionTransaction(session))
+                    png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
+                    put = await client.put(f"/admin/products/{on_sale}/thumbnail", content=png,
+                                           headers={"Content-Type": "image/png"})
+                    assert put.status_code == 200, put.json()
+                    assert put.json()["thumbnail_url"].startswith("/uploads/products/")
+                    assert len(list((_Path(tmp) / "products").iterdir())) == 1
+
                 missing = await client.get("/admin/products/999999999")
                 assert missing.status_code == 404
                 assert (await client.get("/admin/products?size=0")).status_code == 422

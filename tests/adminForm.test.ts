@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   PRODUCT_QUERY_DEFAULTS,
+  checkImageFile,
   emptyNoticeForm,
   parseStockChange,
   previewStock,
@@ -42,4 +43,12 @@ test("공지 폼 검사와 요청 변환", () => {
   assert.deepEqual(toNoticeInput({ ...empty, title: " 안내 ", body: "  ", artistSlug: " bts ", productId: "12", isPinned: true }), {
     title: "안내", body: null, artist_slug: "bts", product_id: 12, is_pinned: true, show_in_topbar: false,
   });
+});
+
+test("대표 이미지 파일 검사: 형식·크기", () => {
+  assert.equal(checkImageFile({ type: "image/png", size: 1000 }), null);
+  assert.equal(checkImageFile({ type: "image/webp", size: 5 * 1024 * 1024 }), null);
+  assert.ok(checkImageFile({ type: "image/gif", size: 1000 }));
+  assert.ok(checkImageFile({ type: "image/jpeg", size: 0 }));
+  assert.ok(checkImageFile({ type: "image/jpeg", size: 5 * 1024 * 1024 + 1 }));
 });

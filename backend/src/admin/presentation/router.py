@@ -7,15 +7,18 @@ main.py 등록(app.include_router)은 P1 인증 PR이 main에 들어온 뒤 P4 P
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, Query, Response
+from fastapi import APIRouter, Depends, Path, Query, Request, Response
 
+from admin.application.image_service import AdminProductImageService
 from admin.application.notice_service import AdminNoticeService
 from admin.application.product_service import AdminProductService, AdminProductStatusService
 from admin.application.stock_service import AdminStockService
 from admin.domain.notice import AdminNoticeRow, NoticeChanges, NoticeDraft
+from admin.domain.product_image import MAX_IMAGE_BYTES, ImageUpload, InvalidImage
 from admin.domain.product_view import AdminProductDetailRow, AdminProductRow, to_public_image_path
 from admin.domain.stock_adjustment import AdminDomainError, StockAdjustment
 from admin.presentation.dependencies import (
+    get_admin_image_service,
     get_admin_notice_service,
     get_admin_product_service,
     get_admin_product_status_service,
@@ -231,3 +234,45 @@ async def delete_notice(
     except AdminDomainError as error:
         raise to_api_error(error) from None
     return Response(status_code=204)
+
+
+# --- 상품 대표 이미지 업로드 (선택 기능 #39). multipart 대신 이미지 파일을 요청 본문 그대로 받는다 ---
+
+
+async def _read_limited(request: Request, limit: int) -> bytes:
+    declared = request.headers.get("content-length")
+    if declared and declared.isdigit() and int(declared) > limit:
+        raise InvalidImage()
+    chunks, size = [], 0
+    async for chunk in request.stream():
+        size += len(chunk)
+        if size > limit:
+            raise InvalidImage()
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
+@router.put(
+    "/products/{product_id}/thumbnail",
+    response_model=AdminProductDetail,
+    responses=_READ_ERRORS,
+    summary="상품 대표 이미지 교체 (JPG·PNG·WebP, 5MB 이하, 본문에 이미지 파일)",
+    openapi_extra={
+        "requestBody": {
+            "required": True,
+            "content": {t: {"schema": {"type": "string", "format": "binary"}} for t in ("image/jpeg", "image/png", "image/webp")},
+        }
+    },
+)
+async def replace_thumbnail(
+    request: Request,
+    product_id: int = Path(ge=1),
+    service: AdminProductImageService = Depends(get_admin_image_service),
+) -> AdminProductDetail:
+    try:
+        data = await _read_limited(request, MAX_IMAGE_BYTES)
+        upload = ImageUpload(content_type=request.headers.get("content-type", ""), data=data)
+        detail = await service.replace_thumbnail(product_id, upload)
+    except AdminDomainError as error:
+        raise to_api_error(error) from None
+    return _to_detail(detail)

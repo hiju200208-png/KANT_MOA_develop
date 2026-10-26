@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Button, Card, Skeleton } from "@/components/ui";
 import { formatPrice } from "@/lib/formatPrice";
-import { STATUS_LABELS, STATUS_OPTIONS, parseStockChange, previewStock } from "@/services/admin/adminForm";
-import { adjustStock, changeProductStatus, getAdminProduct } from "@/services/admin/api";
+import { IMAGE_TYPES, STATUS_LABELS, STATUS_OPTIONS, checkImageFile, parseStockChange, previewStock } from "@/services/admin/adminForm";
+import { adjustStock, changeProductStatus, getAdminProduct, uploadProductThumbnail } from "@/services/admin/api";
 import { adminErrorMessage } from "@/services/admin/client";
 import type { AdminProductDetail, AdminVariant, ProductStatus } from "@/types/admin";
 import { AdminErrorBox, StatusBadge, StockText, Thumb } from "./AdminParts";
@@ -20,6 +20,8 @@ export function AdminProductDetailView() {
   const [error, setError] = useState<unknown>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [savingStatus, setSavingStatus] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -49,6 +51,25 @@ export function AdminProductDetailView() {
     }
   }
 
+  // 대표 이미지 교체 (#39): 새 파일명으로 저장되고 thumbnail_url이 /uploads/... 로 바뀐다
+  async function handleImage(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !product) return;
+    const problem = checkImageFile(file);
+    if (problem) return setMessage(problem);
+    setUploading(true);
+    setMessage(null);
+    try {
+      setProduct(await uploadProductThumbnail(product.id, file));
+      setMessage("대표 이미지를 바꿨어요.");
+    } catch (e) {
+      setMessage(adminErrorMessage(e));
+    } finally {
+      setUploading(false);
+    }
+  }
+
   // 재고 조정 성공 시 해당 옵션 재고만 바꾸고, 품절 여부는 서버 상세를 다시 받아 맞춘다
   async function handleAdjusted(variantId: number, after: number) {
     setProduct((prev) => prev && { ...prev, variants: prev.variants.map((v) => (v.id === variantId ? { ...v, stock: after } : v)) });
@@ -66,7 +87,13 @@ export function AdminProductDetailView() {
       <Link href="/admin/products" className="text-sm text-muted hover:underline">← 상품 목록</Link>
 
       <Card className="flex flex-wrap items-center gap-4 p-5">
-        <Thumb src={product.thumbnail_url} alt="" />
+        <div className="flex flex-col items-center gap-1">
+          <Thumb src={product.thumbnail_url} alt={`${product.name} 대표 이미지`} />
+          <input ref={fileInput} type="file" accept={IMAGE_TYPES.join(",")} className="hidden" onChange={handleImage} aria-label="대표 이미지 파일 선택" />
+          <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-xs" loading={uploading} onClick={() => fileInput.current?.click()}>
+            이미지 변경
+          </Button>
+        </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs text-muted">{product.artist.name} · {product.category?.name ?? "분류 없음"} · #{product.id}</p>
           <h1 className="text-xl font-black">{product.name}</h1>

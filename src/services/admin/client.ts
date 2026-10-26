@@ -23,7 +23,7 @@ export function getAdminAccessToken(): string | null {
 
 export async function adminFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
-  if (init.body !== undefined) headers.set("Content-Type", "application/json");
+  if (init.body !== undefined && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   const token = getAdminAccessToken();
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
