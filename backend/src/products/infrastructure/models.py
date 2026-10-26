@@ -68,7 +68,8 @@ class ProductVariantModel(Base):
     option_name: Mapped[str] = mapped_column(Text, server_default=text("'기본'"))
     extra_price: Mapped[int] = mapped_column(Integer, server_default=text("0"))
     stock: Mapped[int] = mapped_column(Integer, server_default=text("0"))
-    max_per_user: Mapped[int | None] = mapped_column(Integer, server_default=text("4"))
+    # 명시적인 None은 무제한(NULL), 생략은 기본값 4로 저장한다.
+    max_per_user: Mapped[int | None] = mapped_column(Integer().evaluates_none(), server_default=text("4"))
     sort_order: Mapped[int] = mapped_column(Integer, server_default=text("0"))
 
 

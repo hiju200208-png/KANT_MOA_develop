@@ -1,12 +1,13 @@
 import asyncio
 from contextlib import asynccontextmanager
+from dataclasses import replace
 from uuid import uuid4
 
 import pytest
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from products.domain.variant import InsufficientStock
+from products.domain.variant import InsufficientStock, InvalidStock
 from products.infrastructure.models import ArtistModel, CategoryModel, ProductModel, ProductVariantModel
 from products.infrastructure.repositories import ProductRepository
 
@@ -134,4 +135,236 @@ def test_rollback_releases_lock_and_concurrent_updates_are_not_lost(postgres_url
             await asyncio.gather(*(decrease() for _ in range(7)))
             async with factory() as observer:
                 assert await observer.scalar(select(ProductVariantModel.stock).where(ProductVariantModel.id == ids[0])) == 0
+    asyncio.run(check())
+
+
+def test_nullable_purchase_limit_and_option_fields_round_trip(postgres_url):
+    async def check():
+        async with database(postgres_url) as factory:
+            ids = await seed(factory)
+            async with factory() as session:
+                existing = await session.get(ProductVariantModel, ids[0])
+                variant = ProductVariantModel(
+                    product_id=existing.product_id, option_name="무제한", extra_price=1500,
+                    stock=9, max_per_user=None, sort_order=7,
+                )
+                session.add(variant)
+                await session.commit()
+                repo = ProductRepository(session)
+                loaded = (await repo.get_variants_for_update([variant.id]))[0]
+                assert (loaded.option_name, loaded.extra_price, loaded.stock,
+                        loaded.max_per_user, loaded.sort_order) == ("무제한", 1500, 9, None, 7)
+                loaded.decrease_stock(1)
+                await repo.save_variant(loaded)
+                await session.commit()
+                await session.refresh(variant)
+                assert variant.stock == 8 and variant.max_per_user is None
+
+    asyncio.run(check())
+
+
+def test_rejects_unlocked_objects_and_previous_transaction(postgres_url):
+    async def check():
+        async with database(postgres_url) as factory:
+            ids = await seed(factory)
+            async with factory() as session:
+                repo = ProductRepository(session)
+                variant = (await repo.get_variants_for_update(ids))[0]
+                with pytest.raises(ValueError):
+                    await repo.save_variant(replace(variant))
+                with pytest.raises(ValueError):
+                    await ProductRepository(session).save_variant(variant)
+                await session.commit()
+                # 새 root transaction이 열려 있어도 예전 잠금은 유효하지 않다.
+                await session.execute(text("select 1"))
+                with pytest.raises(ValueError):
+                    await repo.save_variant(variant)
+
+    asyncio.run(check())
+
+
+def test_savepoint_rollback_invalidates_lock_before_root_commit(postgres_url):
+    async def check():
+        async with database(postgres_url) as factory:
+            ids = await seed(factory)
+            async with factory() as session:
+                await session.begin()
+                repo = ProductRepository(session)
+                savepoint = await session.begin_nested()
+                variant = (await repo.get_variants_for_update(ids))[0]
+                await savepoint.rollback()
+                # root transaction은 살아 있어도 savepoint에서 얻은 행 잠금은 풀렸다.
+                variant.decrease_stock(1)
+                with pytest.raises(ValueError):
+                    await repo.save_variant(variant)
+
+    asyncio.run(check())
+
+
+def test_partial_save_then_later_option_failure_rolls_back_everything(postgres_url):
+    async def check():
+        async with database(postgres_url) as factory:
+            ids = await seed(factory)
+            async with factory() as session:
+                repo = ProductRepository(session)
+                variants = await repo.get_variants_for_update(ids)
+                try:
+                    variants[0].decrease_stock(2)
+                    await repo.save_variant(variants[0])
+                    variants[1].decrease_stock(6)
+                except InsufficientStock:
+                    await session.rollback()
+                else:
+                    pytest.fail("두 번째 옵션에서 재고 부족이어야 한다")
+            async with factory() as observer:
+                stocks = list(await observer.scalars(
+                    select(ProductVariantModel.stock).where(ProductVariantModel.id.in_(ids))
+                    .order_by(ProductVariantModel.id)
+                ))
+                assert stocks == [5, 5]
+
+    asyncio.run(check())
+
+
+def test_database_acquires_lower_id_before_waiting_on_higher_id(postgres_url):
+    async def check():
+        async with database(postgres_url) as factory:
+            ids = await seed(factory)
+            async with factory() as blocker, factory() as waiter, factory() as probe:
+                await ProductRepository(blocker).get_variants_for_update([ids[1]])
+                waiter_pid = await waiter.scalar(text("select pg_backend_pid()"))
+                probe_pid = await probe.scalar(text("select pg_backend_pid()"))
+                pending = asyncio.create_task(
+                    ProductRepository(waiter).get_variants_for_update([ids[1], ids[0], ids[1]])
+                )
+                probing = None
+                try:
+                    await wait_until_blocked(factory, waiter_pid)
+                    probing = asyncio.create_task(
+                        ProductRepository(probe).get_variants_for_update([ids[0]])
+                    )
+                    await wait_until_blocked(factory, probe_pid)
+                    async with factory() as observer:
+                        blockers = await observer.scalar(
+                            text("select pg_blocking_pids(:pid)"), {"pid": probe_pid}
+                        )
+                        assert waiter_pid in blockers
+                    # 높은 ID를 기다리는 동안 이미 낮은 ID를 잠근 사실을 검증했다.
+                    await blocker.rollback()
+                    assert [v.id for v in await asyncio.wait_for(pending, 10)] == ids
+                    assert not probing.done()
+                    await waiter.commit()
+                    assert [v.id for v in await asyncio.wait_for(probing, 10)] == [ids[0]]
+                finally:
+                    for task in (pending, probing):
+                        if task is not None and not task.done():
+                            task.cancel()
+                    await asyncio.gather(*(task for task in (pending, probing) if task is not None),
+                                         return_exceptions=True)
+
+    asyncio.run(check())
+
+
+class ExampleAdminStockAdapter:
+    """P4가 사용할 연결 예시를 검증한다. 운영 adapter 구현을 대신하지 않는다."""
+
+    def __init__(self, session):
+        self.repository = ProductRepository(session)
+
+    async def lock_variant(self, variant_id):
+        variants = await self.repository.get_variants_for_update([variant_id])
+        return variants[0] if variants else None
+
+    async def increase_stock(self, variant, quantity):
+        from admin.domain.stock_adjustment import InvalidStockAdjustment
+        try:
+            stock = variant.increase_stock(quantity)
+        except InvalidStock as error:
+            raise InvalidStockAdjustment(str(error)) from error
+        await self.repository.save_variant(variant)
+        return stock
+
+    async def decrease_stock(self, variant, quantity):
+        from admin.domain.stock_adjustment import InsufficientStock as AdminInsufficientStock
+        from admin.domain.stock_adjustment import InvalidStockAdjustment
+        try:
+            stock = variant.decrease_stock(quantity)
+        except InsufficientStock as error:
+            raise AdminInsufficientStock(str(error)) from error
+        except InvalidStock as error:
+            raise InvalidStockAdjustment(str(error)) from error
+        await self.repository.save_variant(variant)
+        return stock
+
+
+@pytest.mark.parametrize("change,expected", [(2, 7), (-2, 3), (-6, 5)])
+def test_p4_service_uses_same_session_and_maps_stock_error(postgres_url, change, expected):
+    from admin.application.stock_service import AdminStockService
+    from admin.domain.stock_adjustment import InsufficientStock as AdminInsufficientStock
+    from admin.domain.stock_adjustment import StockAdjustment
+    from admin.presentation.errors import to_api_error
+
+    async def check():
+        async with database(postgres_url) as factory:
+            ids = await seed(factory)
+            async with factory() as session:
+                product_id = await session.scalar(
+                    select(ProductVariantModel.product_id).where(ProductVariantModel.id == ids[0])
+                )
+                service = AdminStockService(ExampleAdminStockAdapter(session), session)
+                if change == -6:
+                    with pytest.raises(AdminInsufficientStock) as caught:
+                        await service.adjust(product_id, ids[0], StockAdjustment(change))
+                    assert to_api_error(caught.value).status_code == 409
+                else:
+                    result = await service.adjust(product_id, ids[0], StockAdjustment(change))
+                    assert (result.before, result.after, result.change) == (5, expected, change)
+                assert not session.in_transaction()
+            async with factory() as observer:
+                assert await observer.scalar(
+                    select(ProductVariantModel.stock).where(ProductVariantModel.id == ids[0])
+                ) == expected
+
+    asyncio.run(check())
+
+
+@pytest.mark.parametrize("missing", [True, False])
+def test_p4_service_missing_or_wrong_product_rolls_back(postgres_url, missing):
+    from admin.application.stock_service import AdminStockService
+    from admin.domain.stock_adjustment import StockAdjustment, VariantNotFound
+    from admin.presentation.errors import to_api_error
+
+    async def check():
+        async with database(postgres_url) as factory:
+            ids = await seed(factory)
+            async with factory() as session:
+                service = AdminStockService(ExampleAdminStockAdapter(session), session)
+                with pytest.raises(VariantNotFound) as caught:
+                    await service.adjust(999999, 999999 if missing else ids[0], StockAdjustment(2))
+                assert to_api_error(caught.value).status_code == 404
+                assert not session.in_transaction()
+            async with factory() as observer:
+                assert await observer.scalar(
+                    select(ProductVariantModel.stock).where(ProductVariantModel.id == ids[0])
+                ) == 5
+
+    asyncio.run(check())
+
+
+def test_p4_example_maps_invalid_quantity_without_saving(postgres_url):
+    from admin.domain.stock_adjustment import InvalidStockAdjustment
+    from admin.presentation.errors import to_api_error
+
+    async def check():
+        async with database(postgres_url) as factory:
+            ids = await seed(factory)
+            async with factory() as session:
+                adapter = ExampleAdminStockAdapter(session)
+                variant = await adapter.lock_variant(ids[0])
+                with pytest.raises(InvalidStockAdjustment) as caught:
+                    await adapter.increase_stock(variant, 0)
+                assert to_api_error(caught.value).status_code == 422
+                assert variant.stock == 5
+                await session.rollback()
+
     asyncio.run(check())
