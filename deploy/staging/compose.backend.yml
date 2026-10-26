@@ -1,0 +1,33 @@
+# Server layout: ~/kant-moa/{compose.backend.yml,Dockerfile.backend,backend.env,app/}
+name: kant-moa
+services:
+  api:
+    build:
+      context: ./app/backend
+      dockerfile: ../../Dockerfile.backend
+    env_file:
+      - ./backend.env
+    ports:
+      - "127.0.0.1:8022:8000"
+    networks:
+      - shared_db
+    volumes:
+      - uploads_data:/app/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()"]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+networks:
+  shared_db:
+    external: true
+    name: dbresting_default
+volumes:
+  uploads_data:
