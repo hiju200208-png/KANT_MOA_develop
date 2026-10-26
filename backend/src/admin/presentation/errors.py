@@ -4,6 +4,9 @@
 HTTP 상태로 422·404·409를 구분한다. 신규 code는 팀 합의 후 추가.
 """
 
+from admin.domain.notice import InvalidNotice, NoticeNotFound
+from admin.domain.product_image import InvalidImage
+from admin.domain.product_view import InvalidProductStatus
 from admin.domain.stock_adjustment import (
     AdminDomainError,
     InsufficientStock,
@@ -15,6 +18,10 @@ from core.errors import ApiError
 
 _STATUS_BY_ERROR: dict[type[AdminDomainError], int] = {
     InvalidStockAdjustment: 422,
+    InvalidProductStatus: 422,
+    InvalidNotice: 422,
+    InvalidImage: 422,
+    NoticeNotFound: 404,
     ProductNotFound: 404,
     VariantNotFound: 404,
     InsufficientStock: 409,
