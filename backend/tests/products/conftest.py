@@ -29,7 +29,8 @@ def postgres_url():
                "postgres:18-alpine")
         for _ in range(120):
             ready = subprocess.run(
-                ["docker", "exec", container, "pg_isready", "-U", "p2_test", "-d", "p2_test"],
+                ["docker", "exec", container, "pg_isready", "-h", "127.0.0.1",
+                 "-U", "p2_test", "-d", "p2_test"],
                 capture_output=True,
             )
             if ready.returncode == 0:
