@@ -42,3 +42,53 @@ def is_sold_out(status: str, total_stock: int) -> bool:
     if status == SOLD_OUT:
         return True
     return status == ON_SALE and total_stock <= 0
+
+
+# --- 관리자 조회 결과 (저장소가 돌려주는 값, 순수 데이터) ---
+
+
+@dataclass(frozen=True)
+class AdminProductRow:
+    id: int
+    name: str
+    artist_slug: str
+    artist_name: str
+    category_slug: str
+    category_name: str
+    price: int
+    status: str
+    thumbnail_path: str | None
+    total_stock: int
+    variant_count: int
+
+    @property
+    def is_sold_out(self) -> bool:
+        return is_sold_out(self.status, self.total_stock)
+
+
+@dataclass(frozen=True)
+class AdminVariantRow:
+    id: int
+    option_name: str
+    extra_price: int
+    stock: int
+    max_per_user: int | None
+
+
+@dataclass(frozen=True)
+class AdminProductDetailRow:
+    product: AdminProductRow
+    variants: tuple[AdminVariantRow, ...]
+
+
+def to_public_image_path(path: str | None, bucket: str = "products") -> str | None:
+    """DB 이미지 경로 → 화면용 상대 경로.
+
+    잠정 규칙 (P2 이미지 이관 규칙 확정 전): 이미 '/'로 시작하면 그대로,
+    버킷 내 경로(예: 'bts/12/main.webp')면 '/static/<bucket>/' 를 앞에 붙인다.
+    """
+    if not path:
+        return None
+    if path.startswith("/"):
+        return path
+    return f"/static/{bucket}/{path}"
