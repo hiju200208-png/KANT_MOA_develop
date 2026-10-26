@@ -42,7 +42,7 @@ async def _scenario():
     engine = create_async_engine(_local_database_url(), poolclass=NullPool)
     async with engine.connect() as conn:
         trans = await conn.begin()
-        session = AsyncSession(bind=conn, expire_on_commit=False)
+        session = AsyncSession(bind=conn, expire_on_commit=False, join_transaction_mode="create_savepoint")
         try:
             artist_id = (await session.execute(text(
                 "INSERT INTO artists (name, name_ko, slug) VALUES ('TEST', '테스트', :s) RETURNING id"
@@ -110,6 +110,15 @@ async def _scenario():
                 body = detail.json()
                 assert [v["option_name"] for v in body["variants"]] == ["옵션0", "옵션1"]
                 assert body["thumbnail_url"] == "/static/products/test/응원봉_A.png"
+
+                # 판매 상태 변경: 서비스 commit은 savepoint까지만, 바깥 트랜잭션 rollback으로 모두 취소
+                changed = await client.patch(f"/admin/products/{on_sale}", json={"status": "hidden"})
+                assert changed.status_code == 200 and changed.json()["status"] == "hidden"
+                assert (await ids(status="hidden"))[0] == [hidden, on_sale]
+                reopened = await client.patch(f"/admin/products/{empty}", json={"status": "on_sale"})
+                assert reopened.json()["is_sold_out"] is True  # 재고 0이면 on_sale이어도 품절 표시
+                assert (await client.patch("/admin/products/999999999", json={"status": "hidden"})).status_code == 404
+                assert (await client.patch(f"/admin/products/{on_sale}", json={"status": "x"})).status_code == 422
 
                 missing = await client.get("/admin/products/999999999")
                 assert missing.status_code == 404

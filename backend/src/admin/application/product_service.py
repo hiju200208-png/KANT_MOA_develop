@@ -5,7 +5,8 @@
 
 from typing import Protocol
 
-from admin.domain.product_view import AdminProductDetailRow, AdminProductRow
+from admin.application.ports import TransactionPort
+from admin.domain.product_view import AdminProductDetailRow, AdminProductRow, ensure_product_status
 from admin.domain.stock_adjustment import ProductNotFound
 
 
@@ -26,6 +27,11 @@ class AdminProductQueryPort(Protocol):
     async def get_product(self, product_id: int) -> AdminProductDetailRow | None: ...
 
 
+class ProductStatusPort(Protocol):
+    async def update_status(self, product_id: int, status: str) -> bool:
+        """상품 status를 바꾸고(flush까지) 바뀐 행이 있으면 True. commit하지 않는다."""
+
+
 class AdminProductService:
     def __init__(self, products: AdminProductQueryPort):
         self._products = products
@@ -38,3 +44,31 @@ class AdminProductService:
         if detail is None:
             raise ProductNotFound()
         return detail
+
+
+class AdminProductStatusService:
+    """판매 상태 변경: 검증 → 변경 → 바뀐 상세 조회 → commit. 실패하면 rollback."""
+
+    def __init__(
+        self,
+        products: AdminProductQueryPort,
+        writer: ProductStatusPort,
+        transaction: TransactionPort,
+    ):
+        self._products = products
+        self._writer = writer
+        self._transaction = transaction
+
+    async def change_status(self, product_id: int, status: str) -> AdminProductDetailRow:
+        try:
+            ensure_product_status(status)
+            if not await self._writer.update_status(product_id, status):
+                raise ProductNotFound()
+            detail = await self._products.get_product(product_id)
+            if detail is None:
+                raise ProductNotFound()
+            await self._transaction.commit()
+            return detail
+        except BaseException:
+            await self._transaction.rollback()
+            raise

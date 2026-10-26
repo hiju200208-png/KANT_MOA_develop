@@ -2,19 +2,20 @@
 
 main.py 등록(app.include_router)은 P1 인증 PR이 main에 들어온 뒤 P4 PR에서 한다 (10/24 희주님 합의).
 상품 목록·상세는 공용 테이블 구조(backend/sql/001_create_tables.sql) 기준 조회 전용으로 연결했다.
-판매 상태 변경은 다음 단계에서 추가한다.
+판매 상태 변경(PATCH)은 상태만 바꾸고 바뀐 상세를 돌려준다. 재고 때문에 상태를 자동으로 바꾸지 않는다.
 """
 
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query
 
-from admin.application.product_service import AdminProductService
+from admin.application.product_service import AdminProductService, AdminProductStatusService
 from admin.application.stock_service import AdminStockService
 from admin.domain.product_view import AdminProductDetailRow, AdminProductRow, to_public_image_path
 from admin.domain.stock_adjustment import AdminDomainError, StockAdjustment
 from admin.presentation.dependencies import (
     get_admin_product_service,
+    get_admin_product_status_service,
     get_admin_stock_service,
     require_admin,
 )
@@ -25,6 +26,7 @@ from admin.presentation.schemas import (
     AdminProductQuery,
     AdminVariantItem,
     NamedRef,
+    ProductStatusUpdate,
     StockAdjustmentRequest,
     StockAdjustmentResponse,
 )
@@ -102,6 +104,24 @@ async def get_product(
 ) -> AdminProductDetail:
     try:
         detail = await service.get_product(product_id)
+    except AdminDomainError as error:
+        raise to_api_error(error) from None
+    return _to_detail(detail)
+
+
+@router.patch(
+    "/products/{product_id}",
+    response_model=AdminProductDetail,
+    responses=_READ_ERRORS,
+    summary="판매 상태 변경 (on_sale / sold_out / hidden)",
+)
+async def change_product_status(
+    body: ProductStatusUpdate,
+    product_id: int = Path(ge=1),
+    service: AdminProductStatusService = Depends(get_admin_product_status_service),
+) -> AdminProductDetail:
+    try:
+        detail = await service.change_status(product_id, body.status)
     except AdminDomainError as error:
         raise to_api_error(error) from None
     return _to_detail(detail)

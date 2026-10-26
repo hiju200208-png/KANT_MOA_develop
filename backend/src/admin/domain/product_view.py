@@ -10,6 +10,8 @@
 from collections.abc import Iterable
 from dataclasses import dataclass
 
+from admin.domain.stock_adjustment import AdminDomainError
+
 ON_SALE = "on_sale"
 SOLD_OUT = "sold_out"
 HIDDEN = "hidden"
@@ -92,3 +94,23 @@ def to_public_image_path(path: str | None, bucket: str = "products") -> str | No
     if path.startswith("/"):
         return path
     return f"/static/{bucket}/{path}"
+
+
+# --- 판매 상태 변경 (PATCH /admin/products/{id}) ---
+
+
+class InvalidProductStatus(AdminDomainError):
+    """on_sale·sold_out·hidden 외의 값 → 422."""
+
+    message = "판매 상태 값을 확인해주세요."
+
+
+def ensure_product_status(status: str) -> str:
+    """관리자가 바꿀 수 있는 상태인지 확인한다.
+
+    세 상태 사이는 자유롭게 바꿀 수 있다. 재고가 0인 상품을 on_sale로 바꿔도 막지 않고,
+    목록·상세에서 is_sold_out=True로 계산해서 보여준다 (상재님 답변: 상태 자동 변경 없음).
+    """
+    if status not in PRODUCT_STATUSES:
+        raise InvalidProductStatus()
+    return status

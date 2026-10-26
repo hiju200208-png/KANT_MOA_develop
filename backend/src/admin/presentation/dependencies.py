@@ -5,13 +5,15 @@
 - get_admin_stock_service: P2 재고 연결(VariantStockPort 구현)이 나오면 실제 서비스를 돌려준다.
   그 전에는 503으로 막는다. 테스트는 app.dependency_overrides로 바꿔 끼운다.
 - get_admin_product_service: 요청마다 같은 AsyncSession으로 조회 전용 서비스를 만든다.
+- get_admin_product_status_service: 같은 AsyncSession으로 조회·변경·commit을 묶는다.
 """
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from admin.application.product_service import AdminProductService
+from admin.application.product_service import AdminProductService, AdminProductStatusService
 from admin.infrastructure.product_queries import SqlAdminProductQueries
+from admin.infrastructure.product_status import SessionTransaction, SqlProductStatusWriter
 from core.errors import ApiError
 from database import get_session
 
@@ -31,3 +33,11 @@ async def get_admin_product_service(
     session: AsyncSession = Depends(get_session),
 ) -> AdminProductService:
     return AdminProductService(SqlAdminProductQueries(session))
+
+
+async def get_admin_product_status_service(
+    session: AsyncSession = Depends(get_session),
+) -> AdminProductStatusService:
+    return AdminProductStatusService(
+        SqlAdminProductQueries(session), SqlProductStatusWriter(session), SessionTransaction(session)
+    )
