@@ -5,6 +5,7 @@
 - 현재 팀: 희주(P1 공통·인증·회원), 상재(P2 상품·카탈로그·좋아요·이관), 여름(P3 장바구니·배송지·주문), 충만(P4 관리자).
 - 확정 방향: Supabase를 Docker PostgreSQL + FastAPI + 로컬 이미지 저장으로 대체합니다.
 - [프로젝트2 설계·역할·공통 API 계약·실행 안내](docs/PROJECT2.md)를 현재 개발 기준으로 사용합니다.
+- **PR 올리기 전 필독: [PR 가이드](docs/PR_GUIDE.md)** — clone마다 한 번 `git config core.hooksPath .githooks`, push 전 자동 검사(CI와 같은 조건), PR → CI(frontend·backend) 통과 → 머지 순서. main은 브랜치 보호로 CI 통과 전 머지 불가.
 - [희주 작업일지](docs/worklog/HEEJU.md). GitHub 문서를 원본으로 유지하고 팀 Notion·Redmine에 연결합니다.
 - 현재 추가된 범위는 공통 실행 기반입니다. 인증·상품·주문·관리자 API와 프론트 이전은 아직 완료되지 않았습니다.
 
