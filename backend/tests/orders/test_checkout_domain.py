@@ -13,7 +13,7 @@ from orders.domain.checkout import (
     draft_from_cart,
     ensure_payable,
 )
-from orders.domain.exceptions import CartEmpty, InvalidOrderValue, PurchaseLimitExceeded, VariantUnavailable
+from orders.domain.exceptions import CartEmpty, InvalidOrderValue, InvalidRecipient, PurchaseLimitExceeded, VariantUnavailable
 from orders.domain.order import Order, OrderItem
 
 RECIPIENT = Recipient(" 김여름 ", "010-1234-5678", " 서울 강남구 1 ")
@@ -33,8 +33,10 @@ def test_recipient_is_trimmed():
     ("가" * 51, "010-1234-5678", "서울"),
 ])
 def test_invalid_recipient_is_rejected(name, phone, address):
-    with pytest.raises(InvalidOrderValue):
+    with pytest.raises(InvalidRecipient) as caught:
         Recipient(name, phone, address)
+    # 입력 오류는 '결제할 수 없는 주문(INVALID_ORDER)' 안내가 아니라 UNKNOWN + 칸별 메시지
+    assert caught.value.code == "UNKNOWN"
 
 
 # ---------- 배송비 ----------

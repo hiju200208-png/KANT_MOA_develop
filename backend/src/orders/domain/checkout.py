@@ -7,6 +7,7 @@ from orders.domain.cart import CartLine, CartVariant
 from orders.domain.exceptions import (
     CartEmpty,
     InvalidOrderValue,
+    InvalidRecipient,
     PurchaseLimitExceeded,
     VariantUnavailable,
 )
@@ -33,13 +34,13 @@ class Recipient:
     def __post_init__(self) -> None:
         name = (self.name or "").strip()
         if not name or len(name) > MAX_RECIPIENT_NAME:
-            raise InvalidOrderValue(f"받는 분 이름은 1~{MAX_RECIPIENT_NAME}자로 입력해주세요.")
+            raise InvalidRecipient(f"받는 분 이름은 1~{MAX_RECIPIENT_NAME}자로 입력해주세요.")
         phone = (self.phone or "").strip()
         if not _PHONE.fullmatch(re.sub(r"\D", "", phone)) or len(phone) > 20:
-            raise InvalidOrderValue("휴대폰 번호를 정확히 입력해주세요.")
+            raise InvalidRecipient("휴대폰 번호를 정확히 입력해주세요.")
         address = (self.address or "").strip()
         if not address or len(address) > MAX_ORDER_ADDRESS:
-            raise InvalidOrderValue("배송 주소를 입력해주세요.")
+            raise InvalidRecipient("배송 주소를 입력해주세요.")
         # 값이 바뀌지 않는(frozen) 객체라서, 만들 때 정리한 값만 이 방법으로 넣는다.
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "phone", phone)
@@ -81,7 +82,7 @@ def calc_shipping_fee(items_price: int, policy: ShippingPolicy | None) -> int:
 
 
 def validate_direct_quantity(quantity: int) -> None:
-    """규칙: 바로 구매 수량은 1개 이상 정수 (예전 create_direct_order는 INVALID_ORDER로 막았다)."""
+    """규칙: 바로 구매 수량은 1~MAX_DIRECT_QUANTITY개 정수. 벗어나면 INVALID_ORDER (예전 create_direct_order와 같다)."""
     if isinstance(quantity, bool) or not isinstance(quantity, int) or not 1 <= quantity <= MAX_DIRECT_QUANTITY:
         raise InvalidOrderValue(f"수량은 1~{MAX_DIRECT_QUANTITY}개 사이로 입력해주세요.")
 

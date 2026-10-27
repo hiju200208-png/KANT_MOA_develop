@@ -48,8 +48,9 @@ def client(app):
     return TestClient(app)
 
 
-def direct(client, variant_id=1, quantity=1):
-    return client.post("/orders/direct", json={**RECIPIENT, "variant_id": variant_id, "quantity": quantity})
+def direct(client, variant_id=1, quantity=1, **recipient):
+    body = {**RECIPIENT, **recipient, "variant_id": variant_id, "quantity": quantity}
+    return client.post("/orders/direct", json=body)
 
 
 # ---------- 정상 ----------
@@ -147,17 +148,33 @@ def test_over_stock_is_409_unavailable(client):
 @pytest.mark.parametrize("body", [
     {**RECIPIENT, "recipient_phone": "02-123-4567"},  # 도메인 검사 (휴대폰 형식)
     {**RECIPIENT, "recipient_name": "   "},  # 도메인 검사 (공백뿐)
+    {**RECIPIENT, "address": "  "},  # 도메인 검사 (주소 없음)
     {**RECIPIENT, "total_price": 1},  # 가격은 받지 않는다 (extra 금지)
     {"recipient_name": "김여름"},  # 필수 칸 누락
 ])
-def test_invalid_order_request_is_422(client, cart_repo, body):
+def test_invalid_order_request_is_422_unknown(client, cart_repo, body):
+    # 받는 분 입력 오류는 422/UNKNOWN (INVALID_ORDER는 '결제할 수 없는 주문' 안내라 쓰지 않는다)
     cart_repo.saved[(ME, 1)] = 1
-    assert client.post("/orders", json=body).status_code == 422
+    res = client.post("/orders", json=body)
+    assert res.status_code == 422 and res.json()["code"] == "UNKNOWN"
 
 
-@pytest.mark.parametrize("quantity", [0, 100])
-def test_invalid_direct_quantity_is_422(client, quantity):
-    assert direct(client, quantity=quantity).status_code == 422
+def test_invalid_recipient_on_direct_order_is_422_unknown(client):
+    res = direct(client, recipient_phone="02-123-4567")
+    assert res.status_code == 422 and res.json()["code"] == "UNKNOWN"
+
+
+@pytest.mark.parametrize("quantity", [0, -1, 100])
+def test_invalid_direct_quantity_is_422_invalid_order(client, quantity):
+    # 바로 구매 수량 오류만 INVALID_ORDER (예전 create_direct_order와 같은 code)
+    res = direct(client, quantity=quantity)
+    assert res.status_code == 422 and res.json()["code"] == "INVALID_ORDER"
+
+
+def test_non_integer_direct_quantity_is_422_unknown(client):
+    # 정수가 아닌 값은 형식 오류라 공통 처리기의 422/UNKNOWN
+    res = direct(client, quantity="두 개")
+    assert res.status_code == 422 and res.json()["code"] == "UNKNOWN"
 
 
 def test_invalid_order_id_and_status_filter_are_422(client):

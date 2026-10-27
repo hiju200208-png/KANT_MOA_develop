@@ -23,7 +23,9 @@ class OrderCreateRequest(BaseModel):
 
 class DirectOrderRequest(OrderCreateRequest):
     variant_id: int = Field(ge=1, examples=[1])
-    quantity: int = Field(ge=1, le=MAX_DIRECT_QUANTITY, examples=[1])
+    # 범위(1~99)는 스키마가 아니라 도메인이 검사한다. 그래야 수량 오류가 약속대로 422/INVALID_ORDER로 나간다.
+    # (스키마에서 막으면 공통 검증 처리기가 422/UNKNOWN으로 바꿔 버린다) 정수가 아닌 값은 여기서 422/UNKNOWN.
+    quantity: int = Field(examples=[1], description=f"1~{MAX_DIRECT_QUANTITY}개. 벗어나면 422 INVALID_ORDER")
 
 
 class OrderQuery(BaseModel):

@@ -11,6 +11,7 @@ from orders.domain.exceptions import (
     InvalidCartQuantity,
     InvalidOrderTransition,
     InvalidOrderValue,
+    InvalidRecipient,
     OrderAccessDenied,
     OrderAlreadyCancelled,
     OrderDomainError,
@@ -23,7 +24,8 @@ from orders.domain.exceptions import (
 
 _STATUS_BY_ERROR: dict[type[OrderDomainError], int] = {
     InvalidAddressValue: 422,  # 입력 형식 오류
-    InvalidOrderValue: 422,
+    InvalidOrderValue: 422,  # 바로 구매 수량 오류 (code INVALID_ORDER)
+    InvalidRecipient: 422,  # 받는 분 입력 오류 (code UNKNOWN)
     InvalidCartQuantity: 422,
     AddressNotFound: 404,  # 없는 데이터
     CartItemNotFound: 404,

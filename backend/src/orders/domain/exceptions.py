@@ -19,6 +19,16 @@ class InvalidOrderValue(OrderDomainError):
     code = "INVALID_ORDER"
 
 
+class InvalidRecipient(OrderDomainError):
+    """주문서의 받는 분 이름·연락처·주소 입력이 잘못된 경우.
+
+    프론트 INVALID_ORDER 안내는 '결제/취소할 수 없는 주문'이라 입력 오류와 맞지 않는다.
+    그래서 팀 규칙대로 UNKNOWN + 칸별 메시지를 쓴다 (p3-orders 5장: 입력 오류 = 422/UNKNOWN).
+    """
+
+    code = "UNKNOWN"
+
+
 class InvalidOrderTransition(OrderDomainError):
     """지금 상태에서는 할 수 없는 동작을 요청한 경우 (예: 이미 결제된 주문을 다시 결제)."""
 
