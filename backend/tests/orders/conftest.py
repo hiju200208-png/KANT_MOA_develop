@@ -11,6 +11,8 @@ import pytest
 
 # database 모듈을 import하는 테스트도 실제 DB에 접속하지 않도록 쓰지 않는 주소를 넣어 둔다.
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://unused:unused@localhost/unused")
+# P1 인증 설정은 JWT_SECRET이 필수라 backend/.env가 없는 PC에서도 수집되게 테스트 전용 값을 넣어 둔다 (실제 비밀값 아님).
+os.environ.setdefault("JWT_SECRET", "p3-test-only-not-a-real-secret-0000000000000000")
 
 from orders.domain.address import Address  # noqa: E402
 

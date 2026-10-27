@@ -1,5 +1,5 @@
 import type { Cart, CartItem } from '@/types/app';
-import { apiAssetUrl, apiFetch, isLoggedIn, jsonBody } from './api';
+import { ApiError, apiAssetUrl, apiFetch, isLoggedIn, jsonBody } from './api';
 import { AppError } from './errors';
 
 // 비회원 장바구니: localStorage. 로그인: FastAPI /cart (P3). 같은 함수로 동작
@@ -58,7 +58,14 @@ const preview = (items: GuestCartItem[]) =>
   apiFetch<CartResponse>('/cart/preview', { method: 'POST', ...jsonBody({ items }) }).then(toCart);
 
 export async function getCart(): Promise<Cart> {
-  if (isLoggedIn()) return toCart(await apiFetch<CartResponse>('/cart'));
+  if (isLoggedIn()) {
+    try {
+      return toCart(await apiFetch<CartResponse>('/cart'));
+    } catch (error) {
+      // 저장된 토큰이 만료·로그아웃(401)이면 장바구니·헤더 뱃지가 깨지지 않게 비회원 장바구니로 보여준다 (토큰 정리는 로그인 쪽)
+      if (!(error instanceof ApiError && error.status === 401)) throw error;
+    }
+  }
   const guest = readGuest();
   if (!guest.length) return { items: [], totalQuantity: 0, totalPrice: 0 };
   return preview(guest);
@@ -117,7 +124,15 @@ export async function updateQuantity(variantId: number, quantity: number): Promi
 }
 
 export async function removeFromCart(variantId: number): Promise<Cart> {
-  if (isLoggedIn()) return toCart(await apiFetch<CartResponse>(`/cart/items/${variantId}`, { method: 'DELETE' }));
+  if (isLoggedIn()) {
+    try {
+      return toCart(await apiFetch<CartResponse>(`/cart/items/${variantId}`, { method: 'DELETE' }));
+    } catch (error) {
+      // 이미 빠진 줄(빠른 두 번 클릭 등)은 오류 없이 현재 장바구니를 돌려준다 (API_SPEC: removeFromCart 에러 없음)
+      if (!(error instanceof ApiError && error.status === 404)) throw error;
+      return getCart();
+    }
+  }
   writeGuest(readGuest().filter((g) => g.variant_id !== variantId));
   return getCart();
 }

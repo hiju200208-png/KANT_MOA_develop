@@ -180,3 +180,18 @@ def test_non_integer_direct_quantity_is_422_unknown(client):
 def test_invalid_order_id_and_status_filter_are_422(client):
     assert client.get("/orders/not-a-uuid").status_code == 422
     assert client.get("/orders", params={"status": "shipped"}).status_code == 422
+
+
+# ---------- 배송비 안내 (로그인 불필요) ----------
+
+def test_shipping_policy_is_public(app):
+    res = TestClient(app).get("/orders/shipping-policy")
+    assert res.status_code == 200 and res.json() == {"free_shipping_threshold": 50000, "shipping_fee": 3000}
+
+
+def test_no_shipping_settings_means_free(app):
+    service = app.dependency_overrides[get_order_service]()
+    service._orders.policy = None
+    app.dependency_overrides[get_order_service] = lambda: service
+    res = TestClient(app).get("/orders/shipping-policy")
+    assert res.json() == {"free_shipping_threshold": 0, "shipping_fee": 0}
