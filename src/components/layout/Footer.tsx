@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { getShopSettings } from "@/services/settings";
+import { io } from "next/cache";
 import { Logo } from "./Logo";
 const policyLinks = ["이용약관", "개인정보 처리방침", "배송·환불 안내"];
 export function Footer() {
@@ -25,7 +25,8 @@ export function Footer() {
 
 // 사업자·고객센터 정보 (DB shop_settings). 못 불러오면 생략
 async function BusinessInfo() {
-  const settings = await getShopSettings().catch(() => null);
+  await io();
+  const settings = await import("@/services/settings").then(({ getShopSettings }) => getShopSettings()).catch(() => null);
   if (!settings) return null;
   const items = [
     `상호 ${settings.companyName}`,

@@ -1,5 +1,6 @@
-import { ADMIN_TOKEN_STORAGE_KEY, apiAssetUrl } from './admin/client';
+import { apiAssetUrl } from './admin/client';
 import { APP_ERROR_CODES, AppError, type AppErrorCode } from './errors';
+import { clearAccessToken, getAccessToken } from './session';
 
 // 쇼핑 화면(장바구니·주문·배송지)의 FastAPI 호출 공통 부분. 오류는 {code, message} → AppError
 // - 주소: NEXT_PUBLIC_API_URL (없으면 로컬 http://localhost:8000). 관리자 화면(admin/client.ts)과 같다.
@@ -7,16 +8,7 @@ import { APP_ERROR_CODES, AppError, type AppErrorCode } from './errors';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000').replace(/\/$/, '');
 
-export { apiAssetUrl };
-
-export function getAccessToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    return window.localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
+export { apiAssetUrl, getAccessToken };
 
 export const isLoggedIn = () => getAccessToken() !== null;
 
@@ -49,6 +41,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   if (init.body !== undefined && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   const token = getAccessToken();
   if (token) headers.set('Authorization', `Bearer ${token}`);
+  if (/\.ngrok-free\.(dev|app)$/.test(new URL(API_URL).hostname)) headers.set('ngrok-skip-browser-warning', 'true');
 
   let response: Response;
   try {
@@ -60,6 +53,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
 
   const data = await response.json().catch(() => null);
   if (!response.ok) {
+    if (response.status === 401 && token && path !== '/auth/login') clearAccessToken(token);
     const code = (APP_ERROR_CODES as readonly string[]).includes(data?.code) ? (data.code as AppErrorCode) : 'UNKNOWN';
     throw new ApiError(response.status, code);
   }

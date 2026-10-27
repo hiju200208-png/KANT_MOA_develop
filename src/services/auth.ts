@@ -1,108 +1,78 @@
-import { createClient } from '@/lib/supabase/client';
 import type { Profile, SignInInput, SignUpInput, UpdateProfileInput } from '@/types/app';
-import { ACCESS_TOKEN_KEY, ApiError, apiFetch, getAccessToken, setAccessToken } from './api';
 import { mergeGuestCart } from './cart';
-import { AppError, toAppError } from './errors';
+import { apiFetch, jsonBody } from './api';
+import { AppError } from './errors';
+import { ACCESS_TOKEN_STORAGE_KEY, AUTH_CHANGE_EVENT, clearAccessToken, getAccessToken, setAccessToken } from './session';
 
-// Supabase Auth 에러 코드 → 앱 에러 코드
-function toAuthError(error: { code?: string; message: string }) {
-  switch (error.code) {
-    case 'invalid_credentials':
-      return new AppError('INVALID_CREDENTIALS');
-    case 'user_already_exists':
-    case 'email_exists':
-      return new AppError('EMAIL_ALREADY_EXISTS');
-    case 'weak_password':
-      return new AppError('WEAK_PASSWORD');
-    default:
-      return new AppError('UNKNOWN', error.message);
-  }
+type CurrentUser = { id: string; email: string; nickname: string; role: string };
+
+export async function signUp(input: SignUpInput): Promise<void> {
+  await apiFetch<CurrentUser>('/auth/signup', { method: 'POST', ...jsonBody(input) });
+  await signIn(input);
 }
-
-export async function signUp({ email, password, nickname }: SignUpInput): Promise<void> {
-  const { error } = await createClient().auth.signUp({
-    email,
-    password,
-    options: { data: { nickname } }, // handle_new_user 트리거가 profiles.nickname으로 저장
-  });
-  if (error) throw toAuthError(error);
-}
-
-// 로그인·로그아웃·내 정보는 FastAPI(P1 /auth/login·/auth/logout·/auth/me). 토큰은 관리자 화면과 같은 localStorage 키에 둔다.
-// 회원가입·내 정보 수정은 아직 Supabase (P1 프론트 전환 대상)
-const AUTH_CHANGED = 'kantmoa:auth-changed';
-const notifyAuthChanged = () => window.dispatchEvent(new Event(AUTH_CHANGED));
 
 export async function signIn({ email, password }: SignInInput): Promise<void> {
-  // OAuth2 password form: username 칸에 이메일. 틀리면 서버가 401 INVALID_CREDENTIALS
-  const token = await apiFetch<{ access_token: string }>('/auth/login', {
-    method: 'POST',
+  const body = await apiFetch<{ access_token: string }>('/auth/login', {
+    method: 'POST', body: new URLSearchParams({ username: email, password }),
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ username: email, password }),
   });
-  setAccessToken(token.access_token);
-  await mergeGuestCart(); // 프로필을 알리기 전에 병합해야 장바구니 화면이 합친 결과를 불러온다
-  notifyAuthChanged();
+  setAccessToken(body.access_token);
+  await mergeGuestCart();
 }
 
 export async function signOut(): Promise<void> {
-  // 서버 블랙리스트에 올린 뒤 브라우저 토큰을 지운다. 이미 만료된 토큰이어도 브라우저에서는 로그아웃한다
-  if (getAccessToken()) await apiFetch<void>('/auth/logout', { method: 'POST' }).catch(() => {});
-  setAccessToken(null);
-  notifyAuthChanged();
+  const token = getAccessToken();
+  if (token) {
+    try {
+      await apiFetch('/auth/logout', { method: 'POST' });
+    } catch (error) {
+      if (!(error instanceof AppError) || error.code !== 'NOT_AUTHENTICATED') throw error;
+    }
+    clearAccessToken(token);
+  }
 }
 
 export async function getProfile(): Promise<Profile | null> {
   if (!getAccessToken()) return null;
   try {
-    const me = await apiFetch<{ id: string; email: string; nickname: string }>('/auth/me');
-    return { id: me.id, email: me.email, nickname: me.nickname, phone: null }; // /auth/me에는 연락처가 없다
+    const user = await apiFetch<CurrentUser>('/auth/me');
+    return { id: user.id, email: user.email, nickname: user.nickname, phone: null };
   } catch (error) {
-    // 만료·로그아웃된 토큰이면 로그아웃 상태로 정리한다
-    if (error instanceof ApiError && error.status === 401) {
-      setAccessToken(null);
-      return null;
-    }
+    if (error instanceof AppError && error.code === 'NOT_AUTHENTICATED') return null;
     throw error;
   }
 }
 
-export async function updateProfile(input: UpdateProfileInput): Promise<Profile> {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new AppError('NOT_AUTHENTICATED');
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .update(input)
-    .eq('id', user.id)
-    .select('id, nickname, phone')
-    .single();
-  if (error) throw toAppError(error);
-  return { ...data, email: user.email ?? '' };
+// P1에 아직 수정 API가 없다. FastAPI 회원 정보를 Supabase에 잘못 저장하지 않는다.
+export async function updateProfile(_input: UpdateProfileInput): Promise<Profile> {
+  void _input;
+  throw new AppError('UNKNOWN', '회원 정보 수정 API는 아직 연결되지 않았어요.');
 }
 
-// 앱 최상단 클라이언트 Provider에서 한 번 구독. 처음 한 번 + 로그인·로그아웃 때마다 프로필을 알린다
-// (비회원 장바구니 병합은 signIn이 알리기 전에 끝낸다)
 export function onAuthChange(cb: (profile: Profile | null) => void): () => void {
   let active = true;
-  const emit = () => {
-    getProfile()
-      .catch(() => null)
-      .then((profile) => active && cb(profile));
+  let version = 0;
+  const load = async () => {
+    const current = ++version;
+    const token = getAccessToken();
+    const profile = await getProfile().catch(() => null);
+    if (active && current === version && token === getAccessToken()) cb(profile);
   };
-  // 다른 탭에서 로그인·로그아웃하면 localStorage 변경 이벤트로 따라간다
-  const onStorage = (event: StorageEvent) => {
-    if (event.key === ACCESS_TOKEN_KEY) emit();
+  const storage = (event: StorageEvent) => {
+    if (event.key === null || event.key === ACCESS_TOKEN_STORAGE_KEY) void load();
   };
-  window.addEventListener(AUTH_CHANGED, emit);
-  window.addEventListener('storage', onStorage);
-  emit();
+  const visible = () => { if (document.visibilityState === 'visible') void load(); };
+  window.addEventListener(AUTH_CHANGE_EVENT, load);
+  window.addEventListener('storage', storage);
+  window.addEventListener('focus', load);
+  document.addEventListener('visibilitychange', visible);
+  void load();
   return () => {
     active = false;
-    window.removeEventListener(AUTH_CHANGED, emit);
-    window.removeEventListener('storage', onStorage);
+    ++version;
+    window.removeEventListener(AUTH_CHANGE_EVENT, load);
+    window.removeEventListener('storage', storage);
+    window.removeEventListener('focus', load);
+    document.removeEventListener('visibilitychange', visible);
   };
 }

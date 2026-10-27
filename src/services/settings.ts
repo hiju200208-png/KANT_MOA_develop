@@ -1,10 +1,10 @@
-import { publicClient as supabase } from '@/lib/supabase/client';
+import { getPublicClient } from '@/lib/supabase/client';
 import type { ShopSettings } from '@/types/app';
 import { toAppError } from './errors';
 
 // 쇼핑몰 설정 (배송비·사업자 정보). 한 줄짜리 테이블
 export async function getShopSettings(): Promise<ShopSettings> {
-  const { data, error } = await supabase.from('shop_settings').select('*').single();
+  const { data, error } = await getPublicClient().from('shop_settings').select('*').single();
   if (error) throw toAppError(error);
   return {
     freeShippingThreshold: data.free_shipping_threshold,

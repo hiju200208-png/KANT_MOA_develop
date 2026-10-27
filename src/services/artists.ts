@@ -1,4 +1,4 @@
-import { createClient, publicClient as supabase } from '@/lib/supabase/client';
+import { createClient, getPublicClient } from '@/lib/supabase/client';
 import { AppError, toAppError } from './errors';
 
 // 아티스트 조회(캐시됨)는 artistCatalog.ts에 있고 여기서 다시 내보냄. 좋아요 함수는 로그인 사용자별·클라이언트 호출이라 캐시하지 않음
@@ -8,7 +8,7 @@ export { getArtist, getArtistBanners, getArtistMembers, getArtists } from './art
 
 // 아티스트별 좋아요 수 { artistId: 개수 }. 비로그인도 조회 가능, 좋아요가 0인 아티스트는 키가 없음 (화면에서 ?? 0)
 export async function getArtistLikeCounts(): Promise<Record<number, number>> {
-  const { data, error } = await supabase.rpc('get_artist_like_counts');
+  const { data, error } = await getPublicClient().rpc('get_artist_like_counts');
   if (error) throw toAppError(error);
   return Object.fromEntries(data.map((row) => [row.artist_id, row.like_count]));
 }

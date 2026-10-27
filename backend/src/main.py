@@ -42,7 +42,7 @@ for router in (address_router, cart_router, order_router):  # P3 배송지·장�
     app.include_router(router)
 app.add_middleware(CORSMiddleware, allow_origins=get_settings().cors_origins,
                    allow_credentials=False, allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-                   allow_headers=["Authorization", "Content-Type"])
+                   allow_headers=["Authorization", "Content-Type", "ngrok-skip-browser-warning"])
 register_error_handlers(app)
 
 
