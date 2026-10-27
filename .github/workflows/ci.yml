@@ -1,14 +1,14 @@
-# PR·push마다 린트 · 타입 검사 · 테스트. 빌드와 미리보기 배포는 Vercel이 PR마다 따로 확인한다
+# PR·push마다 프론트(린트·타입 검사·테스트)와 백엔드(pytest)를 검사한다. 빌드와 미리보기 배포는 Vercel이 PR마다 따로 확인한다
 name: CI
 
 on:
   pull_request:
-    branches: [develop, main]
+    branches: [main]
   push:
-    branches: [develop, main]
+    branches: [main]
 
 jobs:
-  check:
+  frontend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,3 +20,51 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    # CI 안에서만 쓰고 버리는 PostgreSQL. 공용 DB에는 접속하지 않는다
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d ci"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 30
+    env:
+      # CI 전용 테스트값. 실제 비밀번호·키가 아니며 backend/.env 없이 실행된다
+      DATABASE_URL: postgresql+asyncpg://ci:ci@127.0.0.1:5432/ci
+      JWT_SECRET: ci-only-not-a-real-secret-0000000000000000000000000000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv python install 3.13
+      - run: uv sync --locked
+
+      # 1) 공통 DB 준비: 초기 SQL 대신 마이그레이션으로 만들어 마이그레이션 자체도 검증한다
+      - name: alembic upgrade head
+        run: uv run alembic upgrade head
+
+      # 2) 기본 테스트: 위 DB를 쓰는 테스트 + DB 없는 테스트. 별도 DB를 만드는 테스트는 여기서 skip된다
+      - name: pytest (마이그레이션 DB)
+        run: uv run pytest -rs
+
+      # 3) 별도 DB 테스트: 각 conftest가 일회용 Docker 컨테이너에 001 SQL을 적용한다 (위 DB와 섞이지 않음)
+      #    P3(tests/orders)는 폴더가 main에 들어오면 함께 실행된다
+      - name: pytest (일회용 Docker DB)
+        env:
+          P2_RUN_POSTGRES_TESTS: "1"
+          P3_RUN_POSTGRES_TESTS: "1"
+        run: uv run pytest -rs tests/products $(test -d tests/orders && echo tests/orders)
