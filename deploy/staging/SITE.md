@@ -41,6 +41,11 @@
 
 전환 성공 시 `~/kant-moa/active-site.json`에 실행 release·Compose 프로젝트·환경 파일 위치를 기록한다.
 새 배포 관리 시 해당 프로젝트와 release의 `site.env`를 사용한다.
+홈페이지 단독 배포 후에는 `active-site.json`의 `web_override`도 Compose `-f` 인수에 추가한다.
+해당 override는 실제 web 환경값을 포함할 수 있는 서버 전용 비밀 파일이므로 Git·채팅에 복사하지 않는다.
+2026-10-28 배너 개선 web 커밋 `cf82ef7` 단독 배포 완료. API 컨테이너·DB 내용 동일 확인.
+web release는 `~/kant-moa/web-releases/web-20261027T231624Z-cf82ef7`이며,
+측정 범위·소스 식별·백업 정보는 [배너 배포 기록](../../docs/products/P2_HERO_LOADING.md)을 참조한다.
 과거 `compose.backend.yml up`을 실행하면 8022를 두 서비스가 차지하려 하므로 기존 API용 명령을 재사용하지 않는다.
 
 ## 학원 서버 후보 검증 (사용자 실행 결과)
