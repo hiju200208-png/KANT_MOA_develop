@@ -1,6 +1,6 @@
 # 첫 영상 배너 로딩 개선
 
-2026-10-27 KST. 로컬 구현·검증 기록이며 공개 서버 반영 전이다.
+2026-10-27 KST 로컬 구현·검증 후 **2026-10-28 공개 배포 완료**. 아래에 준비·완료 기록을 구분한다.
 
 ## 확인한 원인과 변경
 
@@ -51,3 +51,17 @@ Nginx 설정은 바꾸지 않고 web 컨테이너 IP 갱신을 위해 reload만 
 API 컨테이너 ID·이미지와 DB 내용의 전후 동일 여부를 확인한다. DB 초기화·migration·seed 실행은 없다.
 성공·실패 복구 모의 검사는 `python deploy/staging/check_deploy_web.py`로 재현한다.
 이는 배포 준비 기록이며, 실제 서버 실행 결과를 받기 전에는 배포 완료로 표시하지 않는다.
+
+## 2026-10-28 공개 배포 완료
+
+- 사용자 실행 결과 `WEB_DEPLOY_SUCCESS`, `SSH_EXIT=0`, 복구 없이 성공.
+- 배포 커밋 `cf82ef72a09b1fd91578126117062accec294a93`, [PR #78](https://github.com/hiju200208-png/KANT_MOA_develop/pull/78).
+- 소스 SHA256 `77964cdf7f348abaa347c9ef69c4626741b6803f65c1a10378d0229a2e1939e4`.
+- release `~/kant-moa/web-releases/web-20261027T231624Z-cf82ef7`.
+- backup `~/kant-moa/backups/before-web-20261027T231624Z-cf82ef7`.
+- 홈페이지·로그인 200. 첫 영상 HTML 도착은 후보 0.564초, 공개 주소 0.984초.
+  이는 서버 실행기의 단일 요청 측정이며 영상 재생 시작·화면 표시·전체 로딩 완료 시간이나 캐시 없는 방문의 평균이 아니다.
+- `api_container_unchanged=true`, `database_unchanged=true` 확인.
+- 별도 공개 브라우저에서도 상품 영역이 준비되는 동안 영상 배너와 메뉴가 표시되고 영상 프레임이 재생되는 것을 확인했다.
+- 성공 후 `active-site.json`에 web release·commit·override 경로가 기록됐다.
+  공개 홈페이지: https://letdown-kilometer-nutcase.ngrok-free.dev/
