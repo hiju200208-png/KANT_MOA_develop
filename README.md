@@ -11,9 +11,42 @@
 
 ### 미이전 화면
 
-현재 기존 Next.js 화면 전체가 FastAPI 미이전 상태입니다: 로그인·회원가입·내 정보, 메인·상품·검색·아티스트·카테고리·공지·좋아요, 장바구니·배송지·주문·결제·취소, 최근 본 상품·챗봇. 관리자 화면은 신규 개발 예정입니다.
+현재 기존 Next.js 화면 전체가 FastAPI 미이전 상태입니다: 로그인·회원가입·내 정보, 메인·상품·검색·아티스트·카테고리·공지·좋아요, 최근 본 상품·챗봇. 관리자 화면은 신규 개발 예정입니다. (장바구니·배송지·주문·결제·취소는 FastAPI로 전환했습니다 → 아래 P3 절)
 
 팀 결정에 따라 최종 로컬 서비스에서는 미이전 화면을 숨겨야 합니다. **현재 숨김 처리는 미구현**이며 기존 코드는 Supabase에 의존합니다. 백엔드 실행만으로 프론트가 전환되지는 않습니다.
+
+### P3 장바구니·배송지·주문 (여름)
+
+**FastAPI 담당 범위** — `backend/src/orders/` 4계층 (presentation → application → domain ← infrastructure)
+
+| Use Case | API | 주요 규칙 |
+| --- | --- | --- |
+| 배송지 | `GET·POST /addresses`, `GET·PUT·DELETE /addresses/{id}`, `PATCH /addresses/{id}/default` | 첫 주소 자동 기본, 기본은 1개, 기본 삭제 시 최신 주소가 기본, 남의 배송지 403 |
+| 장바구니 | `GET /cart`, `POST /cart/items`, `PATCH·DELETE /cart/items/{variant_id}`, `POST /cart/merge`, `POST /cart/preview`(비로그인) | 같은 옵션은 수량 합산, 판매 중·재고·1인 구매 제한 안내 검사, 비회원 병합 상한 min(재고, 구매 제한) |
+| 주문·모의 결제·취소 | `GET·POST /orders`, `POST /orders/direct`, `GET /orders/{id}`, `POST /orders/{id}/pay`, `POST /orders/{id}/cancel`, `GET /orders/shipping-policy`(비로그인) | 주문 생성은 재고 그대로, 결제 시 users → orders → 옵션 id 오름차순 `FOR UPDATE` 후 P2 `decrease_stock`, 결제된 옵션만 장바구니에서 제거, paid 취소 시 `increase_stock`, 실패 시 전체 rollback |
+
+- 상태 전이: `pending → paid`, `pending → cancelled`, `paid → cancelled`만 허용 (`domain/order_status.py`).
+- 오류: 422 입력 / 401 미인증·블랙리스트 토큰 / 403 남의 데이터 / 404 없음 / 409 업무 규칙(`OUT_OF_STOCK`·`PURCHASE_LIMIT_EXCEEDED`·`INVALID_ORDER`·`ALREADY_CANCELLED`·`CART_EMPTY`·`UNAVAILABLE_ITEM`). 본문은 `{code, message}`.
+- 목록: `GET /orders`(상태·상품명 검색·페이지), `GET /addresses`(검색·페이지) → `{items, total, page, size}`.
+
+**Supabase → FastAPI 대체 목록 (프론트)**
+
+| 기존 Supabase 호출 | 지금 |
+| --- | --- |
+| `cart_items` 테이블, `merge_cart` RPC, 비회원 장바구니의 `product_variants` 조회 | `src/services/cart.ts` → `/cart`·`/cart/merge`·`/cart/preview` |
+| `create_order`·`create_direct_order`·`pay_order`·`cancel_order` RPC, `orders` 조회 | `src/services/orders.ts` → `/orders/...` |
+| `addresses` 테이블, `set_default_address` RPC | `src/services/addresses.ts` → `/addresses/...` |
+| 배송비 표시용 `shop_settings` 조회 | `useShippingFee` → `/orders/shipping-policy` (푸터 회사 정보는 아직 `settings.ts`) |
+
+공통 호출부는 `src/services/api.ts`이고, 토큰은 localStorage `kantmoa.accessToken`(관리자 화면과 같은 키)에서 읽습니다. 프론트 로그인이 이 키에 저장하는 변경은 [PR #64](https://github.com/hiju200208-png/KANT_MOA_develop/pull/64)(P1 리뷰 중)입니다.
+
+**검증** — 실행 방법과 안전 수칙: [P3 테스트 전략](docs/TEST_STRATEGY_P3.md) · 결과 기록: [여름 작업일지](docs/worklog/YEOREUM.md)
+
+- 자동 테스트: `tests/orders` 221 passed (실제 PostgreSQL 동시 결제·rollback 포함), GitHub CI `backend`·`frontend` 통과
+- 실제 토큰 API E2E 25/25, 프론트 서비스 ↔ FastAPI 31/31
+- 화면 E2E (#64 적용 상태): 로그인 → 비회원 장바구니 병합 → 수량 변경 → 주문서 결제 → 새로고침 → 취소(재고 복구) → 구매 제한 오류 표시 → 로그아웃 후 같은 토큰 401. DB 전 → 후 값은 작업일지에 기록
+
+**미완료·주의**: 회원가입·내 정보 수정 화면은 아직 Supabase(P1). 상품 상세 화면(P2)이 FastAPI로 바뀌기 전에는 화면에서 상품을 담는 경로 대신 비회원 장바구니·바로 구매 주소(`/checkout?variant=&qty=`)로 확인합니다. 결제는 모의 결제입니다.
 
 아래 본문과 기존 `docs/SETUP.md`, `docs/BACKEND.md`, `docs/DB_DESIGN.md`는 프로젝트1 인수 자료입니다. 프로젝트2의 역할·DB·브랜치·재고 규칙은 위 문서를 우선합니다. 기존 저작권 고지는 유지합니다.
 
