@@ -36,3 +36,32 @@ class OrderAccessDenied(OrderDomainError):
 
     # 프론트 오류 목록에 권한 오류 code가 없어서 팀 규칙대로 UNKNOWN + 의미 있는 메시지를 쓴다.
     code = "UNKNOWN"
+
+
+# ---------- 배송지 ----------
+# 프론트 오류 목록에 배송지 전용 code가 없어서 모두 UNKNOWN + 상황별 메시지를 쓴다.
+# 어떤 상태 코드(422·404·403·409)로 보낼지는 presentation/errors.py가 정한다.
+
+
+class InvalidAddressValue(OrderDomainError):
+    """배송지 입력값이 잘못된 경우 (예: 우편번호가 5자리가 아님)."""
+
+    code = "UNKNOWN"
+
+
+class AddressNotFound(OrderDomainError):
+    """없는 배송지 번호를 요청한 경우."""
+
+    code = "UNKNOWN"
+
+
+class AddressAccessDenied(OrderDomainError):
+    """다른 사람의 배송지에 손대려는 경우."""
+
+    code = "UNKNOWN"
+
+
+class AddressLimitExceeded(OrderDomainError):
+    """한 사람이 저장할 수 있는 배송지 개수를 넘긴 경우."""
+
+    code = "UNKNOWN"
