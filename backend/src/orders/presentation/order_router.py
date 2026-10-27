@@ -18,6 +18,7 @@ from orders.presentation.order_schemas import (
     OrderItemResponse,
     OrderQuery,
     OrderResponse,
+    ShippingPolicyResponse,
 )
 
 router = APIRouter(prefix="/orders", tags=["orders"])
@@ -51,6 +52,18 @@ async def list_orders(
     items, total = await service.list(user.id, query.status, query.q, query.page, query.size)
     return PageResponse[OrderResponse](items=[_to_response(o) for o in items], total=total,
                                        page=query.page, size=query.size)
+
+
+# /{order_id}보다 먼저 등록해야 "shipping-policy"가 주문 id로 해석되지 않는다
+@router.get("/shipping-policy", response_model=ShippingPolicyResponse,
+            summary="배송비 안내 (로그인 불필요, 장바구니·주문서 표시용)")
+async def get_shipping_policy(service: OrderService = Depends(get_order_service)) -> ShippingPolicyResponse:
+    policy = await service.shipping_policy()
+    # 설정이 없으면 주문 생성과 같은 규칙으로 배송비 0
+    if policy is None:
+        return ShippingPolicyResponse(free_shipping_threshold=0, shipping_fee=0)
+    return ShippingPolicyResponse(free_shipping_threshold=policy.free_shipping_threshold,
+                                  shipping_fee=policy.shipping_fee)
 
 
 @router.get("/{order_id}", response_model=OrderResponse, responses=_READ_ERRORS, summary="주문 상세")

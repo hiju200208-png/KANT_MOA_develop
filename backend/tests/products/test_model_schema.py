@@ -7,11 +7,12 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.schema import CreateSchema
 
 from database import Base
+from auth.infrastructure.models import UserModel
 from products.infrastructure.models import (
-    ArtistModel, CategoryModel, ProductImageModel, ProductModel, ProductVariantModel,
+    ArtistModel, CategoryModel, ProductImageModel, ProductModel, ProductVariantModel, WishlistModel,
 )
 
-MODELS = (ArtistModel, CategoryModel, ProductModel, ProductImageModel, ProductVariantModel)
+MODELS = (ArtistModel, CategoryModel, ProductModel, ProductImageModel, ProductVariantModel, WishlistModel)
 
 
 def schema_signature(connection, table_name, schema):
@@ -44,6 +45,7 @@ def test_orm_matches_initial_sql_on_postgresql(postgres_url):
             async with engine.begin() as connection:
                 assert all(model.__table__.metadata is Base.metadata for model in MODELS)
                 metadata = MetaData(schema="p2_orm_contract")
+                UserModel.__table__.to_metadata(metadata)
                 for model in MODELS:
                     model.__table__.to_metadata(metadata)
                 await connection.execute(CreateSchema("p2_orm_contract"))

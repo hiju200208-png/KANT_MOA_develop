@@ -1,6 +1,8 @@
 // 관리자 API 호출 공통 부분: FastAPI 주소, 토큰, {code, message} 오류 처리
 // - API 주소: NEXT_PUBLIC_API_URL (없으면 로컬 http://localhost:8000)
-// - 토큰: P1 POST /auth/login으로 받은 access token을 localStorage에 둔다 (쇼핑 화면 services/api.ts와 같은 키)
+// - 토큰: P1 POST /auth/login으로 받은 access token을 공용 session 모듈(localStorage 같은 키)로 저장한다
+
+import { ACCESS_TOKEN_STORAGE_KEY, clearAccessToken, getAccessToken, setAccessToken } from '../session';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
 
@@ -10,24 +12,14 @@ export class AdminApiError extends Error {
   }
 }
 
-export const ADMIN_TOKEN_STORAGE_KEY = "kantmoa.accessToken";
+export const ADMIN_TOKEN_STORAGE_KEY = ACCESS_TOKEN_STORAGE_KEY;
 export function getAdminAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return window.localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
-  } catch {
-    return null;
-  }
+  return getAccessToken();
 }
 
 export function setAdminAccessToken(token: string | null) {
-  if (typeof window === "undefined") return;
-  try {
-    if (token) window.localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, token);
-    else window.localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
-  } catch {
-    // 저장이 막힌 브라우저(시크릿 모드 등)에서는 이번 화면에서만 로그인 상태가 유지되지 않는다
-  }
+  if (token) setAccessToken(token);
+  else clearAccessToken();
 }
 
 export async function adminFetch<T>(path: string, init: RequestInit = {}): Promise<T> {

@@ -1,86 +1,78 @@
-import { createClient } from '@/lib/supabase/client';
 import type { Profile, SignInInput, SignUpInput, UpdateProfileInput } from '@/types/app';
 import { mergeGuestCart } from './cart';
-import { AppError, toAppError } from './errors';
+import { apiFetch, jsonBody } from './api';
+import { AppError } from './errors';
+import { ACCESS_TOKEN_STORAGE_KEY, AUTH_CHANGE_EVENT, clearAccessToken, getAccessToken, setAccessToken } from './session';
 
-// Supabase Auth 에러 코드 → 앱 에러 코드
-function toAuthError(error: { code?: string; message: string }) {
-  switch (error.code) {
-    case 'invalid_credentials':
-      return new AppError('INVALID_CREDENTIALS');
-    case 'user_already_exists':
-    case 'email_exists':
-      return new AppError('EMAIL_ALREADY_EXISTS');
-    case 'weak_password':
-      return new AppError('WEAK_PASSWORD');
-    default:
-      return new AppError('UNKNOWN', error.message);
-  }
-}
+type CurrentUser = { id: string; email: string; nickname: string; role: string };
 
-export async function signUp({ email, password, nickname }: SignUpInput): Promise<void> {
-  const { error } = await createClient().auth.signUp({
-    email,
-    password,
-    options: { data: { nickname } }, // handle_new_user 트리거가 profiles.nickname으로 저장
-  });
-  if (error) throw toAuthError(error);
+export async function signUp(input: SignUpInput): Promise<void> {
+  await apiFetch<CurrentUser>('/auth/signup', { method: 'POST', ...jsonBody(input) });
+  await signIn(input);
 }
 
 export async function signIn({ email, password }: SignInInput): Promise<void> {
-  const { error } = await createClient().auth.signInWithPassword({ email, password });
-  if (error) throw toAuthError(error);
+  const body = await apiFetch<{ access_token: string }>('/auth/login', {
+    method: 'POST', body: new URLSearchParams({ username: email, password }),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  });
+  setAccessToken(body.access_token);
+  await mergeGuestCart();
 }
 
 export async function signOut(): Promise<void> {
-  const { error } = await createClient().auth.signOut();
-  if (error) throw toAuthError(error);
+  const token = getAccessToken();
+  if (token) {
+    try {
+      await apiFetch('/auth/logout', { method: 'POST' });
+    } catch (error) {
+      if (!(error instanceof AppError) || error.code !== 'NOT_AUTHENTICATED') throw error;
+    }
+    clearAccessToken(token);
+  }
 }
 
 export async function getProfile(): Promise<Profile | null> {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, nickname, phone')
-    .eq('id', user.id)
-    .maybeSingle();
-  if (error) throw toAppError(error);
-  return data && { ...data, email: user.email ?? '' };
+  if (!getAccessToken()) return null;
+  try {
+    const user = await apiFetch<CurrentUser>('/auth/me');
+    return { id: user.id, email: user.email, nickname: user.nickname, phone: null };
+  } catch (error) {
+    if (error instanceof AppError && error.code === 'NOT_AUTHENTICATED') return null;
+    throw error;
+  }
 }
 
-export async function updateProfile(input: UpdateProfileInput): Promise<Profile> {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new AppError('NOT_AUTHENTICATED');
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .update(input)
-    .eq('id', user.id)
-    .select('id, nickname, phone')
-    .single();
-  if (error) throw toAppError(error);
-  return { ...data, email: user.email ?? '' };
+// P1에 아직 수정 API가 없다. FastAPI 회원 정보를 Supabase에 잘못 저장하지 않는다.
+export async function updateProfile(_input: UpdateProfileInput): Promise<Profile> {
+  void _input;
+  throw new AppError('UNKNOWN', '회원 정보 수정 API는 아직 연결되지 않았어요.');
 }
 
-// 앱 최상단 클라이언트 Provider에서 한 번 구독. 로그인 시 비회원 장바구니를 자동 병합
 export function onAuthChange(cb: (profile: Profile | null) => void): () => void {
-  const {
-    data: { subscription },
-  } = createClient().auth.onAuthStateChange((event) => {
-    if (event === 'TOKEN_REFRESHED') return;
-    // 콜백 안에서 바로 Supabase를 호출하면 교착될 수 있어 다음 틱으로 미룸 (Supabase 권장)
-    setTimeout(async () => {
-      if (event === 'SIGNED_IN') await mergeGuestCart();
-      cb(await getProfile().catch(() => null));
-    }, 0);
-  });
-  return () => subscription.unsubscribe();
+  let active = true;
+  let version = 0;
+  const load = async () => {
+    const current = ++version;
+    const token = getAccessToken();
+    const profile = await getProfile().catch(() => null);
+    if (active && current === version && token === getAccessToken()) cb(profile);
+  };
+  const storage = (event: StorageEvent) => {
+    if (event.key === null || event.key === ACCESS_TOKEN_STORAGE_KEY) void load();
+  };
+  const visible = () => { if (document.visibilityState === 'visible') void load(); };
+  window.addEventListener(AUTH_CHANGE_EVENT, load);
+  window.addEventListener('storage', storage);
+  window.addEventListener('focus', load);
+  document.addEventListener('visibilitychange', visible);
+  void load();
+  return () => {
+    active = false;
+    ++version;
+    window.removeEventListener(AUTH_CHANGE_EVENT, load);
+    window.removeEventListener('storage', storage);
+    window.removeEventListener('focus', load);
+    document.removeEventListener('visibilitychange', visible);
+  };
 }

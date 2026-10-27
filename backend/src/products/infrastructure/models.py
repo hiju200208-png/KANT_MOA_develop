@@ -1,9 +1,11 @@
 """001_create_tables.sql과 동일한 기존 테이블 매핑. DDL 실행 없음."""
 
 from datetime import date, datetime
+from uuid import UUID
 
 from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Identity, Integer, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
 from database import Base
 
@@ -82,3 +84,11 @@ class ProductImageModel(Base):
     image_path: Mapped[str] = mapped_column(Text)
     sort_order: Mapped[int] = mapped_column(Integer, server_default=text("0"))
     kind: Mapped[str] = mapped_column(Text, server_default=text("'detail'"))
+
+
+class WishlistModel(Base):
+    __tablename__ = "wishlists"
+
+    user_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    product_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("products.id", ondelete="CASCADE"), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
