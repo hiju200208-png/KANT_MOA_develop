@@ -5,7 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.errors import ApiError
 from database import get_session
 from orders.application.address_service import AddressService
+from orders.application.cart_service import CartService
 from orders.infrastructure.address_repository import AddressRepository
+from orders.infrastructure.cart_repository import CartRepository
 from orders.infrastructure.transaction import SessionTransaction
 
 try:  # P1 인증(PR #49)이 main에 들어오면 자동으로 실제 의존성을 쓴다.
@@ -18,3 +20,7 @@ except ImportError:  # pragma: no cover - P1 인증 통합 전
 
 async def get_address_service(session: AsyncSession = Depends(get_session)) -> AddressService:
     return AddressService(AddressRepository(session), SessionTransaction(session))
+
+
+async def get_cart_service(session: AsyncSession = Depends(get_session)) -> CartService:
+    return CartService(CartRepository(session), SessionTransaction(session))

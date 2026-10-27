@@ -65,3 +65,43 @@ class AddressLimitExceeded(OrderDomainError):
     """한 사람이 저장할 수 있는 배송지 개수를 넘긴 경우."""
 
     code = "UNKNOWN"
+
+
+# ---------- 장바구니 ----------
+# code는 프론트 src/services/errors.ts에 이미 있는 이름을 그대로 쓴다 (화면 안내 문구가 연결돼 있음).
+
+
+class InvalidCartQuantity(OrderDomainError):
+    """수량이 1 미만이거나 한 번에 담을 수 있는 최대치를 넘은 경우."""
+
+    code = "UNKNOWN"
+
+
+class VariantNotFound(OrderDomainError):
+    """없는 옵션이거나 숨김 상품의 옵션인 경우 (사용자에게는 없는 상품처럼 보인다)."""
+
+    code = "UNAVAILABLE_ITEM"
+
+
+class VariantUnavailable(OrderDomainError):
+    """상품이 판매 중이 아닌 경우 (예: 품절 처리됨)."""
+
+    code = "UNAVAILABLE_ITEM"
+
+
+class OutOfStock(OrderDomainError):
+    """남은 재고보다 많이 담으려는 경우."""
+
+    code = "OUT_OF_STOCK"
+
+
+class PurchaseLimitExceeded(OrderDomainError):
+    """옵션당 1인 구매 제한을 넘는 경우 (이미 결제한 수량 포함)."""
+
+    code = "PURCHASE_LIMIT_EXCEEDED"
+
+
+class CartItemNotFound(OrderDomainError):
+    """장바구니에 없는 옵션을 수정·삭제하려는 경우."""
+
+    code = "UNKNOWN"

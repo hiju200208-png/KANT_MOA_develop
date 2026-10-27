@@ -100,6 +100,59 @@ class FakeTransaction:
         self.rollbacks += 1
 
 
+class FakeCartRepository:
+    """메모리 장바구니. variants는 상품 정보(P2), paid는 이미 결제한 수량. commit 전 변경은 pending."""
+
+    def __init__(self):
+        self.variants: dict = {}
+        self.paid: dict = {}
+        self.saved: dict[tuple, int] = {}  # (user_id, variant_id) → 수량 (담은 순서 유지)
+        self.pending: dict[tuple, int] | None = None
+        self.locked_users: list = []
+
+    @property
+    def data(self) -> dict[tuple, int]:
+        if self.pending is None:
+            self.pending = dict(self.saved)
+        return self.pending
+
+    async def lock_owner(self, user_id):
+        self.locked_users.append(user_id)
+
+    async def list_lines(self, user_id):
+        from orders.domain.cart import CartLine
+
+        return [CartLine(self.variants[v], q) for (u, v), q in self.data.items() if u == user_id and v in self.variants]
+
+    async def get_variant(self, variant_id):
+        return self.variants.get(variant_id)
+
+    async def get_variants(self, variant_ids):
+        return {v: self.variants[v] for v in variant_ids if v in self.variants}
+
+    async def get_quantity(self, user_id, variant_id):
+        return self.data.get((user_id, variant_id))
+
+    async def paid_quantity(self, user_id, variant_id):
+        return self.paid.get((user_id, variant_id), 0)
+
+    async def set_quantity(self, user_id, variant_id, quantity):
+        self.data[(user_id, variant_id)] = quantity
+
+    async def delete_item(self, user_id, variant_id):
+        return self.data.pop((user_id, variant_id), None) is not None
+
+
+@pytest.fixture
+def cart_repo():
+    return FakeCartRepository()
+
+
+@pytest.fixture
+def cart_tx(cart_repo):
+    return FakeTransaction(cart_repo)
+
+
 @pytest.fixture
 def address_repo():
     return FakeAddressRepository()

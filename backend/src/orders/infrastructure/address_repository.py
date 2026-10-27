@@ -1,10 +1,11 @@
 # [infrastructure] 배송지 저장소: DB 행 ↔ 도메인 Address 변환. commit하지 않고 필요할 때 flush만 한다.
 from uuid import UUID
 
-from sqlalchemy import delete, func, or_, select, text, update
+from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from orders.domain.address import Address, AddressInput
+from orders.infrastructure.locks import lock_user
 from orders.infrastructure.models import AddressModel
 
 # 목록 순서: 기본 배송지 맨 앞, 나머지는 최근 등록순 (프론트 기존 동작과 같다)
@@ -44,13 +45,8 @@ class AddressRepository:
         self._session = session
 
     async def lock_owner(self, user_id: UUID) -> None:
-        """같은 사람의 배송지 변경을 한 줄로 세운다.
-
-        첫 배송지를 동시에 두 번 등록하면 둘 다 기본 배송지가 되려다 UNIQUE 제약에 걸린다.
-        회원 행(users)을 FOR UPDATE로 잠가 같은 사람의 요청은 앞 요청이 끝날 때까지 기다리게 한다.
-        users는 P1 테이블이라 읽기 잠금만 하고 값은 바꾸지 않는다.
-        """
-        await self._session.execute(text("SELECT id FROM users WHERE id = :id FOR UPDATE"), {"id": user_id})
+        """같은 사람의 배송지 변경을 한 줄로 세운다 (첫 배송지 동시 등록 시 기본 배송지 2개 방지)."""
+        await lock_user(self._session, user_id)
 
     async def list_by_user(self, user_id: UUID, keyword: str | None, page: int, size: int) -> tuple[list[Address], int]:
         condition = [AddressModel.user_id == user_id]
