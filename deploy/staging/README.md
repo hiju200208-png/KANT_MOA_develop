@@ -4,8 +4,10 @@
 인계 사항은 [docs/STAGING.md](../../docs/STAGING.md)를 먼저 확인합니다.
 아래 비밀 환경 파일 생성 명령은 새 환경 최초 준비용이며, 현재 서버에는 이미 파일이 있습니다.
 
-이 설정은 FastAPI만 실행합니다. Next.js, 새 인증/상품/주문 API, ngrok 서비스 등록은
+이 Compose 설정은 FastAPI만 실행합니다. Next.js, 새 인증/상품/주문 API는
 포함하지 않습니다. 초기 확인 대상은 `/health`와 `/docs`입니다.
+서버 ngrok는 별도 `kant-moa-ngrok.service`로 자동 실행 등록했으며,
+상태·관리 명령은 [STAGING.md의 ngrok 항목](../../docs/STAGING.md#7-ngrok-실행-상태와-외부-검증)을 참고합니다.
 
 서버에서 확인된 조건:
 
