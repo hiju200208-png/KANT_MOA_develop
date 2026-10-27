@@ -1,6 +1,0 @@
-__init__
-admin
-auth
-core
-database
-main
