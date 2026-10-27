@@ -168,3 +168,15 @@ def test_merge_empty_list_is_ok(service):
     svc, tx = service
     assert run(svc.merge_guest(ME, [])).lines == []
     assert tx.commits == 1
+
+
+# ---------- 비회원 미리보기 ----------
+
+def test_preview_combines_lines_and_hides_missing_or_hidden(service, cart_repo):
+    svc, tx = service
+    cart = run(svc.preview([(1, 2), (1, 1), (3, 1), (4, 1), (99, 1), (5, 0)]))
+    # 같은 옵션은 합치고, 숨김·없는 옵션·0개 줄은 빠진다. 품절은 보이되 주문 불가로 표시
+    assert [(line.variant.variant_id, line.quantity, line.is_available) for line in cart.lines] == [
+        (1, 3, True), (3, 1, False)]
+    assert cart.total_price == 3000
+    assert cart_repo.saved == {} and tx.commits == 0  # 저장하지 않는다

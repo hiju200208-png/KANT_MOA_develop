@@ -90,6 +90,16 @@ async def remove_item(
         raise to_api_error(error) from error
 
 
+@router.post("/preview", response_model=CartResponse, responses={422: {"model": ErrorResponse}},
+             summary="비회원 장바구니·바로 구매 미리보기 (로그인 불필요, 저장하지 않음)")
+async def preview_cart(body: CartMergeRequest, service: CartService = Depends(get_cart_service)) -> CartResponse:
+    # 브라우저에 저장된 [{variant_id, quantity}]를 그대로 받아 회원 장바구니와 같은 모양으로 돌려준다
+    try:
+        return _to_response(await service.preview([(item.variant_id, item.quantity) for item in body.items]))
+    except OrderDomainError as error:
+        raise to_api_error(error) from error
+
+
 @router.post("/merge", response_model=CartResponse, responses=_ERRORS,
              summary="비회원 장바구니 병합 (로그인 직후, 상한 min(재고, 구매 제한))")
 async def merge_guest_cart(

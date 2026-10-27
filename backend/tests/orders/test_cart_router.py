@@ -127,3 +127,19 @@ def test_bad_add_body_is_422(client, body):
 def test_too_many_merge_items_is_422(client):
     items = [{"variant_id": i + 1, "quantity": 1} for i in range(MAX_MERGE_ITEMS + 1)]
     assert client.post("/cart/merge", json={"items": items}).status_code == 422
+
+
+# ---------- 비회원 미리보기 (로그인 불필요) ----------
+
+def test_preview_works_without_login(app):
+    res = TestClient(app).post("/cart/preview", json={"items": [{"variant_id": 1, "quantity": 2},
+                                                                {"variant_id": 4, "quantity": 1}]})
+    assert res.status_code == 200
+    body = res.json()
+    assert [i["variant_id"] for i in body["items"]] == [1] and body["total_price"] == 70000
+
+
+def test_preview_rejects_too_many_lines(app):
+    items = [{"variant_id": 1, "quantity": 1}] * (MAX_MERGE_ITEMS + 1)
+    res = TestClient(app).post("/cart/preview", json={"items": items})
+    assert res.status_code == 422 and res.json()["code"] == "UNKNOWN"
