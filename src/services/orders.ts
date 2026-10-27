@@ -1,5 +1,5 @@
 import type { CreateOrderInput, Order, OrderStatus, OrderSummary } from '@/types/app';
-import { apiFetch, isLoggedIn, jsonBody } from './api';
+import { ApiError, apiFetch, isLoggedIn, jsonBody } from './api';
 import { AppError } from './errors';
 
 // 주문·바로 구매·모의 결제·취소: FastAPI /orders (P3). 서버가 소유권(403)·재고·구매 제한을 검사한다
@@ -86,8 +86,8 @@ export async function getOrder(orderId: string): Promise<Order | null> {
   try {
     data = await apiFetch<OrderResponse>(`/orders/${encodeURIComponent(orderId)}`);
   } catch (error) {
-    // 없는 주문(404)·남의 주문(403)·uuid 형식 아님(422)은 예전처럼 '없음'으로 다룬다
-    if (error instanceof AppError && error.code === 'UNKNOWN') return null;
+    // 없는 주문(404)·남의 주문(403)·uuid 형식 아님(422)은 예전처럼 '없음'으로 다룬다. 서버 연결 실패는 오류 그대로
+    if (error instanceof ApiError && [403, 404, 422].includes(error.status)) return null;
     throw error;
   }
 

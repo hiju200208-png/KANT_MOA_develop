@@ -20,6 +20,17 @@ export function getAccessToken(): string | null {
 
 export const isLoggedIn = () => getAccessToken() !== null;
 
+// 화면은 code로 문구를 고른다. status는 services가 없음(404)·남의 것(403)·로그인 만료(401)를 구분할 때만 쓴다.
+// detail은 API_SPEC 계약상 '문제된 variantId' 자리라 서버 문구를 넣지 않는다 (서버는 {code, message}만 준다).
+export class ApiError extends AppError {
+  constructor(
+    public status: number, // 0 = 서버에 연결하지 못함
+    code: AppErrorCode,
+  ) {
+    super(code);
+  }
+}
+
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   if (init.body !== undefined && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
@@ -30,15 +41,14 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   try {
     response = await fetch(`${API_URL}${path}`, { ...init, headers, cache: 'no-store' });
   } catch {
-    throw new AppError('UNKNOWN', '서버에 연결할 수 없어요.');
+    throw new ApiError(0, 'UNKNOWN');
   }
   if (response.status === 204) return undefined as T;
 
   const data = await response.json().catch(() => null);
   if (!response.ok) {
     const code = (APP_ERROR_CODES as readonly string[]).includes(data?.code) ? (data.code as AppErrorCode) : 'UNKNOWN';
-    // 서버 message는 화면 문구(ERROR_MESSAGES)가 없는 UNKNOWN일 때 참고용으로 detail에 남긴다
-    throw new AppError(code, typeof data?.message === 'string' ? data.message : undefined);
+    throw new ApiError(response.status, code);
   }
   return data as T;
 }
