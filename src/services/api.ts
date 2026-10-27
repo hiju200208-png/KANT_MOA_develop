@@ -12,19 +12,6 @@ export { apiAssetUrl, getAccessToken };
 
 export const isLoggedIn = () => getAccessToken() !== null;
 
-export const ACCESS_TOKEN_KEY = ADMIN_TOKEN_STORAGE_KEY;
-
-// 로그인(auth.ts)이 받은 토큰을 저장하고, 로그아웃·만료 때 null로 지운다
-export function setAccessToken(token: string | null) {
-  if (typeof window === 'undefined') return;
-  try {
-    if (token) window.localStorage.setItem(ACCESS_TOKEN_KEY, token);
-    else window.localStorage.removeItem(ACCESS_TOKEN_KEY);
-  } catch {
-    // 저장이 막힌 브라우저(사생활 보호 모드 등)에서는 로그인 상태가 유지되지 않는다
-  }
-}
-
 // 화면은 code로 문구를 고른다. status는 services가 없음(404)·남의 것(403)·로그인 만료(401)를 구분할 때만 쓴다.
 // detail은 API_SPEC 계약상 '문제된 variantId' 자리라 서버 문구를 넣지 않는다 (서버는 {code, message}만 준다).
 export class ApiError extends AppError {
