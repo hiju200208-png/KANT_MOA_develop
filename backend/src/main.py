@@ -14,6 +14,9 @@ from core.errors import register_error_handlers
 from database import engine
 from auth.presentation.router import router as auth_router
 from products.presentation.router import router as products_router
+from orders.presentation.address_router import router as address_router
+from orders.presentation.cart_router import router as cart_router
+from orders.presentation.order_router import router as order_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("kantmoa")
@@ -33,6 +36,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="KANT MOA Project 2 API", version="0.1.0", lifespan=lifespan)
 app.include_router(auth_router)
 app.include_router(products_router)
+for router in (address_router, cart_router, order_router):  # P3 배송지·장바구니·주문
+    app.include_router(router)
 app.add_middleware(CORSMiddleware, allow_origins=get_settings().cors_origins,
                    allow_credentials=False, allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
                    allow_headers=["Authorization", "Content-Type"])

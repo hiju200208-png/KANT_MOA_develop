@@ -1,9 +1,8 @@
-import { createClient } from '@/lib/supabase/client';
 import type { Cart, CartItem } from '@/types/app';
-import { AppError, toAppError } from './errors';
-import { getImageUrl } from './storage';
+import { apiAssetUrl, apiFetch, isLoggedIn, jsonBody } from './api';
+import { AppError } from './errors';
 
-// 비회원 장바구니: localStorage. 로그인: cart_items 테이블. 같은 함수로 동작
+// 비회원 장바구니: localStorage. 로그인: FastAPI /cart (P3). 같은 함수로 동작
 const GUEST_KEY = 'guest_cart';
 type GuestCartItem = { variant_id: number; quantity: number };
 
@@ -24,117 +23,66 @@ function writeGuest(items: GuestCartItem[]) {
   }
 }
 
-async function getUserId() {
-  const { data } = await createClient().auth.getSession();
-  return data.session?.user.id ?? null;
-}
-
-const VARIANT_COLUMNS =
-  'id, option_name, extra_price, stock, max_per_user, products(id, name, price, status, thumbnail_path)';
-
-type VariantRow = {
-  id: number;
+// FastAPI 장바구니 응답 (snake_case)
+type CartItemResponse = {
+  variant_id: number;
+  quantity: number;
+  product: { id: number; name: string; thumbnail_url: string | null };
   option_name: string;
-  extra_price: number;
+  unit_price: number;
   stock: number;
   max_per_user: number | null;
-  products: { id: number; name: string; price: number; status: string; thumbnail_path: string | null };
+  is_available: boolean;
 };
+type CartResponse = { items: CartItemResponse[]; total_quantity: number; total_price: number };
 
-const toItem = (v: VariantRow, quantity: number): CartItem => ({
-  variantId: v.id,
-  quantity,
-  product: {
-    id: v.products.id,
-    name: v.products.name,
-    thumbnailUrl: getImageUrl('products', v.products.thumbnail_path),
-  },
-  optionName: v.option_name,
-  unitPrice: v.products.price + v.extra_price,
-  stock: v.stock,
-  maxPerUser: v.max_per_user,
-  isAvailable: v.products.status === 'on_sale' && v.stock >= quantity,
+const toItem = (i: CartItemResponse): CartItem => ({
+  variantId: i.variant_id,
+  quantity: i.quantity,
+  product: { id: i.product.id, name: i.product.name, thumbnailUrl: apiAssetUrl(i.product.thumbnail_url) },
+  optionName: i.option_name,
+  unitPrice: i.unit_price,
+  stock: i.stock,
+  maxPerUser: i.max_per_user,
+  isAvailable: i.is_available,
 });
 
-function toCart(items: CartItem[]): Cart {
-  return {
-    items,
-    totalQuantity: items.reduce((sum, i) => sum + i.quantity, 0),
-    totalPrice: items.filter((i) => i.isAvailable).reduce((sum, i) => sum + i.unitPrice * i.quantity, 0),
-  };
-}
+const toCart = (c: CartResponse): Cart => ({
+  items: c.items.map(toItem),
+  totalQuantity: c.total_quantity,
+  totalPrice: c.total_price,
+});
+
+// 비회원 장바구니·바로 구매: 저장하지 않고 옵션 정보만 장바구니 모양으로 받는다 (없거나 숨김이면 빠짐)
+const preview = (items: GuestCartItem[]) =>
+  apiFetch<CartResponse>('/cart/preview', { method: 'POST', ...jsonBody({ items }) }).then(toCart);
 
 export async function getCart(): Promise<Cart> {
-  const supabase = createClient();
-
-  if (await getUserId()) {
-    const { data, error } = await supabase
-      .from('cart_items')
-      .select(`quantity, product_variants(${VARIANT_COLUMNS})`)
-      .order('created_at');
-    if (error) throw toAppError(error);
-    const rows = data as unknown as { quantity: number; product_variants: VariantRow | null }[];
-    // 숨김 상품은 RLS로 variant가 null → 화면에서 제외
-    return toCart(rows.filter((r) => r.product_variants).map((r) => toItem(r.product_variants!, r.quantity)));
-  }
-
+  if (isLoggedIn()) return toCart(await apiFetch<CartResponse>('/cart'));
   const guest = readGuest();
-  if (!guest.length) return toCart([]);
-  const { data, error } = await supabase
-    .from('product_variants')
-    .select(VARIANT_COLUMNS)
-    .in('id', guest.map((g) => g.variant_id));
-  if (error) throw toAppError(error);
-  const byId = new Map((data as unknown as VariantRow[]).map((v) => [v.id, v]));
-  return toCart(guest.filter((g) => byId.has(g.variant_id)).map((g) => toItem(byId.get(g.variant_id)!, g.quantity)));
+  if (!guest.length) return { items: [], totalQuantity: 0, totalPrice: 0 };
+  return preview(guest);
 }
 
 // 바로 구매 주문서용: 장바구니에 담지 않고 옵션 하나를 장바구니 항목 모양으로 불러온다. 없거나 숨김이면 null
 export async function getDirectItem(variantId: number, quantity: number): Promise<CartItem | null> {
-  const { data, error } = await createClient()
-    .from('product_variants')
-    .select(VARIANT_COLUMNS)
-    .eq('id', variantId)
-    .maybeSingle();
-  if (error) throw toAppError(error);
-  return data ? toItem(data as unknown as VariantRow, quantity) : null;
+  const cart = await preview([{ variant_id: variantId, quantity }]);
+  return cart.items[0] ?? null;
 }
 
-// 담기 단계 체크는 안내용. 최종 검증은 pay_order
-async function checkQuantity(variantId: number, quantity: number, userId: string | null) {
-  const supabase = createClient();
-  const { data: v, error } = await supabase
-    .from('product_variants')
-    .select('stock, max_per_user, products(status)')
-    .eq('id', variantId)
-    .maybeSingle();
-  if (error) throw toAppError(error);
-  if (!v || v.products?.status !== 'on_sale') throw new AppError('UNAVAILABLE_ITEM', String(variantId));
-  if (quantity > v.stock) throw new AppError('OUT_OF_STOCK', String(variantId));
-  if (v.max_per_user == null) return;
-
-  let bought = 0;
-  if (userId) {
-    const { data: paid, error: paidError } = await supabase
-      .from('order_items')
-      .select('quantity, orders!inner(status)')
-      .eq('variant_id', variantId)
-      .eq('orders.status', 'paid');
-    if (paidError) throw toAppError(paidError);
-    bought = paid.reduce((sum, r) => sum + r.quantity, 0);
+// 비회원 담기 단계 체크 (안내용). 회원은 서버가 같은 규칙으로 검사하고, 최종 검증은 결제가 한다
+async function checkGuestQuantity(variantId: number, quantity: number) {
+  const item = await getDirectItem(variantId, quantity);
+  if (!item) throw new AppError('UNAVAILABLE_ITEM', String(variantId));
+  if (quantity > item.stock) throw new AppError('OUT_OF_STOCK', String(variantId));
+  if (!item.isAvailable) throw new AppError('UNAVAILABLE_ITEM', String(variantId)); // 판매 중 아님
+  if (item.maxPerUser != null && quantity > item.maxPerUser) {
+    throw new AppError('PURCHASE_LIMIT_EXCEEDED', String(variantId));
   }
-  if (bought + quantity > v.max_per_user) throw new AppError('PURCHASE_LIMIT_EXCEEDED', String(variantId));
 }
 
-async function setQuantity(variantId: number, quantity: number, userId: string | null) {
-  if (userId) {
-    const { error } = await createClient()
-      .from('cart_items')
-      .upsert({ user_id: userId, variant_id: variantId, quantity }, { onConflict: 'user_id,variant_id' });
-    if (error) throw toAppError(error);
-    return;
-  }
-  // 이미 있으면 제자리에서 수량만 변경, 없으면 끝에 추가
+// 이미 있으면 제자리에서 수량만 변경, 없으면 끝에 추가
+function setGuestQuantity(variantId: number, quantity: number) {
   const guest = readGuest();
   const exists = guest.some((g) => g.variant_id === variantId);
   writeGuest(
@@ -145,34 +93,43 @@ async function setQuantity(variantId: number, quantity: number, userId: string |
 }
 
 export async function addToCart(variantId: number, quantity: number): Promise<Cart> {
-  const userId = await getUserId();
-  const current = (await getCart()).items.find((i) => i.variantId === variantId)?.quantity ?? 0;
-  await checkQuantity(variantId, current + quantity, userId);
-  await setQuantity(variantId, current + quantity, userId);
+  if (isLoggedIn()) {
+    // 같은 옵션이면 서버가 수량을 더한다
+    return toCart(
+      await apiFetch<CartResponse>('/cart/items', { method: 'POST', ...jsonBody({ variant_id: variantId, quantity }) }),
+    );
+  }
+  const current = readGuest().find((g) => g.variant_id === variantId)?.quantity ?? 0;
+  await checkGuestQuantity(variantId, current + quantity);
+  setGuestQuantity(variantId, current + quantity);
   return getCart();
 }
 
 export async function updateQuantity(variantId: number, quantity: number): Promise<Cart> {
-  const userId = await getUserId();
-  await checkQuantity(variantId, quantity, userId);
-  await setQuantity(variantId, quantity, userId);
+  if (isLoggedIn()) {
+    return toCart(
+      await apiFetch<CartResponse>(`/cart/items/${variantId}`, { method: 'PATCH', ...jsonBody({ quantity }) }),
+    );
+  }
+  await checkGuestQuantity(variantId, quantity);
+  setGuestQuantity(variantId, quantity);
   return getCart();
 }
 
 export async function removeFromCart(variantId: number): Promise<Cart> {
-  if (await getUserId()) {
-    const { error } = await createClient().from('cart_items').delete().eq('variant_id', variantId);
-    if (error) throw toAppError(error);
-  } else {
-    writeGuest(readGuest().filter((g) => g.variant_id !== variantId));
-  }
+  if (isLoggedIn()) return toCart(await apiFetch<CartResponse>(`/cart/items/${variantId}`, { method: 'DELETE' }));
+  writeGuest(readGuest().filter((g) => g.variant_id !== variantId));
   return getCart();
 }
 
 // 로그인 직후 호출 (auth.onAuthChange가 자동 호출). 실패 시 localStorage 유지 → 다음 로그인 때 재시도
 export async function mergeGuestCart(): Promise<void> {
   const guest = readGuest();
-  if (!guest.length) return;
-  const { error } = await createClient().rpc('merge_cart', { p_items: guest });
-  if (!error) writeGuest([]);
+  if (!guest.length || !isLoggedIn()) return;
+  try {
+    await apiFetch<CartResponse>('/cart/merge', { method: 'POST', ...jsonBody({ items: guest }) });
+    writeGuest([]);
+  } catch {
+    // 서버가 전체 rollback했으므로 브라우저 장바구니를 그대로 둔다
+  }
 }
