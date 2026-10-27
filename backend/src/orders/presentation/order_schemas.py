@@ -28,6 +28,11 @@ class DirectOrderRequest(OrderCreateRequest):
     quantity: int = Field(examples=[1], description=f"1~{MAX_DIRECT_QUANTITY}개. 벗어나면 422 INVALID_ORDER")
 
 
+class ShippingPolicyResponse(BaseModel):
+    free_shipping_threshold: int = Field(description="상품 금액이 이 이상이면 배송비 0원")
+    shipping_fee: int = Field(description="기준 미만일 때 배송비. 설정이 없으면 0")
+
+
 class OrderQuery(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

@@ -58,6 +58,12 @@ export async function cancelOrder(orderId: string): Promise<void> {
   await apiFetch<OrderResponse>(`/orders/${encodeURIComponent(orderId)}/cancel`, { method: 'POST' });
 }
 
+// 장바구니·주문서 배송비 안내 (로그인 불필요). 실제 배송비는 주문 생성 때 서버가 같은 설정으로 계산
+export async function getShippingPolicy(): Promise<{ freeShippingThreshold: number; shippingFee: number }> {
+  const p = await apiFetch<{ free_shipping_threshold: number; shipping_fee: number }>('/orders/shipping-policy');
+  return { freeShippingThreshold: p.free_shipping_threshold, shippingFee: p.shipping_fee };
+}
+
 const toSummary = (o: OrderResponse): OrderSummary => ({
   id: o.id,
   status: o.status as OrderStatus,
