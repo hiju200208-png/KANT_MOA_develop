@@ -195,7 +195,7 @@ function HeroProduct({ product, kind, active }: { product: ProductSummary; kind:
         {product.thumbnailUrl && (
           // 합성(multiply)은 감싼 상자에, 밝기 필터는 이미지에 따로 건다 (한 요소에 같이 걸면 Chrome이 합성을 무시함)
           <span className="absolute inset-0 overflow-hidden mix-blend-multiply" style={EDGE_FEATHER}>
-            <Image
+            <Image unoptimized
               src={product.thumbnailUrl}
               alt={`${product.artist.name} ${product.name}`}
               fill
