@@ -2,6 +2,14 @@
 
 기준일: 2026-10-26. GitHub가 원본이며 Notion·Redmine에는 요약과 이 문서 링크를 연결합니다.
 
+## 10/27 새 공용 DB 최초 이력 준비
+
+- 새 대상 DB·계정은 `kant-moa`입니다. 이전 `kant_moa`와 구분하며 최신 [DB 이전 기록](products/DB_TRANSFER_20261027.md)을 확인합니다. 상품 시드도 후속 적용돼 기존 데이터를 보존해야 합니다.
+- [최초 Alembic 이력 적용 절차](SHARED_DB_BASELINE.md)와 읽기 전용 비교·명시적 적용 도구를 준비했습니다. 아직 공용 DB에는 실행하지 않았습니다.
+- 최신 main `b75580d` 기준 일회용 DB 검증: 마이그레이션 3개 적용 성공, 기본 테스트 395 passed / 88 skipped, P2·P3 별도 Docker DB 테스트 308 passed / 5 skipped. 각 실행에서 기존 TestClient 경고 1개가 남습니다. 마지막 5개는 이미지 원본이 필요한 테스트입니다.
+- 작업 중 추가된 main `4376fd2`도 병합해 재검증했습니다. 최종 로컬 결과는 기본 **397 passed / 88 skipped**, 별도 Docker DB **310 passed / 5 skipped**입니다. [Draft PR #63](https://github.com/hiju200208-png/KANT_MOA_develop/pull/63)에서 최초 이력 절차를 검토합니다.
+- PR 리뷰·병합·현재 백업·적용 시점 공유 후 전체 구조 비교를 통과한 대상에만 인증 차이와 최초 이력을 같은 트랜잭션으로 적용합니다. 직접 `stamp head`하거나 초기 SQL을 재실행하지 않습니다.
+
 ## 10/26 공용 서버·DB 적용 업데이트
 
 현재 서버 구성·적용 스키마·검증·후속 작업은 [STAGING.md](STAGING.md)를 먼저 확인합니다.
