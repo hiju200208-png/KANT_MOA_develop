@@ -9,13 +9,16 @@ from products.domain.product import Product
 class ProductQuery(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    page: int = Field(default=1, ge=1)
+    page: int = Field(default=1, ge=1, le=2_147_483_647)
     size: int = Field(default=20, ge=1, le=100)
-    q: str | None = Field(default=None, max_length=100)
+    q: str | None = Field(
+        default=None, max_length=100,
+        description="상품명·아티스트 한글/영문명 부분 검색. 생략하면 전체, 공백이면 빈 결과. %/_는 문자 그대로 검색합니다.",
+    )
     artist: str | None = Field(default=None, max_length=100)
     category: str | None = Field(default=None, max_length=100)
     sort: Literal["latest", "price_asc", "price_desc"] = "latest"
-    exclude_id: int | None = Field(default=None, ge=1)
+    exclude_id: int | None = Field(default=None, ge=1, le=9_223_372_036_854_775_807)
 
 
 class ArtistRef(BaseModel):

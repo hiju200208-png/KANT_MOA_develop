@@ -7,6 +7,8 @@ from products.infrastructure.models import ArtistModel, CategoryModel, ProductIm
 
 
 class CatalogRepository:
+    """상품 조회 전용. 옵션·이미지는 일괄 조회해 중복 행과 N+1을 피한다."""
+
     def __init__(self, session: AsyncSession):
         self.session = session
 
@@ -15,7 +17,7 @@ class CatalogRepository:
         return (select(ProductModel, ArtistModel, CategoryModel)
                 .join(ArtistModel, ProductModel.artist_id == ArtistModel.id)
                 .join(CategoryModel, ProductModel.category_id == CategoryModel.id)
-                .where(ProductModel.status != "hidden"))
+                .where(ProductModel.status.in_(("on_sale", "sold_out"))))
 
     async def to_products(self, rows, *, detail=False) -> list[Product]:
         if not rows:
