@@ -1,0 +1,11 @@
+#!/bin/sh
+# [팀 공통 hook] commit 전: .env 같은 비밀값 파일이 커밋에 섞이지 않게 막는다
+# 설치(clone마다 한 번): git config core.hooksPath .githooks
+
+blocked=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '(^|/)\.env($|\.)' | grep -vE '\.example$')
+if [ -n "$blocked" ]; then
+  echo "커밋 멈춤: 비밀값 파일은 커밋할 수 없어요."
+  echo "$blocked" | sed 's/^/  - /'
+  echo "커밋에서 빼려면: git restore --staged <파일>"
+  exit 1
+fi
