@@ -1,5 +1,5 @@
 # [domain] 주문 엔티티: 결제·취소 시 상태 전이 규칙을 지킨다
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import UUID
 
@@ -12,16 +12,48 @@ from orders.domain.exceptions import (
 from orders.domain.order_status import OrderStatus, can_transition
 
 
+@dataclass(frozen=True)
+class OrderItem:
+    """주문 상품 한 줄. 상품명·옵션명·단가는 주문할 때 값을 복사해 둔 것이다 (스냅샷)."""
+
+    variant_id: int
+    product_name: str
+    option_name: str
+    unit_price: int
+    quantity: int
+
+    @property
+    def line_price(self) -> int:
+        return self.unit_price * self.quantity
+
+
 @dataclass
 class Order:
     """주문 한 건. 상태를 바꾸는 일은 반드시 pay()/cancel() 메서드로만 한다."""
 
     id: UUID
     user_id: UUID
-    total_price: int
+    total_price: int  # 실제 결제 금액 = 상품 금액 + 배송비
     status: OrderStatus = OrderStatus.PENDING
     paid_at: datetime | None = None
     cancelled_at: datetime | None = None
+    shipping_fee: int = 0
+    is_direct: bool = False  # 바로 구매 주문이면 True (결제해도 장바구니를 건드리지 않음)
+    recipient_name: str = ""
+    recipient_phone: str = ""
+    address: str = ""
+    created_at: datetime | None = None
+    items: list[OrderItem] = field(default_factory=list)
+
+    @property
+    def items_price(self) -> int:
+        """배송비를 뺀 상품 금액."""
+        return self.total_price - self.shipping_fee
+
+    @property
+    def quantities(self) -> dict[int, int]:
+        """옵션별 수량 (결제 때 재고 차감, 취소 때 재고 복구에 쓴다)."""
+        return {item.variant_id: item.quantity for item in self.items}
 
     def __post_init__(self) -> None:
         # DB에서 읽은 문자열("paid" 등)도 받을 수 있게 열거형으로 바꾼다.
@@ -34,6 +66,9 @@ class Order:
         # 규칙: 주문 총액은 0원 이상이어야 한다.
         if self.total_price < 0:
             raise InvalidOrderValue("주문 금액은 0원 이상이어야 해요.")
+        # 규칙: 배송비는 0원 이상이고 결제 금액 안에 들어 있어야 한다.
+        if not 0 <= self.shipping_fee <= self.total_price:
+            raise InvalidOrderValue("배송비가 올바르지 않아요.")
 
         # 규칙: 상태와 시각 기록이 서로 맞아야 한다.
         # 결제 완료 주문에 결제 시각이 없거나, 취소 주문에 취소 시각이 없으면 이상한 데이터다.

@@ -4,6 +4,8 @@ from uuid import UUID
 
 from orders.domain.address import Address, AddressInput
 from orders.domain.cart import CartLine, CartVariant
+from orders.domain.checkout import OrderDraft, ShippingPolicy
+from orders.domain.order import Order
 
 
 class AddressRepositoryPort(Protocol):
@@ -50,3 +52,30 @@ class TransactionPort(Protocol):
     async def commit(self) -> None: ...
 
     async def rollback(self) -> None: ...
+
+
+class OrderRepositoryPort(Protocol):
+    async def lock_owner(self, user_id: UUID) -> None: ...
+
+    async def shipping_policy(self) -> ShippingPolicy | None: ...
+
+    async def add(self, user_id: UUID, draft: OrderDraft) -> Order: ...
+
+    async def get(self, order_id: UUID) -> Order | None: ...
+
+    async def get_for_update(self, order_id: UUID) -> Order | None: ...
+
+    async def save_status(self, order: Order) -> None: ...
+
+    async def list_by_user(self, user_id: UUID, status: str | None, keyword: str | None,
+                           page: int, size: int) -> tuple[list[Order], int]: ...
+
+
+class StockPort(Protocol):
+    """재고 변경 창구. 실제 구현은 P2 재고 함수(get_variants_for_update / decrease_stock / increase_stock)를 부른다."""
+
+    async def lock(self, variant_ids: list[int]) -> None: ...
+
+    async def decrease(self, variant_id: int, quantity: int) -> None: ...
+
+    async def increase(self, variant_id: int, quantity: int) -> None: ...

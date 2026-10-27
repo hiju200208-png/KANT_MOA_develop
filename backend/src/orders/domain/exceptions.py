@@ -105,3 +105,18 @@ class CartItemNotFound(OrderDomainError):
     """장바구니에 없는 옵션을 수정·삭제하려는 경우."""
 
     code = "UNKNOWN"
+
+
+# ---------- 주문 생성·결제 ----------
+
+
+class CartEmpty(OrderDomainError):
+    """장바구니가 비어 있는데 주문하려는 경우."""
+
+    code = "CART_EMPTY"
+
+
+class OrderNotFound(OrderDomainError):
+    """없는 주문 번호를 요청한 경우."""
+
+    code = "UNKNOWN"

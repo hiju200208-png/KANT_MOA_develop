@@ -5,6 +5,7 @@ from orders.domain.exceptions import (
     AddressAccessDenied,
     AddressLimitExceeded,
     AddressNotFound,
+    CartEmpty,
     CartItemNotFound,
     InvalidAddressValue,
     InvalidCartQuantity,
@@ -13,6 +14,7 @@ from orders.domain.exceptions import (
     OrderAccessDenied,
     OrderAlreadyCancelled,
     OrderDomainError,
+    OrderNotFound,
     OutOfStock,
     PurchaseLimitExceeded,
     VariantNotFound,
@@ -25,6 +27,7 @@ _STATUS_BY_ERROR: dict[type[OrderDomainError], int] = {
     InvalidCartQuantity: 422,
     AddressNotFound: 404,  # 없는 데이터
     CartItemNotFound: 404,
+    OrderNotFound: 404,
     VariantNotFound: 404,  # 없는 옵션·숨김 상품 (code는 UNAVAILABLE_ITEM)
     AddressAccessDenied: 403,  # 남의 데이터
     OrderAccessDenied: 403,
@@ -34,6 +37,7 @@ _STATUS_BY_ERROR: dict[type[OrderDomainError], int] = {
     VariantUnavailable: 409,
     OutOfStock: 409,
     PurchaseLimitExceeded: 409,
+    CartEmpty: 409,
 }
 
 
