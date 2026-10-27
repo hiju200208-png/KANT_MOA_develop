@@ -11,6 +11,8 @@ import { RecentlyViewedTracker } from "@/components/product/RecentlyViewedProduc
 import { ShareButton } from "@/components/product/ShareButton";
 import { Badge, Skeleton } from "@/components/ui";
 import { getProduct } from "@/services/products";
+import { publicApiOrigin } from "@/services/catalogClient";
+import { isApiImage } from "@/services/catalogMapping";
 import type { ProductDetail } from "@/types/app";
 
 interface ProductPageProps {
@@ -30,7 +32,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 async function ProductContent({ params }: ProductPageProps) {
   const { id } = await params;
   const productId = Number(id);
-  if (!Number.isInteger(productId) || productId <= 0) notFound();
+  if (!Number.isSafeInteger(productId) || productId <= 0) notFound();
 
   let product: ProductDetail | null;
   try {
@@ -82,7 +84,7 @@ async function ProductContent({ params }: ProductPageProps) {
         {product.imageUrls.length > 0 && (
           <div className="mt-5">
             {product.imageUrls.map((url, index) => (
-              <Image key={url} src={url} alt={`${altBase} 상세 이미지 ${index + 1}`} width={1200} height={1200} sizes="(min-width: 768px) 768px, 100vw" className="h-auto w-full" />
+              <Image key={url} src={url} alt={`${altBase} 상세 이미지 ${index + 1}`} width={1200} height={1200} unoptimized={isApiImage(url, publicApiOrigin())} sizes="(min-width: 768px) 768px, 100vw" className="h-auto w-full" />
             ))}
           </div>
         )}

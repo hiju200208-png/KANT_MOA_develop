@@ -44,8 +44,10 @@ def test_app_docs_and_public_static_routes_without_database_lifespan():
     preflight = client.options("/health", headers={
         "Origin": "http://localhost:3000",
         "Access-Control-Request-Method": "GET",
+        "Access-Control-Request-Headers": "Authorization, ngrok-skip-browser-warning",
     })
     assert preflight.headers["access-control-allow-origin"] == "http://localhost:3000"
+    assert "ngrok-skip-browser-warning" in preflight.headers["access-control-allow-headers"]
     denied = client.options("/health", headers={
         "Origin": "https://untrusted.example",
         "Access-Control-Request-Method": "GET",

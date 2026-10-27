@@ -15,10 +15,11 @@ export function AdminErrorBox({ error, onRetry }: { error: unknown; onRetry?: ()
   return (
     <div role="alert" className="rounded-lg border border-red-100 bg-red-50 px-5 py-6 text-sm">
       <p className="font-bold text-danger">{title}</p>
+      {status === 403 && <p className="mt-1 text-muted">관리자 계정으로 다시 로그인해주세요.</p>}
       {status !== 401 && status !== 403 && <p className="mt-1 text-muted">{message}</p>}
       <div className="mt-4 flex gap-2">
-        {status === 401 && (
-          <Link href="/login" className="text-sm font-bold underline">
+        {(status === 401 || status === 403) && (
+          <Link href="/admin/login" className="text-sm font-bold underline">
             로그인하러 가기
           </Link>
         )}
