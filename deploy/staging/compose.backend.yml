@@ -1,4 +1,4 @@
-# Server layout: ~/kant-moa/{compose.backend.yml,Dockerfile.backend,backend.env,app/}
+# Server layout: ~/kant-moa/{compose.backend.yml,Dockerfile.backend,Dockerfile.frontend(+.dockerignore),backend.env,web.env,app/}
 name: kant-moa
 services:
   api:
@@ -7,10 +7,13 @@ services:
       dockerfile: ../../Dockerfile.backend
     env_file:
       - ./backend.env
+    # 화면(web)이 공개 주소의 /backend 를 이 API로 넘긴다. Swagger가 /backend 아래 주소로 요청하도록 root-path를 준다.
+    command: ["uvicorn", "main:app", "--app-dir", "src", "--host", "0.0.0.0", "--port", "8000", "--root-path", "/backend"]
     ports:
       - "127.0.0.1:8022:8000"
     networks:
       - shared_db
+      - default
     volumes:
       - uploads_data:/app/uploads
     restart: unless-stopped
@@ -25,7 +28,29 @@ services:
       options:
         max-size: "5m"
         max-file: "2"
+  # Next.js 화면. ngrok 공개 주소는 이 포트(3022)를 가리킨다. 공개 주소는 web.env의 NEXT_PUBLIC_API_URL(…/backend)로 빌드에 넣는다.
+  web:
+    build:
+      context: ./app
+      dockerfile: ../Dockerfile.frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?web.env에 공개 주소/backend 를 넣어주세요}
+        API_INTERNAL_URL: http://api:8000
+    environment:
+      API_INTERNAL_URL: http://api:8000
+    ports:
+      - "127.0.0.1:3022:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
 networks:
+  default: {}
   shared_db:
     external: true
     name: dbresting_default

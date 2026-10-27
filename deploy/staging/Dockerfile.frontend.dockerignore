@@ -1,0 +1,13 @@
+# 화면 빌드에 필요 없는 것 (백엔드·로컬 설치물·비밀 파일)
+.git
+node_modules
+.next
+backend
+supabase
+deploy
+docs
+outputs
+.env
+.env.*
+!.env.example
+.claude
