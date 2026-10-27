@@ -41,6 +41,8 @@
 
 전환 성공 시 `~/kant-moa/active-site.json`에 실행 release·Compose 프로젝트·환경 파일 위치를 기록한다.
 새 배포 관리 시 해당 프로젝트와 release의 `site.env`를 사용한다.
+홈페이지 단독 배포 후에는 `active-site.json`의 `web_override`도 Compose `-f` 인수에 추가한다.
+해당 override는 실제 web 환경값을 포함할 수 있는 서버 전용 비밀 파일이므로 Git·채팅에 복사하지 않는다.
 과거 `compose.backend.yml up`을 실행하면 8022를 두 서비스가 차지하려 하므로 기존 API용 명령을 재사용하지 않는다.
 
 ## 학원 서버 후보 검증 (사용자 실행 결과)
