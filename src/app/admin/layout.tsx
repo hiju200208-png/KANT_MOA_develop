@@ -8,6 +8,7 @@ import { AdminSession } from "@/components/admin/AdminSession";
 const MENU = [
   { href: "/admin", label: "대시보드" },
   { href: "/admin/products", label: "상품·재고" },
+  { href: "/admin/orders", label: "주문·배송" },
   { href: "/admin/notices", label: "공지" },
 ];
 

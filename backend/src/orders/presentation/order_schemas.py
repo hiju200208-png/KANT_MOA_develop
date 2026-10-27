@@ -1,5 +1,6 @@
 # [presentation] 주문 요청·응답 모양 (JSON 필드는 팀 백엔드 공통인 snake_case)
 from datetime import datetime
+from orders.domain.order import Order
 from typing import Literal
 from uuid import UUID
 
@@ -65,3 +66,16 @@ class OrderResponse(BaseModel):
     created_at: datetime
     paid_at: datetime | None
     cancelled_at: datetime | None
+
+
+
+def order_response(order: Order) -> OrderResponse:
+    return OrderResponse(
+        id=order.id, status=order.status.value, items_price=order.items_price, shipping_fee=order.shipping_fee,
+        total_price=order.total_price, is_direct=order.is_direct, recipient_name=order.recipient_name,
+        recipient_phone=order.recipient_phone, address=order.address,
+        items=[OrderItemResponse(variant_id=i.variant_id, product_name=i.product_name, option_name=i.option_name,
+                                 unit_price=i.unit_price, quantity=i.quantity, line_price=i.line_price)
+               for i in order.items],
+        created_at=order.created_at, paid_at=order.paid_at, cancelled_at=order.cancelled_at,
+    )

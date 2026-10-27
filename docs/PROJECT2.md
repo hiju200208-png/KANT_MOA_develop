@@ -205,3 +205,16 @@ uv run uvicorn main:app --app-dir src --reload --host 127.0.0.1 --port 8000
 - 팀 Redmine: https://sulfite-footbath-next.ngrok-free.dev/projects/2_project?jump=welcome
 - 기존 플랫폼: https://kant-moa.vercel.app/
 - 제출 2026-10-28 14:00, 발표 14:30. 외부 문서는 이번 작업에서 수정하지 않았습니다.
+
+## 10/27 추가 범위 — 관리자 주문·배송 (P3, 사용자 승인)
+
+KANT MOA 대화의 16:09 관리자 연동 문의를 확인한 뒤, 여름이 이번 제출에 추가하기로 승인했다. P3가 관리자 주문·배송을 구현하며 P4 기존 상품·재고 기능과 분리한다. 코드·로컬 검증과 공용 적용은 구분한다.
+
+- 화면 `/admin/orders`: ADMIN 전체 주문 목록, 주문번호·상품명·받는 분 검색, 결제·배송 상태 필터, 20건 페이지 조회, 배송 정보 및 처리 시각.
+- API `GET /orders/admin`, `PATCH /orders/admin/{order_id}/shipping`: P1 `require_admin`으로 401·403을 서버에서 검증한다. 기존 P3 라우터에 정적 관리자 경로를 먼저 등록하므로 공통 main.py 변경은 없다.
+- 결제 상태 pending/paid/cancelled를 유지한다. 배송은 paid 주문만 preparing → shipped → delivered. 단계 생략·역행·중복, 미결제·취소 주문 발송은 409 INVALID_ORDER. 형식·허용값 오류는 422 UNKNOWN.
+- 발송 이후 고객의 일반 취소는 409 INVALID_ORDER로 막아 출고 재고가 복구되지 않게 한다. 반품·환불·택배사/운송장 연동은 범위 밖이다.
+- 발송·취소 모두 사용자 행 → 주문 행 잠금. 배송 기록·처리 관리자·시각은 같은 세션에서 저장하고 서비스가 한 번 commit/실패 시 rollback한다. 배송 처리 자체는 상품·재고·결제 상태를 변경하지 않는다.
+- 후속 revision `4c726d1a91ab`(부모 `3f21520f9615`)은 `order_shipments` 테이블만 추가한다. 기존 주문·회원·상품·재고는 수정하지 않는다.
+- **배포 순서 필수:** 최신 백업·팀 적용 공지 → 최초 baseline 이력(3f21520f9615) 대조·채택 → 승인된 후속 배송 migration → 새 API 배포 → 관리자 화면 배포/검증. 새 취소 코드는 배송 테이블을 읽으므로 migration 전에 코드를 배포하지 않는다. 공용 DB에는 아직 실행하지 않았다.
+- 최초 이력 도구의 비교 DB는 전용 로컬 DB를 `alembic upgrade 3f21520f9615`로 준비한다. 저장소에는 알려진 단일 배송 head와 정확한 부모만 추가 허용하고 미검토·복수 head 거부는 유지한다. 최초 채택이 기록하는 revision은 계속 3f21520f9615다.

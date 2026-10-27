@@ -13,6 +13,7 @@ from orders.domain.order import Order
 from orders.presentation.dependencies import get_current_user, get_order_service
 from orders.presentation.errors import to_api_error
 from orders.presentation.order_schemas import (
+    order_response,
     DirectOrderRequest,
     OrderCreateRequest,
     OrderItemResponse,
@@ -21,22 +22,18 @@ from orders.presentation.order_schemas import (
     ShippingPolicyResponse,
 )
 
+from orders.presentation.admin_order_router import router as admin_order_router
+
 router = APIRouter(prefix="/orders", tags=["orders"])
+# 관리자 정적 경로를 /{order_id}보다 먼저 등록한다. 공통 main.py 변경은 필요 없다.
+router.include_router(admin_order_router)
 
 _READ_ERRORS = {code: {"model": ErrorResponse} for code in (401, 403, 404, 422)}
 _WRITE_ERRORS = {code: {"model": ErrorResponse} for code in (401, 403, 404, 409, 422)}
 
 
 def _to_response(order: Order) -> OrderResponse:
-    return OrderResponse(
-        id=order.id, status=order.status.value, items_price=order.items_price, shipping_fee=order.shipping_fee,
-        total_price=order.total_price, is_direct=order.is_direct, recipient_name=order.recipient_name,
-        recipient_phone=order.recipient_phone, address=order.address,
-        items=[OrderItemResponse(variant_id=i.variant_id, product_name=i.product_name, option_name=i.option_name,
-                                 unit_price=i.unit_price, quantity=i.quantity, line_price=i.line_price)
-               for i in order.items],
-        created_at=order.created_at, paid_at=order.paid_at, cancelled_at=order.cancelled_at,
-    )
+    return order_response(order)
 
 
 def _recipient(body: OrderCreateRequest) -> Recipient:

@@ -38,7 +38,7 @@ backend 폴더에서:
 .\.venv\Scripts\python.exe -m alembic heads
 ```
 
-두 결과가 `3f21520f9615`인지 확인합니다. 다른 head가 생겼다면 이 절차는 중단하고 새 이력 기준을 검토합니다. 기존 로컬 DB를 초기화하지 않습니다. 비교 기준은 `BASELINE_REFERENCE_URL` 환경변수가 있으면 그것을, 없으면 로컬 `backend/.env`의 DATABASE_URL을 읽습니다.
+비교용 DB의 current는 고정 기준 `3f21520f9615`여야 합니다. 저장소 heads는 기준 revision 또는 검토된 배송 후속 `4c726d1a91ab` 단일 head만 허용합니다. 그 밖의 head·분기는 중단합니다. 이미 후속 migration이 적용된 개인 DB는 되돌리지 말고 별도 기준 DB를 준비합니다. 비교 기준은 `BASELINE_REFERENCE_URL` 환경변수가 있으면 그것을, 없으면 로컬 `backend/.env`의 DATABASE_URL을 읽습니다.
 
 ## 2. 읽기 전용 비교
 
@@ -93,3 +93,11 @@ try {
 ```
 
 일회용 PostgreSQL 18 컨테이너 안에 서로 다른 기준·대상 DB를 만들며 실제 공용 DB·개인 개발 DB는 사용하지 않습니다. 검증 항목은 읽기 전용 확인, 잘못된 대상 및 예상 밖 컬럼 거부, 사후 검증 실패 시 전체 rollback, 회원·상품·블랙리스트 행 보존, 정상 최초 이력 등록, 재실행 거부, 추가 CHECK 동작입니다. 검증용 DB·컨테이너는 종료 시 정리합니다.
+
+## 배송 후속 revision이 있는 저장소에서의 주의 (10/27)
+
+현재 검토 중인 배송 head는 `4c726d1a91ab`이며 부모는 기존 기준 `3f21520f9615`다. 최초 baseline 비교·채택 기준은 변경하지 않는다. 비교용 **별도 빈 로컬 DB**를 `alembic upgrade 3f21520f9615`로 준비하고 `BASELINE_REFERENCE_URL`로 지정한다. 이미 배송 head까지 올라간 개인 개발 DB를 비교 기준으로 쓰거나 되돌리지 않는다.
+
+도구는 기존 기준 head 또는 검토된 단일 배송 head/정확한 부모만 허용하며, 미검토 head·복수 head·잘못된 부모는 거부한다. DB version·18개 테이블·허용 차이 검사는 기존 baseline 기준 그대로다.
+
+최신 백업·읽기 비교·팀 공지 후 baseline 채택(3f21520f9615)을 마친 다음, 별도 승인된 배송 migration(4c726d1a91ab)을 적용하고 API를 배포한다. 이 후속 migration과 신규 관리자 기능은 아직 공용에 적용하지 않았다.

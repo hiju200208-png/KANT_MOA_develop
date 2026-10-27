@@ -141,15 +141,21 @@ async def run(reference_url, target_url, database, user, apply=False):
         raise ValueError("비교 기준 DB와 대상 DB는 달라야 합니다.")
     config = Config(str(ROOT / "alembic.ini"))
     scripts = ScriptDirectory.from_config(config)
-    if scripts.get_heads() != [HEAD]:
-        raise ValueError("저장소 head가 변경됐습니다. 적용 절차를 다시 검토하세요.")
+    heads = scripts.get_heads()
+    # 최초 이력은 계속 3f21520f9615만 등록한다. 검토된 배송 후속 revision만 허용한다.
+    known_shipping_head = (
+        heads == ["4c726d1a91ab"]
+        and scripts.get_revision(heads[0]).down_revision == HEAD
+    )
+    if heads != [HEAD] and not known_shipping_head:
+        raise ValueError("저장소 head가 바뀌었습니다. 최초 이력 기준을 다시 검토하세요.")
     reference_engine = create_async_engine(reference_url, poolclass=NullPool)
     target_engine = create_async_engine(target_url, poolclass=NullPool)
     try:
         async with reference_engine.begin() as connection:
             await connection.execute(text("SET TRANSACTION READ ONLY"))
             if await connection.scalar(text("SELECT version_num FROM public.alembic_version")) != HEAD:
-                raise ValueError("비교 기준 로컬 DB가 최신 head가 아닙니다.")
+                raise ValueError("비교 기준 로컬 DB는 최초 baseline 3f21520f9615여야 합니다.")
             reference = await connection.run_sync(schema_snapshot)
         async with target_engine.begin() as connection:
             if not apply:
