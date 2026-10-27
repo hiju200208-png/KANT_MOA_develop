@@ -23,7 +23,7 @@
 | JWT·블랙리스트·ADMIN 검사 | 기능 구현·통합·실제 토큰 검증은 후속 |
 | 상품·주문·관리자 API·화면 연동 | 후속. 서버에 최신 소스가 있어도 라우터 등록·실행 확인 전에는 API 완료로 보지 않음 |
 | 팀원 PC에서 공용 DB 직접 접속 | 미설정. 현재 DB는 Docker 내부 네트워크에서만 접근 |
-| ngrok 상시 실행 | 미설정. 현재 SSH 터미널에서 포그라운드 실행 중 |
+| ngrok 상시 실행 | `kant-moa-ngrok.service` 등록. enabled·active (running), 전환 후 외부 `/health` HTTP 200 확인 |
 | Next.js 서버 실행 | 미실시. 기존 프론트에는 Supabase 의존성이 남아 있음 |
 
 ## 2. 접속 주소와 배치
@@ -139,8 +139,10 @@ flowchart LR
 3. 재현 가능한 개인 테스트는 각자 로컬 Docker DB에서 하고, 같은 초기 SQL을 **빈 DB에 한 번** 적용합니다.
    로컬 `compose.yaml` 기본 DB/사용자는 `kantmoa`이며 서버의 `kant_moa`와 이름이 다릅니다.
    접속 URL은 각자의 실제 설정에 맞춥니다.
-4. 서버의 DB 변경은 한 명의 적용자가 검토된 후속 마이그레이션으로 진행합니다.
-   스키마 변경·시드 초기화·동시성 실험으로 다른 팀원의 데이터를 덮어쓰지 않습니다.
+4. 각 담당자가 로컬 Docker DB에서 검증하고 PR 리뷰·병합을 마친 후속 마이그레이션을 공용 DB에 직접 적용합니다.
+   최초 Alembic 이력은 실제 스키마와 비교해 P1과 먼저 맞춥니다. 이후 적용 전 변경 내용·시점을 공유하고
+   한 번에 한 명씩 적용하며, 적용 후 버전·검증 결과를 기록합니다. 마이그레이션 head가 갈라지면 먼저 정리합니다.
+   공용 DB 초기화·초기 SQL 재실행·실패/동시성 실험으로 다른 팀원의 데이터를 덮어쓰지 않습니다.
 5. Repository는 비동기 AsyncSession과 ORM↔도메인 변환을 직접 구현합니다.
    공용 DB를 사용한다는 이유로 과제의 개인별 구현·검증이 대체되지는 않습니다.
 6. P2가 공통 재고 잠금 조회·저장을 제공하고 P3/P4가 같은 세션에서 사용합니다.
@@ -212,8 +214,16 @@ ngrok 3.39.13(`/snap/bin/ngrok`)이 기존에 설치돼 있어 재설치하지 �
 ngrok http http://127.0.0.1:8022 --url https://letdown-kilometer-nutcase.ngrok-free.dev --config "$HOME/kant-moa/ngrok.yml"
 ```
 
-- 현재는 포그라운드 실행입니다. Ctrl+C·SSH 종료 시 끊길 수 있습니다.
-- systemd·백그라운드 상시 실행·재부팅 자동 복구는 이번에 설정하지 않았습니다.
+- 위 명령은 최초 포그라운드 검증용입니다. 이후 수동 실행을 종료하고 systemd 서비스로 전환했습니다.
+- 서비스 파일: `/etc/systemd/system/kant-moa-ngrok.service`. `User=kant`로 기존 전용 설정을 읽습니다.
+- `systemctl enable --now` 후 enabled·active (running)을 사용자 출력으로 확인했습니다.
+  SSH 종료와 무관하게 실행하며, 부팅 시 시작하고 프로세스 종료 시 10초 후 재시작하도록 설정했습니다.
+  실제 서버 재부팅 테스트는 하지 않았습니다.
+- 서비스 전환 후 외부 `/health` HTTP 200 및 `{"status":"ok","database":"ok"}`를 다시 확인했습니다.
+- 상태: `systemctl status kant-moa-ngrok.service --no-pager`
+  / 로그: `sudo journalctl -u kant-moa-ngrok.service -n 30 --no-pager`
+  / 재시작: `sudo systemctl restart kant-moa-ngrok.service`
+  / 중지: `sudo systemctl stop kant-moa-ngrok.service`.
 - 기존 터널이 실행 중이면 중복 실행하지 않습니다. 다른 사람의 ngrok 프로세스나 기본 설정을 변경하지 않습니다.
 - 터미널의 `solaris` 색상 UI 경고가 있었지만 외부 HTTP 검증은 성공했습니다.
 - 무료 플랜의 브라우저 안내가 나오면 Visit Site로 진입합니다.
@@ -249,7 +259,7 @@ Codex 외부 읽기 요청으로 확인한 결과:
 - [ ] P2: 시드·이미지, 상품/좋아요 API와 공통 재고 잠금·저장 제공
 - [ ] P3/P4: 같은 AsyncSession 기반 재고·트랜잭션 통합, 실제 실패·권한 검증
 - [ ] 팀원 PC의 공용 DB 접속 경로 마련
-- [ ] ngrok 상시 실행·재부팅 복구 방식 정리
+- [x] ngrok systemd 상시 실행·부팅 자동 시작 등록 및 전환 후 외부 상태 확인 (실제 재부팅 테스트 미실시)
 - [ ] Next.js 실행·새 API 연결·Google 콜백 URL·CORS 확정
 - [ ] 스키마 변경·백업·재배포 담당과 절차 확정
 
