@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from orders.application.ports import CartRepositoryPort, OrderRepositoryPort, StockPort, TransactionPort
-from orders.domain.checkout import Recipient, draft_direct, draft_from_cart, ensure_payable
+from orders.domain.checkout import Recipient, ShippingPolicy, draft_direct, draft_from_cart, ensure_payable
 from orders.domain.exceptions import OrderNotFound
 from orders.domain.order import Order
 
@@ -110,6 +110,10 @@ class OrderService:
         except BaseException:
             await self._transaction.rollback()
             raise
+
+    async def shipping_policy(self) -> ShippingPolicy | None:
+        """장바구니·주문서 배송비 안내용 (읽기만). 실제 배송비는 주문 생성 때 같은 설정으로 서버가 계산한다."""
+        return await self._orders.shipping_policy()
 
     async def get(self, user_id: UUID, order_id: UUID) -> Order:
         return await self._get_owned(user_id, order_id, lock=False)
