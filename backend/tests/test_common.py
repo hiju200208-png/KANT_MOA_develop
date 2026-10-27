@@ -39,6 +39,8 @@ def test_app_docs_and_public_static_routes_without_database_lifespan():
     client = TestClient(app)
     assert client.get("/docs").status_code == 200
     assert "/health" in client.get("/openapi.json").json()["paths"]
+    schemes = client.get("/openapi.json").json()["components"]["securitySchemes"]
+    assert schemes["OAuth2PasswordBearer"]["flows"]["password"]["tokenUrl"] == "auth/login"
     assert client.get("/static/missing.webp").status_code == 404
     assert client.get("/uploads/missing.webp").json()["code"] == "UNKNOWN"
     preflight = client.options("/health", headers={

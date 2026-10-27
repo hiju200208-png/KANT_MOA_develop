@@ -1,0 +1,59 @@
+name: kant-moa-site
+services:
+  api:
+    image: kant-moa-site-api:${SITE_RELEASE:?Set the release identifier}
+    build:
+      context: ../..
+      dockerfile: deploy/staging/Dockerfile.api
+    env_file:
+      - ${SITE_API_ENV_FILE:?Set the existing server API env file}
+    volumes:
+      - type: bind
+        source: ${SITE_ASSET_DIR:?Set existing original asset directory}
+        target: /app/assets
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${SITE_UPLOAD_DIR:?Set existing upload directory}
+        target: /app/uploads
+        bind:
+          create_host_path: false
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()"]
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 15s
+  web:
+    image: kant-moa-site-web:${SITE_RELEASE:?Set the release identifier}
+    build:
+      context: ../..
+      dockerfile: deploy/staging/Dockerfile.web
+      args:
+        NEXT_PUBLIC_API_URL: ${SITE_PUBLIC_ORIGIN:?Set the public site origin}/api
+    environment:
+      API_INTERNAL_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/login').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 15s
+  gateway:
+    image: public.ecr.aws/docker/library/nginx:stable-alpine
+    ports:
+      - "127.0.0.1:${SITE_PORT:-8030}:8080"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    restart: unless-stopped

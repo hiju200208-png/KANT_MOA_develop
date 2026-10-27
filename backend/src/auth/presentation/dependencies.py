@@ -13,7 +13,7 @@ from database import get_session
 
 
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/auth/login",
+    tokenUrl="auth/login",
     auto_error=False,
 )
 
