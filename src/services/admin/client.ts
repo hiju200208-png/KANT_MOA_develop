@@ -1,8 +1,8 @@
 // 관리자 API 호출 공통 부분: FastAPI 주소, 토큰, {code, message} 오류 처리
 // - API 주소: NEXT_PUBLIC_API_URL (없으면 로컬 http://localhost:8000)
-// - 토큰: P1(희주님) 로그인 프론트가 정해지면 getAdminAccessToken 한 곳만 바꾼다.
+// - 토큰: P1 POST /auth/login으로 받은 access token을 공용 session 모듈(localStorage 같은 키)로 저장한다
 
-import { ACCESS_TOKEN_STORAGE_KEY, getAccessToken } from '../session';
+import { ACCESS_TOKEN_STORAGE_KEY, clearAccessToken, getAccessToken, setAccessToken } from '../session';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
 
@@ -12,10 +12,14 @@ export class AdminApiError extends Error {
   }
 }
 
-// TODO(P1 연동): 로그인 후 받은 access token을 돌려주도록 교체
 export const ADMIN_TOKEN_STORAGE_KEY = ACCESS_TOKEN_STORAGE_KEY;
 export function getAdminAccessToken(): string | null {
   return getAccessToken();
+}
+
+export function setAdminAccessToken(token: string | null) {
+  if (token) setAccessToken(token);
+  else clearAccessToken();
 }
 
 export async function adminFetch<T>(path: string, init: RequestInit = {}): Promise<T> {

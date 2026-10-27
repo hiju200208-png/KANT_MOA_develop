@@ -319,10 +319,38 @@ PROJECT2.md 구조: `presentation/router.py + schemas.py → application/service
 - [x] (선택 #40) 공지 관리 API 등록·수정·삭제·목록·상세 + 테스트 28개(규칙, commit·rollback, 201·204·401·403·404·422) + 로컬 DB 통합 테스트 → `uv run pytest` 125 passed, 2 skipped
   - 사용자 화면 노출은 P2 공개 공지 API 전환 후 확인 (#40 완료 조건)
 - [x] 재고 조정 라우터·오류 변환·의존성 + API 테스트 10개 (10/25: 관리자 200, 비로그인 401, 일반 회원 403, 0 미만 409·rollback, 다른 상품 옵션 404, 잘못된 입력 422, 통합 전 대체 의존성 차단) → `uv run pytest` 47 passed
-- [ ] P1 `require_admin` main 반영 후 `main.py`에 `app.include_router(admin_router)` 추가, 희주님 리뷰 요청
+- [x] P1 `require_admin` main 반영(#49) 후 `main.py`에 `app.include_router(admin_router)` 등록 (10/27). 실제 P1 토큰으로 401/403/200, 로그아웃 후 401 확인
 - [x] P2 예외 변환: `InsufficientStock` → 409, `InvalidStock` → 422
 - [x] (#38) 관리자 화면 10/26: `/admin/products`(목록·검색·필터·정렬·페이지·상태 변경), `/admin/products/[id]`(상태 변경·옵션별 재고 증감·적용 후 미리보기), `/admin/notices`(등록·수정·삭제 확인)
   - 파일: `src/app/admin/`, `src/components/admin/`, `src/services/admin/`(API 주소 `NEXT_PUBLIC_API_URL`, 기본 `http://localhost:8000`), `src/types/admin.ts`, `tests/adminForm.test.ts`
   - 확인: `tsc` 통과, eslint 통과, `node --test tests/adminForm.test.ts` 4개 통과, 로컬 화면→API→DB 클릭 테스트(목록 필터·검색, 상태 변경, 재고 3→13, 없는 상품 안내, 공지 등록·422 안내·수정·삭제) 통과
   - 남은 연결: 로그인 토큰은 `src/services/admin/client.ts`의 `getAdminAccessToken` 한 곳만 P1 방식으로 교체, 헤더 MY 메뉴의 "관리자" 링크(ADMIN만)는 P1 사용자 정보 연동 후 추가
   - 재고 조정 화면 테스트: 실제 P2 재고 연결로 37→42 확인 (10/26)
+
+
+---
+
+## 10. 10/27 추가 — main.py 등록·대시보드·일괄 상태 변경·관리자 로그인
+
+| 기능 | API / 화면 | 규칙 |
+|---|---|---|
+| 관리자 API 서버 등록 | `backend/src/main.py` `app.include_router(admin_router)` | 공통 파일 1줄 추가. 라우터 전체 P1 `require_admin` |
+| 대시보드 요약 | `GET /admin/dashboard` → `/admin` | 전체·판매중·품절 처리·숨김·재고 없음(합계 0)·재고 부족(옵션 5개 이하). 숫자 기준 = 목록 필터와 같음 (카드 클릭 → 같은 개수 목록) |
+| 판매 상태 일괄 변경 | `POST /admin/products/bulk-status` `{product_ids: [1~100개], status}` | 중복·빈 목록·100개 초과 422, 없는 상품이 하나라도 있으면 404 + 전부 취소(rollback), `status`만 변경 |
+| 관리자 로그인·로그아웃 | `/admin/login` | P1 `POST /auth/login`(OAuth2 form) → `GET /auth/me`로 ADMIN 확인, 아니면 토큰 지우고 안내. 로그아웃은 `POST /auth/logout`(블랙리스트) 후 토큰 삭제. 토큰은 쇼핑 화면(`services/api.ts`)과 같은 localStorage 키 |
+
+실제 토큰 검증 (로컬 PostgreSQL, main 앱 그대로 실행, 관리자·일반 회원은 P1 서비스로 생성):
+
+| 시나리오 | 기대 | 실제 | DB (전 → 후) |
+|---|---|---|---|
+| 토큰 없이 `GET /admin/products` | 401 | 401 NOT_AUTHENTICATED | 변화 없음 |
+| 일반 회원 `GET /admin/dashboard` | 403 | 403 | 변화 없음 |
+| 일반 회원 일괄 숨김 | 403 | 403 | hidden → hidden (그대로) |
+| 관리자 대시보드 | 200 | 200 (전체 4, 재고 부족 2 …) | - |
+| 관리자 일괄 숨김 2개 | 200 | 200 updated 2 | 2: on_sale → hidden |
+| 관리자 일괄 (없는 상품 포함) | 404 | 404 | 상태 그대로 (rollback) |
+| 관리자 재고 +5 / -1000 | 200 / 409 | 200 / 409 | 12 → 17 / 17 → 17 |
+| 관리자 공지 등록 → 삭제 | 201 / 204 | 201 / 204 | notices 0 → 1 → 0 |
+| 로그아웃 후 같은 토큰 | 401 | 401 | token_blacklist 1행 |
+
+화면 확인: 비로그인 401 안내 → 일반 회원 로그인 거절 → 틀린 비밀번호 안내 → 관리자 로그인 → 대시보드 → "재고 부족" 카드 → 2개 목록 → 2개 선택 일괄 품절 → 로그아웃 → 다시 401 안내

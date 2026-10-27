@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from admin.application.product_service import AdminProductFilters
 from admin.domain.product_view import (
     LOW_STOCK_THRESHOLD,
+    AdminDashboardSummary,
     AdminProductDetailRow,
     AdminProductRow,
     AdminVariantRow,
@@ -134,3 +135,22 @@ class SqlAdminProductQueries:
                 for v in variants
             ),
         )
+
+    async def dashboard_summary(self) -> AdminDashboardSummary:
+        """목록 필터와 같은 조건으로 센다 (status 필터, stock=out, stock=low)."""
+        has_low = func.coalesce(_variant_summary.c.has_low_stock, False)
+        row = (
+            await self._session.execute(
+                select(
+                    func.count(P.id).label("total"),
+                    func.count(P.id).filter(P.status == "on_sale").label("on_sale"),
+                    func.count(P.id).filter(P.status == "sold_out").label("sold_out"),
+                    func.count(P.id).filter(P.status == "hidden").label("hidden"),
+                    func.count(P.id).filter(_total_stock == 0).label("out_of_stock"),
+                    func.count(P.id).filter(has_low).label("low_stock"),
+                )
+                .select_from(P)
+                .outerjoin(_variant_summary, _variant_summary.c.product_id == P.id)
+            )
+        ).mappings().one()
+        return AdminDashboardSummary(**{k: int(v) for k, v in row.items()})

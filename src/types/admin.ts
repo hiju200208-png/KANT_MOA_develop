@@ -66,3 +66,14 @@ export type ProductFilters = {
   page: number;
   size: number;
 };
+
+export type AdminDashboard = {
+  total: number;
+  on_sale: number;
+  sold_out: number; // 관리자가 직접 품절 처리
+  hidden: number;
+  out_of_stock: number; // 옵션 재고 합계 0 (목록 stock=out)
+  low_stock: number; // 재고 5개 이하 옵션 있음 (목록 stock=low)
+};
+
+export type AuthUser = { id: string; email: string; nickname: string; role: "USER" | "ADMIN" };

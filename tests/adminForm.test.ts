@@ -3,6 +3,9 @@ import { test } from "node:test";
 import {
   PRODUCT_QUERY_DEFAULTS,
   checkImageFile,
+  filtersFromQuery,
+  toggleSelected,
+  validateLogin,
   emptyNoticeForm,
   parseStockChange,
   previewStock,
@@ -51,4 +54,23 @@ test("대표 이미지 파일 검사: 형식·크기", () => {
   assert.ok(checkImageFile({ type: "image/gif", size: 1000 }));
   assert.ok(checkImageFile({ type: "image/jpeg", size: 0 }));
   assert.ok(checkImageFile({ type: "image/jpeg", size: 5 * 1024 * 1024 + 1 }));
+});
+
+test("대시보드 카드 쿼리 → 목록 필터 (잘못된 값은 무시)", () => {
+  const q = (o: Record<string, string>) => (k: string) => o[k] ?? null;
+  assert.deepEqual(filtersFromQuery(q({ status: "hidden", stock: "low", sort: "stock_asc" })), {
+    q: "", artist: "", status: "hidden", stock: "low", sort: "stock_asc",
+  });
+  assert.deepEqual(filtersFromQuery(q({ status: "deleted", stock: "many", sort: "price" })), {
+    q: "", artist: "", status: "", stock: "", sort: "latest",
+  });
+});
+
+test("일괄 선택 토글과 로그인 입력 검사", () => {
+  const a = toggleSelected(new Set([1]), 2);
+  assert.deepEqual([...a].sort(), [1, 2]);
+  assert.deepEqual([...toggleSelected(a, 1)], [2]);
+  assert.equal(validateLogin("admin@kantmoa.dev", "pw"), null);
+  assert.ok(validateLogin("admin", "pw"));
+  assert.ok(validateLogin("admin@kantmoa.dev", ""));
 });

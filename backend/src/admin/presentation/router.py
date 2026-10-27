@@ -27,6 +27,7 @@ from admin.presentation.dependencies import (
 )
 from admin.presentation.errors import to_api_error
 from admin.presentation.schemas import (
+    AdminDashboard,
     AdminNoticeItem,
     AdminNoticeQuery,
     AdminProductDetail,
@@ -36,6 +37,8 @@ from admin.presentation.schemas import (
     NamedRef,
     NoticeCreate,
     NoticeUpdate,
+    ProductBulkStatusResult,
+    ProductBulkStatusUpdate,
     ProductStatusUpdate,
     StockAdjustmentRequest,
     StockAdjustmentResponse,
@@ -84,6 +87,29 @@ def _to_detail(detail: AdminProductDetailRow) -> AdminProductDetail:
             for v in detail.variants
         ],
     )
+
+
+@router.get("/dashboard", response_model=AdminDashboard, responses=_READ_ERRORS, summary="관리자 대시보드 요약")
+async def dashboard(service: AdminProductService = Depends(get_admin_product_service)) -> AdminDashboard:
+    summary = await service.dashboard_summary()
+    return AdminDashboard(**summary.__dict__)
+
+
+@router.post(
+    "/products/bulk-status",
+    response_model=ProductBulkStatusResult,
+    responses=_READ_ERRORS,
+    summary="판매 상태 일괄 변경 (1~100개, 하나라도 없으면 전부 취소)",
+)
+async def change_status_bulk(
+    body: ProductBulkStatusUpdate,
+    service: AdminProductStatusService = Depends(get_admin_product_status_service),
+) -> ProductBulkStatusResult:
+    try:
+        ids = await service.change_status_bulk(body.product_ids, body.status)
+    except AdminDomainError as error:
+        raise to_api_error(error) from None
+    return ProductBulkStatusResult(status=body.status, product_ids=ids, updated=len(ids))
 
 
 @router.get(

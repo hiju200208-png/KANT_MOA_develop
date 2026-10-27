@@ -2,9 +2,11 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Header } from "@/components/layout/Header";
 import { PageMain } from "@/components/layout/PageMain";
+import { AdminSession } from "@/components/admin/AdminSession";
 
 // 관리자 화면 공통: 기존 헤더 + 관리자 메뉴. 접근 권한은 서버 API(require_admin)가 401/403으로 막는다.
 const MENU = [
+  { href: "/admin", label: "대시보드" },
   { href: "/admin/products", label: "상품·재고" },
   { href: "/admin/notices", label: "공지" },
 ];
@@ -22,6 +24,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 {item.label}
               </Link>
             ))}
+            <AdminSession />
           </nav>
           {children}
         </div>

@@ -18,6 +18,7 @@ from products.presentation.wishlist_router import router as wishlist_router
 from orders.presentation.address_router import router as address_router
 from orders.presentation.cart_router import router as cart_router
 from orders.presentation.order_router import router as order_router
+from admin.presentation.router import router as admin_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("kantmoa")
@@ -40,6 +41,7 @@ app.include_router(products_router)
 app.include_router(wishlist_router)
 for router in (address_router, cart_router, order_router):  # P3 배송지·장바구니·주문
     app.include_router(router)
+app.include_router(admin_router)  # P4 관리자 (라우터 전체 require_admin)
 app.add_middleware(CORSMiddleware, allow_origins=get_settings().cors_origins,
                    allow_credentials=False, allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
                    allow_headers=["Authorization", "Content-Type", "ngrok-skip-browser-warning"])
