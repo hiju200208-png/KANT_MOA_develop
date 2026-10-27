@@ -1,13 +1,22 @@
-import { createClient } from '@/lib/supabase/client';
-import type { Database } from '@/types/database';
 import type { Address, AddressInput } from '@/types/app';
-import { AppError, toAppError } from './errors';
+import { apiFetch, isLoggedIn, jsonBody } from './api';
+import { AppError } from './errors';
 
-// 첫 주소 자동 기본 지정, 기본 배송지 삭제 시 재지정은 DB 트리거가 처리 (migrations/..._add_addresses.sql)
+// 배송지: FastAPI /addresses (P3). 첫 주소 자동 기본 지정, 기본 배송지 삭제 시 재지정은 서버가 처리한다
 
-type AddressRow = Database['public']['Tables']['addresses']['Row'];
+// FastAPI 배송지 응답 (snake_case)
+type AddressResponse = {
+  id: number;
+  label: string | null;
+  recipient_name: string;
+  recipient_phone: string;
+  postal_code: string;
+  address1: string;
+  address2: string | null;
+  is_default: boolean;
+};
 
-const toAddress = (a: AddressRow): Address => ({
+const toAddress = (a: AddressResponse): Address => ({
   id: a.id,
   label: a.label,
   recipientName: a.recipient_name,
@@ -18,75 +27,44 @@ const toAddress = (a: AddressRow): Address => ({
   isDefault: a.is_default,
 });
 
-const toRow = (input: AddressInput) => ({
+const toBody = (input: AddressInput) => ({
   label: input.label,
   recipient_name: input.recipientName,
   recipient_phone: input.recipientPhone,
   postal_code: input.postalCode,
   address1: input.address1,
   address2: input.address2,
+  is_default: input.isDefault ?? false,
 });
 
-async function requireUser() {
-  const supabase = createClient();
-  const { data } = await supabase.auth.getSession();
-  const userId = data.session?.user.id;
-  if (!userId) throw new AppError('NOT_AUTHENTICATED');
-  return { supabase, userId };
+function requireAuth() {
+  if (!isLoggedIn()) throw new AppError('NOT_AUTHENTICATED');
 }
 
-// 기본 배송지가 맨 앞, 나머지는 최신순
+// 기본 배송지가 맨 앞, 나머지는 최신순 (서버 정렬). 사람당 최대 10개라 한 페이지로 충분
 export async function getAddresses(): Promise<Address[]> {
-  const { supabase } = await requireUser();
-  const { data, error } = await supabase
-    .from('addresses')
-    .select('*')
-    .order('is_default', { ascending: false })
-    .order('created_at', { ascending: false })
-    .order('id', { ascending: false });
-  if (error) throw toAppError(error);
-  return data.map(toAddress);
+  requireAuth();
+  const page = await apiFetch<{ items: AddressResponse[] }>('/addresses?page=1&size=100');
+  return page.items.map(toAddress);
 }
 
 export async function setDefaultAddress(id: number): Promise<void> {
-  const { supabase } = await requireUser();
-  const { error } = await supabase.rpc('set_default_address', { p_address_id: id });
-  if (error) throw toAppError(error);
-}
-
-async function getAddress(id: number): Promise<Address> {
-  const { supabase } = await requireUser();
-  const { data, error } = await supabase.from('addresses').select('*').eq('id', id).single();
-  if (error) throw toAppError(error);
-  return toAddress(data);
+  requireAuth();
+  await apiFetch<void>(`/addresses/${id}/default`, { method: 'PATCH' });
 }
 
 export async function createAddress(input: AddressInput): Promise<Address> {
-  const { supabase, userId } = await requireUser();
-  const { data, error } = await supabase
-    .from('addresses')
-    .insert({ ...toRow(input), user_id: userId })
-    .select('*')
-    .single();
-  if (error) throw toAppError(error);
-  if (input.isDefault && !data.is_default) {
-    await setDefaultAddress(data.id);
-    return getAddress(data.id);
-  }
-  return toAddress(data);
+  requireAuth();
+  return toAddress(await apiFetch<AddressResponse>('/addresses', { method: 'POST', ...jsonBody(toBody(input)) }));
 }
 
 // isDefault: true면 기본 배송지로 지정. false는 무시 (기본 배송지는 항상 1개 유지)
 export async function updateAddress(id: number, input: AddressInput): Promise<Address> {
-  const { supabase } = await requireUser();
-  const { error } = await supabase.from('addresses').update(toRow(input)).eq('id', id);
-  if (error) throw toAppError(error);
-  if (input.isDefault) await setDefaultAddress(id);
-  return getAddress(id);
+  requireAuth();
+  return toAddress(await apiFetch<AddressResponse>(`/addresses/${id}`, { method: 'PUT', ...jsonBody(toBody(input)) }));
 }
 
 export async function deleteAddress(id: number): Promise<void> {
-  const { supabase } = await requireUser();
-  const { error } = await supabase.from('addresses').delete().eq('id', id);
-  if (error) throw toAppError(error);
+  requireAuth();
+  await apiFetch<void>(`/addresses/${id}`, { method: 'DELETE' });
 }
