@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { CartIcon, GridIcon, HomeIcon, UserIcon } from "./Icons";
+import { getErrorMessage } from "@/constants/error-messages";
 
 const links = [
   { href: "/", label: "홈", Icon: HomeIcon },
@@ -20,16 +21,20 @@ export function MobileMenu() {
   const { profile, initialized } = useAuth();
   const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
+  const [error, setError] = useState("");
   const close = () => dialogRef.current?.close();
 
   async function handleSignOut() {
     setSigningOut(true);
+    setError("");
     try {
       const { signOut } = await import("@/services/auth");
       await signOut();
       close();
       router.replace("/");
       router.refresh();
+    } catch (error) {
+      setError(getErrorMessage(error));
     } finally {
       setSigningOut(false);
     }
@@ -83,6 +88,7 @@ export function MobileMenu() {
                 <button type="button" onClick={handleSignOut} disabled={signingOut} className={`${itemClass} w-full text-muted disabled:cursor-wait`}>
                   {signingOut ? "로그아웃 중" : "로그아웃"}
                 </button>
+                {error && <p role="alert" className="text-xs text-danger">{error}</p>}
               </div>
             ) : (
               <Link href="/login" onClick={close} className="flex h-12 items-center justify-center rounded-full bg-foreground text-[15px] font-bold">

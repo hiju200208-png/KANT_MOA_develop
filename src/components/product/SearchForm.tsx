@@ -9,6 +9,7 @@ export function SearchForm({ defaultValue = "", autoFocus = false }: { defaultVa
         id="product-search"
         name="q"
         type="search"
+        maxLength={100}
         defaultValue={defaultValue}
         autoFocus={autoFocus}
         placeholder="상품명이나 아티스트로 검색"

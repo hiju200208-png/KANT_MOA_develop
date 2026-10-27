@@ -1,5 +1,5 @@
 import { cacheLife } from 'next/cache';
-import { publicClient as supabase } from '@/lib/supabase/client';
+import { getPublicClient } from '@/lib/supabase/client';
 import type { Notice } from '@/types/app';
 import { toAppError } from './errors';
 
@@ -38,7 +38,7 @@ export function formatNoticeDate(iso: string): string {
 export async function getNotices({ artistSlug, limit = 20 }: { artistSlug?: string; limit?: number } = {}): Promise<Notice[]> {
   'use cache';
   cacheLife('minutes');
-  let query = supabase
+  let query = getPublicClient()
     .from('notices')
     .select(artistSlug ? COLUMNS.replace('artists(slug)', 'artists!inner(slug)') : COLUMNS)
     .order('is_pinned', { ascending: false })
@@ -54,7 +54,7 @@ export async function getNotices({ artistSlug, limit = 20 }: { artistSlug?: stri
 export async function getNotice(id: number, artistSlug?: string): Promise<Notice | null> {
   'use cache';
   cacheLife('minutes');
-  const { data, error } = await supabase.from('notices').select(COLUMNS).eq('id', id).maybeSingle();
+  const { data, error } = await getPublicClient().from('notices').select(COLUMNS).eq('id', id).maybeSingle();
   if (error) throw toAppError(error);
   if (!data) return null;
   const notice = toNotice(data as unknown as NoticeRow);
@@ -63,7 +63,7 @@ export async function getNotice(id: number, artistSlug?: string): Promise<Notice
 
 // 맨 위 검은 공지 띠에 보여줄 공지 1건 (없으면 null)
 export async function getTopbarNotice(): Promise<Notice | null> {
-  const { data, error } = await supabase
+  const { data, error } = await getPublicClient()
     .from('notices')
     .select(COLUMNS)
     .eq('show_in_topbar', true)

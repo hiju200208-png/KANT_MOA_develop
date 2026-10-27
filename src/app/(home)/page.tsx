@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { io } from "next/cache";
 import { ArtistPicker } from "@/components/home/ArtistPicker";
 import { ArtistShowcase, ArtistShowcaseSkeleton } from "@/components/home/ArtistShowcase";
 import { LoadError } from "@/components/product/LoadError";
@@ -55,6 +56,7 @@ function newCandidate(products: ProductSummary[]): Pick | undefined {
 // 메인 배너: 아티스트마다 한 장. 영상이 있는 아티스트는 HomeSpotlight에서 COMEBACK 영상 슬라이드(맨 앞)로 바뀌고,
 // 나머지 상품 슬라이드는 NEW(신상품)와 BEST(최근 7일 판매 1위)가 번갈아 나오도록 배정한다. 대표 상품이 없는 아티스트는 빠짐
 async function MainHero() {
+  await io();
   let artists: Artist[];
   let likeCounts: Record<number, number>;
   try {
@@ -91,6 +93,7 @@ async function MainHero() {
 }
 
 async function RecommendedArtists() {
+  await io();
   let artists: Artist[];
   try {
     artists = await getArtists();
@@ -103,6 +106,7 @@ async function RecommendedArtists() {
 }
 
 async function ArtistShowcases() {
+  await io();
   let artists: Artist[];
   try {
     artists = await getArtists();

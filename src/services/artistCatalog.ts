@@ -3,7 +3,7 @@
 // 아티스트·멤버·아티스트 배너 조회. 파일 전체가 'use cache'라 내보내는 함수는 모두 캐시됨 (cacheLife는 함수마다).
 // 좋아요 함수(artists.ts)를 클라이언트가 import하므로, 캐시 함수는 이 파일에 따로 두고 artists.ts가 다시 내보낸다
 import { cacheLife } from 'next/cache';
-import { publicClient as supabase } from '@/lib/supabase/client';
+import { getPublicClient } from '@/lib/supabase/client';
 import type { Database } from '@/types/database';
 import type { Artist, ArtistMember, ArtistPromoBanner } from '@/types/app';
 import { toAppError } from './errors';
@@ -24,7 +24,7 @@ const toArtist = (a: ArtistRow): Artist => ({
 });
 
 export async function getArtists(): Promise<Artist[]> {
-  const { data, error } = await supabase.from('artists').select('*').order('sort_order');
+  const { data, error } = await getPublicClient().from('artists').select('*').order('sort_order');
   if (error) {
     cacheLife('seconds'); // DB 오류 때 예비 데이터는 짧게만 캐시
     warnFallback('getArtists', error);
@@ -35,7 +35,7 @@ export async function getArtists(): Promise<Artist[]> {
 }
 
 export async function getArtist(slug: string): Promise<Artist | null> {
-  const { data, error } = await supabase.from('artists').select('*').eq('slug', slug).maybeSingle();
+  const { data, error } = await getPublicClient().from('artists').select('*').eq('slug', slug).maybeSingle();
   if (error) {
     cacheLife('seconds'); // DB 오류 때 예비 데이터는 짧게만 캐시
     warnFallback('getArtist', error);
@@ -48,7 +48,7 @@ export async function getArtist(slug: string): Promise<Artist | null> {
 // 등록된 배너가 없거나 없는 slug면 빈 배열
 export async function getArtistBanners(slug: string): Promise<ArtistPromoBanner[]> {
   cacheLife('minutes');
-  const { data, error } = await supabase
+  const { data, error } = await getPublicClient()
     .from('artist_banners')
     .select('id, title, subtitle, image_path, link_path, artists!inner(slug)')
     .eq('artists.slug', slug)
@@ -66,7 +66,7 @@ export async function getArtistBanners(slug: string): Promise<ArtistPromoBanner[
 // 없는 slug면 빈 배열
 export async function getArtistMembers(slug: string): Promise<ArtistMember[]> {
   cacheLife('minutes');
-  const { data, error } = await supabase
+  const { data, error } = await getPublicClient()
     .from('artist_members')
     .select('*, artists!inner(slug)')
     .eq('artists.slug', slug)

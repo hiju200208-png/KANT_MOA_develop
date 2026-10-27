@@ -5,19 +5,24 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { UserIcon } from "./Icons";
+import { getErrorMessage } from "@/constants/error-messages";
 
 export function AccountActions() {
   const { profile, initialized } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleSignOut() {
     setLoading(true);
+    setError("");
     try {
       const { signOut } = await import("@/services/auth");
       await signOut();
       router.replace("/");
       router.refresh();
+    } catch (error) {
+      setError(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -44,6 +49,7 @@ export function AccountActions() {
       <button type="button" onClick={handleSignOut} disabled={loading} className="brand-gradient-soft-hover h-10 rounded-full px-3 text-sm font-semibold text-muted disabled:cursor-wait">
         {loading ? "로그아웃 중" : "로그아웃"}
       </button>
+      {error && <span role="alert" className="max-w-48 text-xs text-danger">{error}</span>}
     </div>
   );
 }

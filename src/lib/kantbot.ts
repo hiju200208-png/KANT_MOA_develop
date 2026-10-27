@@ -1,7 +1,7 @@
 // 칸트봇(AI 챗봇) 서버 전용 로직. /api/chat 에서만 사용한다 (API 키가 브라우저로 가면 안 됨)
 // Gemini 무료 티어: 입력이 구글 학습·사람 검토에 쓰일 수 있어 상품·정책 정보만 보낸다 (회원·주문 정보 금지)
 import { ApiError, GoogleGenAI, ThinkingLevel, type Content } from '@google/genai';
-import { publicClient as db } from '@/lib/supabase/client';
+import { getPublicClient } from '@/lib/supabase/client';
 
 const MODELS = ['gemini-3.5-flash', 'gemini-3.5-flash-lite']; // 앞 모델이 한도(429)면 다음 모델로
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -14,7 +14,7 @@ let catalogCache: { text: string; at: number } | null = null;
 
 async function getCatalogText(): Promise<string> {
   if (catalogCache && Date.now() - catalogCache.at < CATALOG_TTL) return catalogCache.text;
-  const { data, error } = await db
+  const { data, error } = await getPublicClient()
     .from('products')
     .select('id, name, price, status, description, artists(name), categories(name), product_variants(option_name, extra_price, stock, max_per_user, sort_order)')
     .order('id');
