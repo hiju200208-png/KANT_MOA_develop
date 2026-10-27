@@ -40,6 +40,19 @@ export function AdminDashboardView() {
   return (
     <section>
       <PageTitle title="관리자 대시보드" description="카드를 누르면 해당 조건의 상품 목록으로 이동해요." />
+      {data && data.out_of_stock + data.low_stock > 0 && (
+        <Link
+          href="/admin/products?stock=low&sort=stock_asc"
+          role="alert"
+          className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+        >
+          <span>
+            <strong>재고 확인이 필요해요.</strong> 재고 없음 {data.out_of_stock.toLocaleString()}개, 재고 부족{" "}
+            {data.low_stock.toLocaleString()}개
+          </span>
+          <span className="shrink-0 font-bold underline">재고 적은 순으로 보기</span>
+        </Link>
+      )}
       {error ? (
         <AdminErrorBox error={error} onRetry={load} />
       ) : (
