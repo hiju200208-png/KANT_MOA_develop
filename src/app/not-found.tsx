@@ -12,9 +12,10 @@ export default function NotFound() {
       <Header />
       <PageMain>
         <div className="content-shell flex min-h-[60vh] flex-col items-center justify-center py-16 text-center">
-          <p aria-hidden="true" className="bg-[linear-gradient(135deg,var(--brand-strong),#8a70df_55%,#df74aa)] bg-clip-text text-7xl font-black tracking-tight text-transparent md:text-8xl">
-            404
-          </p>
+          {/* 고객에게 상태 코드(404)는 보여주지 않는다 */}
+          <span aria-hidden="true" className="grid size-16 place-items-center rounded-full bg-neutral-100 text-3xl">
+            🔍
+          </span>
           <h1 className="mt-4 text-2xl font-black tracking-[-0.035em] md:text-3xl">페이지를 찾을 수 없어요</h1>
           <p className="mt-3 max-w-sm text-sm leading-6 text-muted">
             주소가 바뀌었거나 판매가 끝난 상품일 수 있어요.

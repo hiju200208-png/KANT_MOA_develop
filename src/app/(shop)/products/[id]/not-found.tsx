@@ -7,9 +7,10 @@ export const metadata: Metadata = { title: "상품을 찾을 수 없어요" };
 export default function ProductNotFound() {
   return (
     <div className="content-shell flex min-h-[60vh] flex-col items-center justify-center py-16 text-center">
-      <p aria-hidden="true" className="text-6xl font-black tracking-tight text-neutral-300 md:text-7xl">
-        404
-      </p>
+      {/* 고객에게 상태 코드(404)는 보여주지 않는다 */}
+      <span aria-hidden="true" className="grid size-16 place-items-center rounded-full bg-neutral-100 text-3xl">
+        🔍
+      </span>
       <h1 className="mt-4 text-2xl font-black tracking-[-0.035em] md:text-3xl">상품을 찾을 수 없어요</h1>
       <p className="mt-3 max-w-sm text-sm leading-6 text-muted">
         판매가 끝났거나 주소가 바뀐 상품일 수 있어요.
