@@ -11,6 +11,10 @@ class Settings(BaseSettings):
 
     database_url: str
     cors_origins: list[str] = ["http://localhost:3000"]
+    jwt_secret: str
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 30
+    jwt_issuer: str = "kant-moa"
 
 
 @lru_cache

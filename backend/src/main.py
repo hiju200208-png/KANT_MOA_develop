@@ -12,6 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from core.config import BACKEND_ROOT, get_settings
 from core.errors import register_error_handlers
 from database import engine
+from auth.presentation.router import router as auth_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("kantmoa")
@@ -29,6 +30,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="KANT MOA Project 2 API", version="0.1.0", lifespan=lifespan)
+app.include_router(auth_router)
 app.add_middleware(CORSMiddleware, allow_origins=get_settings().cors_origins,
                    allow_credentials=False, allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
                    allow_headers=["Authorization", "Content-Type"])
