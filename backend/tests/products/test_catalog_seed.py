@@ -22,14 +22,6 @@ COUNTS = {'artists': 11, 'categories': 7, 'products': 389, 'product_variants': 6
           'home_banners': 0, 'notices': 35, 'shop_settings': 1}
 
 
-@pytest.fixture
-def original_images():
-    manifest = json.loads((ASSET_ROOT / 'catalog-image-manifest.json').read_text(encoding='utf-8'))
-    if any(not (ASSET_ROOT / path).is_file() for path in manifest['files']):
-        pytest.skip('기존 Storage ZIP의 원본 이미지를 먼저 준비해주세요.')
-    return manifest
-
-
 @pytest.mark.parametrize('url', [None, 'invalid',
     'postgresql+asyncpg://user:secret@db.example/test',
     'postgresql+asyncpg://user:secret@127.0.0.1/test?host=db.example',

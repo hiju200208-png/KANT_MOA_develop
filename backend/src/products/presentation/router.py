@@ -15,14 +15,16 @@ router = APIRouter(tags=["products"])
 Session = Annotated[AsyncSession, Depends(get_session)]
 
 
-@router.get("/products", response_model=PageResponse[ProductSummary])
+@router.get("/products", response_model=PageResponse[ProductSummary], summary="공개 상품 목록·검색")
 async def list_products(query: Annotated[ProductQuery, Query()], session: Session):
     products, total = await CatalogService(CatalogRepository(session)).list_products(**query.model_dump())
     return PageResponse(items=[summary(p) for p in products], total=total, page=query.page, size=query.size)
 
 
-@router.get("/products/{product_id}", response_model=ProductDetail)
-async def get_product(product_id: Annotated[int, Path(ge=1)], session: Session):
+@router.get("/products/{product_id}", response_model=ProductDetail, summary="공개 상품 상세")
+async def get_product(
+    product_id: Annotated[int, Path(ge=1, le=9_223_372_036_854_775_807)], session: Session,
+):
     try:
         product = await CatalogService(CatalogRepository(session)).get_product(product_id)
     except ProductNotFound as error:
@@ -30,6 +32,6 @@ async def get_product(product_id: Annotated[int, Path(ge=1)], session: Session):
     return detail(product)
 
 
-@router.get("/categories", response_model=list[CategoryResponse])
+@router.get("/categories", response_model=list[CategoryResponse], summary="활성 카테고리 목록")
 async def categories(session: Session):
     return await CatalogRepository(session).categories()
