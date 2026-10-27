@@ -1,6 +1,7 @@
 """옵트인 테스트 전용 Docker DB. 기존 DATABASE_URL·Compose DB에 접속하지 않는다."""
 
 import os
+import json
 from pathlib import Path
 import secrets
 import subprocess
@@ -10,6 +11,16 @@ from uuid import uuid4
 import pytest
 
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://unused:unused@localhost/unused")
+
+
+@pytest.fixture
+def original_images():
+    from products.infrastructure.seed import ASSET_ROOT
+
+    manifest = json.loads((ASSET_ROOT / "catalog-image-manifest.json").read_text(encoding="utf-8"))
+    if any(not (ASSET_ROOT / path).is_file() for path in manifest["files"]):
+        pytest.skip("기존 Storage ZIP의 원본 이미지를 먼저 준비해주세요.")
+    return manifest
 
 
 @pytest.fixture(scope="session")
