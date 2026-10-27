@@ -24,6 +24,16 @@ class SqlProductStatusWriter:
         )
         return result.scalar_one_or_none() is not None
 
+    async def update_status_many(self, product_ids: list[int], status: str) -> list[int]:
+        result = await self._session.execute(
+            update(ProductModel)
+            .where(ProductModel.id.in_(product_ids))
+            .values(status=status)
+            .returning(ProductModel.id)
+            .execution_options(synchronize_session=False)
+        )
+        return [row[0] for row in result.all()]
+
 
 class SessionTransaction:
     def __init__(self, session: AsyncSession):

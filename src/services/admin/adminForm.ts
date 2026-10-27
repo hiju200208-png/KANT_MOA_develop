@@ -93,3 +93,37 @@ export function checkImageFile(file: { type: string; size: number }): string | n
   if (file.size > MAX_IMAGE_BYTES) return "5MB 이하 이미지만 올릴 수 있어요.";
   return null;
 }
+
+// 목록 주소의 쿼리(?status=hidden&stock=low)를 필터 초기값으로 바꾼다. 잘못된 값은 무시
+export function filtersFromQuery(get: (key: string) => string | null): {
+  q: string;
+  artist: string;
+  status: "" | (typeof STATUS_OPTIONS)[number];
+  stock: "" | "out" | "low";
+  sort: "latest" | "stock_asc" | "name";
+} {
+  const status = get("status");
+  const stock = get("stock");
+  const sort = get("sort");
+  return {
+    q: (get("q") ?? "").slice(0, 100),
+    artist: get("artist") ?? "",
+    status: (STATUS_OPTIONS as readonly string[]).includes(status ?? "") ? (status as (typeof STATUS_OPTIONS)[number]) : "",
+    stock: stock === "out" || stock === "low" ? stock : "",
+    sort: sort === "stock_asc" || sort === "name" ? sort : "latest",
+  };
+}
+
+// 체크박스 선택 토글 (새 Set을 돌려줘서 React 상태로 바로 쓴다)
+export function toggleSelected(selected: ReadonlySet<number>, id: number): Set<number> {
+  const next = new Set(selected);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  return next;
+}
+
+export function validateLogin(email: string, password: string): string | null {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return "이메일을 확인해주세요.";
+  if (!password) return "비밀번호를 입력해주세요.";
+  return null;
+}

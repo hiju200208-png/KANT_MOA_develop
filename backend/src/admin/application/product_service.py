@@ -6,7 +6,13 @@
 from typing import Protocol
 
 from admin.application.ports import TransactionPort
-from admin.domain.product_view import AdminProductDetailRow, AdminProductRow, ensure_product_status
+from admin.domain.product_view import (
+    AdminDashboardSummary,
+    AdminProductDetailRow,
+    AdminProductRow,
+    ensure_bulk_product_ids,
+    ensure_product_status,
+)
 from admin.domain.stock_adjustment import ProductNotFound
 
 
@@ -26,10 +32,15 @@ class AdminProductQueryPort(Protocol):
 
     async def get_product(self, product_id: int) -> AdminProductDetailRow | None: ...
 
+    async def dashboard_summary(self) -> AdminDashboardSummary: ...
+
 
 class ProductStatusPort(Protocol):
     async def update_status(self, product_id: int, status: str) -> bool:
         """상품 status를 바꾸고(flush까지) 바뀐 행이 있으면 True. commit하지 않는다."""
+
+    async def update_status_many(self, product_ids: list[int], status: str) -> list[int]:
+        """여러 상품 status를 바꾸고 실제로 바뀐 id 목록을 돌려준다. commit하지 않는다."""
 
 
 class AdminProductService:
@@ -38,6 +49,9 @@ class AdminProductService:
 
     async def list_products(self, filters: AdminProductFilters) -> tuple[list[AdminProductRow], int]:
         return await self._products.list_products(filters)
+
+    async def dashboard_summary(self) -> AdminDashboardSummary:
+        return await self._products.dashboard_summary()
 
     async def get_product(self, product_id: int) -> AdminProductDetailRow:
         detail = await self._products.get_product(product_id)
@@ -69,6 +83,20 @@ class AdminProductStatusService:
                 raise ProductNotFound()
             await self._transaction.commit()
             return detail
+        except BaseException:
+            await self._transaction.rollback()
+            raise
+
+    async def change_status_bulk(self, product_ids: list[int], status: str) -> list[int]:
+        """여러 상품을 한 번에 같은 상태로. 하나라도 없는 상품이면 전부 취소(rollback)."""
+        try:
+            ensure_product_status(status)
+            ids = ensure_bulk_product_ids(product_ids)
+            updated = await self._writer.update_status_many(ids, status)
+            if sorted(updated) != ids:
+                raise ProductNotFound("없는 상품이 포함돼 있어요. 아무것도 바꾸지 않았어요.")
+            await self._transaction.commit()
+            return ids
         except BaseException:
             await self._transaction.rollback()
             raise

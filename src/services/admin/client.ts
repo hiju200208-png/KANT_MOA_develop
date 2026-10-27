@@ -1,6 +1,6 @@
 // 관리자 API 호출 공통 부분: FastAPI 주소, 토큰, {code, message} 오류 처리
 // - API 주소: NEXT_PUBLIC_API_URL (없으면 로컬 http://localhost:8000)
-// - 토큰: P1(희주님) 로그인 프론트가 정해지면 getAdminAccessToken 한 곳만 바꾼다.
+// - 토큰: P1 POST /auth/login으로 받은 access token을 localStorage에 둔다 (쇼핑 화면 services/api.ts와 같은 키)
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
 
@@ -10,7 +10,6 @@ export class AdminApiError extends Error {
   }
 }
 
-// TODO(P1 연동): 로그인 후 받은 access token을 돌려주도록 교체
 export const ADMIN_TOKEN_STORAGE_KEY = "kantmoa.accessToken";
 export function getAdminAccessToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -18,6 +17,16 @@ export function getAdminAccessToken(): string | null {
     return window.localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
   } catch {
     return null;
+  }
+}
+
+export function setAdminAccessToken(token: string | null) {
+  if (typeof window === "undefined") return;
+  try {
+    if (token) window.localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, token);
+    else window.localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+  } catch {
+    // 저장이 막힌 브라우저(시크릿 모드 등)에서는 이번 화면에서만 로그인 상태가 유지되지 않는다
   }
 }
 

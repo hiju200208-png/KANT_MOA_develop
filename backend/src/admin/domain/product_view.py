@@ -114,3 +114,35 @@ def ensure_product_status(status: str) -> str:
     if status not in PRODUCT_STATUSES:
         raise InvalidProductStatus()
     return status
+
+
+# --- 관리자 대시보드 요약 (GET /admin/dashboard) ---
+# 숫자마다 목록 필터와 같은 기준을 써서, 카드를 누르면 같은 개수의 목록이 나온다.
+
+
+@dataclass(frozen=True)
+class AdminDashboardSummary:
+    total: int          # 전체 상품 (숨김 포함)
+    on_sale: int        # status=on_sale
+    sold_out: int       # status=sold_out (관리자가 직접 품절 처리)
+    hidden: int         # status=hidden
+    out_of_stock: int   # 옵션 재고 합계 0 (stock=out 필터와 같음)
+    low_stock: int      # 재고 5개 이하 옵션이 있음 (stock=low 필터와 같음)
+
+
+# --- 판매 상태 일괄 변경 ---
+MAX_BULK_PRODUCTS = 100
+
+
+class InvalidBulkRequest(AdminDomainError):
+    """빈 목록·중복·개수 초과 → 422."""
+
+    message = "바꿀 상품을 1~100개 골라주세요."
+
+
+def ensure_bulk_product_ids(product_ids: list[int]) -> list[int]:
+    if not 1 <= len(product_ids) <= MAX_BULK_PRODUCTS or len(set(product_ids)) != len(product_ids):
+        raise InvalidBulkRequest()
+    if any(type(i) is not int or i <= 0 for i in product_ids):
+        raise InvalidBulkRequest()
+    return sorted(product_ids)

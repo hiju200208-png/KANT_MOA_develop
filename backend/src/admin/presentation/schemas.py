@@ -143,3 +143,28 @@ class AdminNoticeQuery(BaseModel):
     artist: str | None = Field(default=None, description="아티스트 slug, all = 전체 공지만")
     page: int = Field(default=1, ge=1)
     size: int = Field(default=20, ge=1, le=100)
+
+
+# --- 대시보드·상태 일괄 변경 ---
+
+
+class AdminDashboard(BaseModel):
+    total: int = Field(ge=0, description="전체 상품 (숨김 포함)")
+    on_sale: int = Field(ge=0)
+    sold_out: int = Field(ge=0, description="관리자가 직접 품절 처리한 상품")
+    hidden: int = Field(ge=0)
+    out_of_stock: int = Field(ge=0, description="옵션 재고 합계 0 (목록 stock=out과 같음)")
+    low_stock: int = Field(ge=0, description="재고 5개 이하 옵션이 있음 (목록 stock=low와 같음)")
+
+
+class ProductBulkStatusUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    product_ids: list[StrictInt] = Field(min_length=1, max_length=100)
+    status: ProductStatus
+
+
+class ProductBulkStatusResult(BaseModel):
+    status: ProductStatus
+    product_ids: list[int]
+    updated: int
