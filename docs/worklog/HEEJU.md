@@ -7,6 +7,7 @@
 - 일회용 PostgreSQL 18 전용 테스트에서 읽기 전용 확인, 대상·구조 거부, 사후 검증 실패 rollback, 회원·아티스트·블랙리스트 데이터 보존, 최초 등록·중복 거부·CHECK 동작을 확인했습니다(1 passed).
 - 팀의 `scripts/check.py`로 일회용 DB 전체 검증: 마이그레이션 3개 적용 성공, 기본 395 passed / 88 skipped, 별도 P2·P3 DB 308 passed / 5 skipped. 이미지 원본이 필요한 5개는 미실행이며 두 pytest 실행에 TestClient 경고 1개씩 남습니다.
 - `docs/SHARED_DB_BASELINE.md`에 백업·팀 공지·읽기 전용 비교·적용·사후 확인 절차를 기록했습니다. 이 도구는 새 공용 DB에 아직 실행하지 않았습니다. 공용 적용·서버 배포는 리뷰·병합과 담당자 협의 후 별도 진행합니다.
+- 커밋 `7f70427`을 푸시해 [Draft PR #63](https://github.com/hiju200208-png/KANT_MOA_develop/pull/63)을 생성했습니다. 이후 main `4376fd2`도 병합(`e9cecda`)하고 전체 검사 재실행: migration 3개 성공, 기본 **397 passed / 88 skipped**, 별도 Docker DB **310 passed / 5 skipped**. 각 실행에 기존 경고 1개가 남으며 마지막 skip 5개는 이미지 원본 부재입니다.
 
 ## 2026-10-26 | PR #49 최종 리뷰 준비
 
