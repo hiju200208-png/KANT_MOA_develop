@@ -10,6 +10,7 @@ import { getWishlist } from "@/services/wishlist";
 import type { ProductSummary } from "@/types/app";
 import { ProductCard } from "./ProductCard";
 import { ProductGridSkeleton } from "./ProductGrid";
+import { LIKES_CHANGE_EVENT } from "./LikeButton";
 
 type LoadedLikes = { userId: string; items: ProductSummary[]; error: string | null };
 
@@ -18,23 +19,31 @@ export function LikedProductList() {
   const { profile, initialized } = useAuth();
   const userId = profile?.id ?? null;
   const [state, setState] = useState<LoadedLikes | null>(null);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     if (!userId) return;
     let active = true;
-    getWishlist()
-      .then((items) => active && setState({ userId, items, error: null }))
-      .catch((error) => active && setState({ userId, items: [], error: getErrorMessage(error) }));
+    let version = 0;
+    const load = () => {
+      const current = ++version;
+      void getWishlist()
+        .then((items) => active && current === version && setState({ userId, items, error: null }))
+        .catch((error) => active && current === version && setState({ userId, items: [], error: getErrorMessage(error) }));
+    };
+    load();
+    window.addEventListener(LIKES_CHANGE_EVENT, load);
     return () => {
       active = false;
+      window.removeEventListener(LIKES_CHANGE_EVENT, load);
     };
-  }, [userId]);
+  }, [userId, retry]);
 
   if (!initialized) return <ProductGridSkeleton />;
   if (!userId) return <LoginRequired next="/recently-viewed?tab=likes" description="로그인하면 좋아요한 상품을 모아 볼 수 있어요." />;
   const current = state?.userId === userId ? state : null;
   if (!current) return <ProductGridSkeleton />;
-  if (current.error) return <EmptyState title="좋아요한 상품을 불러오지 못했어요" description={current.error} />;
+  if (current.error) return <EmptyState title="좋아요한 상품을 불러오지 못했어요" description={current.error} action={<button type="button" onClick={() => setRetry((value) => value + 1)} className="underline">다시 시도</button>} />;
   if (current.items.length === 0) {
     return (
       <EmptyState

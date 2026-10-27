@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
+import { io } from "next/cache";
 import { EmptyState, PageTitle, Skeleton } from "@/components/ui";
 import { artistThemeStyle } from "@/components/artist/artistTheme";
 import { LoadError } from "@/components/product/LoadError";
@@ -23,6 +24,7 @@ export default function ArtistsPage() {
 }
 
 async function ArtistList() {
+  await io();
   let artists: Artist[];
   try {
     artists = await getArtists();
