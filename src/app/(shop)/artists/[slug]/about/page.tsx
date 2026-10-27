@@ -62,7 +62,7 @@ async function AboutContent({ params }: ArtistAboutPageProps) {
 
       <section aria-label={`${artist.name} 단체 사진`} className="relative h-[min(56vh,560px)] min-h-64 overflow-hidden bg-linear-to-br from-(--artist-color) to-foreground">
         {artist.heroImageUrl && (
-          <Image src={artist.heroImageUrl} alt={`${artist.name} 단체 사진`} fill sizes="100vw" loading="eager" fetchPriority="high" className="object-cover" />
+          <Image unoptimized src={artist.heroImageUrl} alt={`${artist.name} 단체 사진`} fill sizes="100vw" loading="eager" fetchPriority="high" className="object-cover" />
         )}
       </section>
 

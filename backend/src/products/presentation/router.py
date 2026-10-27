@@ -10,8 +10,10 @@ from products.application.catalog_service import CatalogService
 from products.domain.product import ProductNotFound
 from products.infrastructure.catalog import CatalogRepository
 from products.presentation.schemas import CategoryResponse, ProductDetail, ProductQuery, ProductSummary, detail, summary
+from products.presentation.discovery_router import router as discovery_router
 
 router = APIRouter(tags=["products"])
+router.include_router(discovery_router)  # /products/best must precede /products/{product_id}.
 Session = Annotated[AsyncSession, Depends(get_session)]
 
 

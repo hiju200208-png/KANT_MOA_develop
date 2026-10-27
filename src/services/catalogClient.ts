@@ -23,8 +23,9 @@ export async function catalogFetch<T>(path: string): Promise<T> {
   } catch {
     throw new AppError('UNKNOWN', '서버에 연결할 수 없어요.');
   }
-  const data = await response.json().catch(() => null);
+  let data;
+  try { data = await response.json(); }
+  catch { throw new AppError('UNKNOWN', '상품 응답을 확인할 수 없어요.'); }
   if (!response.ok) throw new CatalogHttpError(response.status, data?.message);
-  if (data === null) throw new AppError('UNKNOWN', '상품 응답을 확인할 수 없어요.');
   return data as T;
 }
