@@ -1,0 +1,2 @@
+# git hook은 sh가 읽으므로 Windows에서도 줄바꿈을 LF로 고정한다 (CRLF면 hook이 깨진다)
+.githooks/* text eol=lf

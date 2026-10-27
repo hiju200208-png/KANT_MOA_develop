@@ -1,0 +1,38 @@
+[
+  {
+    "notice_title": "[ORBIT:ON] 1st Mini Album [LIFTOFF] 예약 판매 안내",
+    "product_thumbnail_path": "/static/products/orbit-on/1st-mini-launch/main.webp"
+  },
+  {
+    "notice_title": "[ORBIT:ON] 공식 멤버십 카드 발송 일정 안내",
+    "product_thumbnail_path": "/static/products/orbit-on/membership-card/main.webp"
+  },
+  {
+    "notice_title": "[ORBIT:ON] 마스코트 인형 키링 판매 안내 (1인 2개 한정)",
+    "product_thumbnail_path": "/static/products/orbit-on/mascot-doll/main.webp"
+  },
+  {
+    "notice_title": "[SODAFM] 공식 멤버십 카드 발송 안내",
+    "product_thumbnail_path": "/static/products/sodafm/membership-card/main.webp"
+  },
+  {
+    "notice_title": "[SODAFM] 슬로건 타올 배송 지연 안내",
+    "product_thumbnail_path": "/static/products/sodafm/slogan-towel/main.webp"
+  },
+  {
+    "notice_title": "[SODAFM] 컬러 텀블러 판매 안내",
+    "product_thumbnail_path": "/static/products/sodafm/tumbler/main.webp"
+  },
+  {
+    "notice_title": "[DAYLOG] 공식 멤버십 혜택 안내",
+    "product_thumbnail_path": "/static/products/daylog/membership-card/main.webp"
+  },
+  {
+    "notice_title": "[DAYLOG] 멤버 인형 재입고 안내",
+    "product_thumbnail_path": "/static/products/daylog/member-doll/main.webp"
+  },
+  {
+    "notice_title": "[DAYLOG] 2nd Single [diary] 예약 판매 안내",
+    "product_thumbnail_path": "/static/products/daylog/2nd-single-diary/main.webp"
+  }
+]
