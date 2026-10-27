@@ -3,6 +3,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import time
@@ -24,7 +25,7 @@ def inspect(cid):
     return json.loads(command(['docker', 'inspect', cid]))[0]
 
 
-def verify_web(base):
+def verify_web(base, video_path='/sources/tws.mp4'):
     request = urllib.request.Request(base + '/', headers={'ngrok-skip-browser-warning': 'true'})
     started = time.monotonic()
     first_video = None
@@ -33,7 +34,7 @@ def verify_web(base):
         assert response.status == 200
         while chunk := response.read1(16384):
             content += chunk
-            if first_video is None and b'src="/sources/tws.mp4"' in content:
+            if first_video is None and ('src="' + video_path + '"').encode() in content:
                 first_video = round(time.monotonic() - started, 3)
     assert first_video is not None, 'Initial video missing'
     assert b'data-precedence="default"' not in content, 'Banner font still blocks streaming'
@@ -52,6 +53,9 @@ def main():
     manifest = json.loads((RELEASE / 'web-release.json').read_text())
     for name, expected in manifest['files']:
         assert hashlib.sha256((RELEASE / name).read_bytes()).hexdigest() == expected
+    hero_config = (RELEASE / 'src/components/home/heroVideos.ts').read_text(encoding='utf-8')
+    initial_video = re.search(r'\btws:\s*\{\s*src:\s*"([^"]+)"', hero_config).group(1)
+    assert initial_video.startswith('/sources/') and initial_video.endswith('.mp4')
     # Reuse the deployed candidate's read-only DB snapshot. Importing does not run its main().
     spec = importlib.util.spec_from_file_location('snapshot', base_release / 'deploy/staging/site_candidate.py')
     snapshot = importlib.util.module_from_spec(spec)
@@ -102,7 +106,7 @@ def main():
         port = command(['docker', 'port', candidate_name, '3000/tcp']).decode().strip().rsplit(':', 1)[1]
         for attempt in range(20):
             try:
-                report['candidate'] = verify_web('http://127.0.0.1:' + port)
+                report['candidate'] = verify_web('http://127.0.0.1:' + port, initial_video)
                 break
             except Exception:
                 if attempt == 19: raise
@@ -117,7 +121,7 @@ def main():
         command(['docker', 'exec', ids['gateway'], 'nginx', '-s', 'reload'])
         for attempt in range(10):
             try:
-                report['public'] = verify_web(PUBLIC)
+                report['public'] = verify_web(PUBLIC, initial_video)
                 break
             except Exception:
                 if attempt == 9: raise

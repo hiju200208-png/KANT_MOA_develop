@@ -1,0 +1,29 @@
+{
+  "profile": "540p24-h264-300k-vbv350k-aac64k-faststart",
+  "assets": [
+    {
+      "original": "tws.mp4",
+      "original_sha256": "4d8cdc268cb3a293eeeab751042fcb8bc3c6cd73016fabce9e08b27f3a4a8772",
+      "file": "tws.hero-540p-v1-79ec81ce1c.mp4",
+      "sha256": "79ec81ce1cb5b7bb0f01d9dba0c6f1b9e5fa3e52c2713eba7268a3956ee1071b",
+      "bytes": 790587,
+      "saved_percent": 66.2
+    },
+    {
+      "original": "cortis.mp4",
+      "original_sha256": "54720ef2639e6643b63f77c9ba80a1baf322e48b3633a83c3216a5ed1f9f76ff",
+      "file": "cortis.hero-540p-v1-88b2b14570.mp4",
+      "sha256": "88b2b1457071af12ba28660938c9a805f104a4dfb7217686df6abb0e129f2338",
+      "bytes": 841742,
+      "saved_percent": 83.0
+    },
+    {
+      "original": "le-sserafim.mp4",
+      "original_sha256": "880fa157aa68d9dafdbf8bb73d27149f06f0d7f178f79245e6bac0e164e8792f",
+      "file": "le-sserafim.hero-540p-v1-0f621be923.mp4",
+      "sha256": "0f621be92346202fa0dfcfa9315b987f33c174e0f75cbcfe7d9b59504e83a53a",
+      "bytes": 868523,
+      "saved_percent": 64.7
+    }
+  ]
+}
