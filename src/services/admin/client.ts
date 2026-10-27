@@ -2,6 +2,8 @@
 // - API 주소: NEXT_PUBLIC_API_URL (없으면 로컬 http://localhost:8000)
 // - 토큰: P1(희주님) 로그인 프론트가 정해지면 getAdminAccessToken 한 곳만 바꾼다.
 
+import { ACCESS_TOKEN_STORAGE_KEY, getAccessToken } from '../session';
+
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
 
 export class AdminApiError extends Error {
@@ -11,14 +13,9 @@ export class AdminApiError extends Error {
 }
 
 // TODO(P1 연동): 로그인 후 받은 access token을 돌려주도록 교체
-export const ADMIN_TOKEN_STORAGE_KEY = "kantmoa.accessToken";
+export const ADMIN_TOKEN_STORAGE_KEY = ACCESS_TOKEN_STORAGE_KEY;
 export function getAdminAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return window.localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
-  } catch {
-    return null;
-  }
+  return getAccessToken();
 }
 
 export async function adminFetch<T>(path: string, init: RequestInit = {}): Promise<T> {

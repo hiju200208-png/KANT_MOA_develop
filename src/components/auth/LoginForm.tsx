@@ -24,7 +24,7 @@ export function LoginForm() {
       const { signIn } = await import("@/services/auth");
       await signIn({ email, password });
       const requestedPath = new URLSearchParams(window.location.search).get("next");
-      const nextPath = requestedPath?.startsWith("/") && !requestedPath.startsWith("//") ? requestedPath : "/";
+      const nextPath = requestedPath?.startsWith("/") && !requestedPath.startsWith("//") && !requestedPath.includes("\\") ? requestedPath : "/";
       router.replace(nextPath);
       router.refresh();
     } catch (submitError) {

@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { EmptyState } from "@/components/ui";
 import { getWishedIds } from "@/services/wishlist";
+import { publicApiOrigin } from "@/services/catalogClient";
+import { isApiImage } from "@/services/catalogMapping";
 import type { ProductSummary } from "@/types/app";
 import { HeartIcon } from "./HeartIcon";
 import { LIKES_CHANGE_EVENT } from "./LikeButton";
@@ -115,7 +117,7 @@ export function RecentlyViewedButton() {
       className="fixed right-4 bottom-[calc(4.5rem+8px+env(safe-area-inset-bottom))] z-44 block size-12 transition-transform md:size-14 hover:-translate-y-0.5 md:right-6 md:bottom-23"
     >
       <span className="relative grid size-full place-items-center overflow-hidden rounded-full border-2 border-white bg-neutral-100 shadow-[0_12px_30px_-8px_rgb(17_18_20/0.45)]">
-        {latest?.thumbnailUrl && <Image src={latest.thumbnailUrl} alt="" fill sizes="56px" className="object-cover" />}
+        {latest?.thumbnailUrl && <Image src={latest.thumbnailUrl} unoptimized={isApiImage(latest.thumbnailUrl, publicApiOrigin())} alt="" fill sizes="56px" className="object-cover" />}
         {!latest && <HeartIcon filled className="size-6 text-rose-500" />}
       </span>
       <span aria-hidden="true" className="absolute -top-1 -left-1 grid h-5 min-w-5 place-items-center rounded-full bg-neutral-900 px-1 text-[11px] font-bold text-white">
