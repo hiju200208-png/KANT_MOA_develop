@@ -1,5 +1,7 @@
 # 학원 서버 홈페이지·API 배포
 
+> **최신 운영은 [최종 현황](../../docs/FINAL_STATUS.md)을 확인합니다.** API·웹은 e0c7ad8, DB는 서버 설치본 내부 연결·배송 head 4c726d1a91ab입니다. 아래는 최초 홈페이지 전환과 당시 복구 절차입니다. 현재 배포는 실제 활성 설정과 override를 대조하며 과거 release/env로 덮어쓰지 않습니다.
+
 한 서버에서 Next.js, FastAPI, Nginx를 각각 컨테이너로 실행한다.
 기존 ngrok는 그대로 `127.0.0.1:8022`에 연결한다.
 
@@ -15,7 +17,7 @@
 ## 보존 대상
 
 - 서버의 기존 `~/kant-moa/backend.env`를 Compose `env_file`로 읽는다. JWT와 DATABASE_URL을 다시 만들지 않는다.
-- 현재 외부 DB 이름은 **kant-moa**다. 과거 Docker 내부 `kant_moa`와 구분한다.
+- 아래 최초 전환 당시 외부 DB 이름은 **kant-moa**다. 이후 같은 DB의 API 연결만 내부로 전환했다. 과거 Docker 내부 `kant_moa`와 구분한다.
 - 기존 원본 assets 디렉터리를 읽기 전용으로 연결한다. products 1,800개·artists 47개 파일을 보존한다.
 - 기존 업로드 볼륨의 실제 디렉터리를 그대로 연결한다. 빈 새 볼륨으로 교체하지 않는다.
 - Dockerfile·컨테이너 시작 명령에는 SQL·Alembic·시드 실행이 없다.
@@ -46,7 +48,7 @@
 2026-10-28 배너 개선 web 커밋 `cf82ef7` 단독 배포 완료. API 컨테이너·DB 내용 동일 확인.
 web release는 `~/kant-moa/web-releases/web-20261027T231624Z-cf82ef7`이며,
 측정 범위·소스 식별·백업 정보는 [배너 배포 기록](../../docs/products/P2_HERO_LOADING.md)을 참조한다.
-이후 2026-10-28 경량 영상 web 커밋 `28e695e`를 단독 배포했다. 현재 web release는
+이후 2026-10-28 경량 영상 web 커밋 `28e695e`를 단독 배포했다. 당시 web release는
 `~/kant-moa/web-releases/web-20261027T234206Z-28e695e`다. API 컨테이너·DB 내용 동일을 확인했다.
 새 영상 URL·파일 크기·해시·다운로드 측정은 [경량 영상 배포 기록](../../docs/products/P2_HERO_VIDEO_ENCODING.md)을 따른다.
 과거 `compose.backend.yml up`을 실행하면 8022를 두 서비스가 차지하려 하므로 기존 API용 명령을 재사용하지 않는다.

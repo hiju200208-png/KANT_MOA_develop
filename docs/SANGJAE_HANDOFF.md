@@ -1,5 +1,32 @@
 # 이상재(P2) 새 채팅 인계 및 작업 계획
 
+> **최종 인계는 아래 완료 표와 [최종 현황](FINAL_STATUS.md)을 먼저 봅니다.** 이후의 10/26~27 계획·미완료 체크·과거 시작 요청을 현재 작업 지시로 재실행하지 않습니다.
+
+## 최종 P2 인계 · 2026-10-28
+
+P2 1~9단계의 구현·팀 main 병합·화면 연결·운영 반영을 완료했습니다.
+공개 상품 388개·FastAPI 경로 51개는 최종 e0c7ad8 배포 점검 시점 기준입니다.
+
+| 단계 | 최종 결과·근거 |
+| --- | --- |
+| 1 | P1 인증·P3/P4 재고·Alembic 연결 계약 확인. 최초 공용 이력과 배송 head 적용까지 완료 |
+| 2~3 | 순수 재고 도메인·잠금 Repository·savepoint 보호, #42·#53 |
+| 4 | 실제 카탈로그·원본 이미지 이관·공용 적용, #56 |
+| 5~6 | 상품 목록/검색/상세·찜 API와 실제 P1 인증, #57·#61 |
+| 7~8 | 기존 화면·최소 인증·나머지 카탈로그/좋아요 연결, #66·#72 |
+| 9 | P1/P2/P3/P4 재고·rollback·동시성 통합 및 사이트 배포, #75 |
+| 후속 | 첫 배너·원본 영상 전달·상품 조회량 개선, #78·#79. 배송 테스트 DB 보완 #86 |
+
+P1·P3·P4 업무 기능을 P2 단독 구현으로 표시하지 않습니다.
+최신 구성·제한·실행 근거는 [FINAL_STATUS.md](FINAL_STATUS.md)와 [현재 README](../README.md)를 먼저 봅니다.
+개인 로컬의 미커밋 문서/배포 도구를 팀 main에 이미 들어간 코드로 가정하지 않습니다.
+아래 체크리스트와 새 채팅 문구는 10/26~27 당시의 진행 기록이며 재실행 지시가 아닙니다.
+
+유지보수 채팅 시작 시: 최신 main·최종 현황·실제 실행 코드/DB 이력을 먼저 읽고,
+원래 미커밋 작업을 보존한 별도 브랜치에서 요청한 수정만 수행합니다. 공용 초기 SQL·baseline·시드를 재실행하지 않습니다.
+
+## 과거 작업 계획·검토 이력
+
 기준: 2026-10-26 KST. 현재 대화, 사용자 서버 실행 결과, 로컬 파일 확인 기준.
 이 문서는 새 채팅에서 먼저 읽을 인계 자료다. 계획은 구현 완료를 의미하지 않는다.
 
@@ -41,7 +68,7 @@ P1 인증을 재사용한 찜 목록/IDs/멱등 PUT·DELETE 구현·검증 완�
 | 작성한 ERD | https://app.notion.com/p/405db49922e58127aca1e84966e7756f |
 | 서버 구축 기록 | https://app.notion.com/p/405db49922e581979ebfc66ad1d42b1b |
 | 이상재 구축 일지 | https://app.notion.com/p/teamsparta/4052dc3ef51480cd8c1decbd1ee4b8b5 |
-| 공개 Swagger | https://letdown-kilometer-nutcase.ngrok-free.dev/docs |
+| 공개 Swagger (현재 경로) | https://letdown-kilometer-nutcase.ngrok-free.dev/api/docs |
 | 공개 health | https://letdown-kilometer-nutcase.ngrok-free.dev/health |
 | 팀 Slack | https://2026kant.slack.com/archives/C0CBAJV8309 |
 | Redmine | https://sulfite-footbath-next.ngrok-free.dev/projects/2_project/activity |
@@ -410,7 +437,7 @@ P4 상태 변경·품절 규칙은 일치하고 중복 ORM은 없지만 P2 ORM �
 - [ ] 개인 일지에 역할·문제·수행·해결·결과를 기록하고 PR/커밋·테스트 명령·시연 링크를 연결한다.
 - 완료: 다른 팀원이 문서 명령으로 재현 가능하고 제출 시연에서 담당 E2E와 실패 처리를 설명할 수 있다.
 
-## 12. 새 채팅에 붙여넣을 시작 요청
+## 12. 당시 새 채팅 시작 요청 (과거 계획, 현재 실행 지시 아님)
 
 > 이 저장소의 `docs/SANGJAE_HANDOFF.md`, `docs/STAGING.md`, `docs/PROJECT2.md`와 AGENTS.md를 먼저 읽어줘.
 > 나는 이상재(P2)이고, 공용 DB·서버 준비를 마쳤으니 이제 내 상품·카탈로그 기능을 구현할 거야.

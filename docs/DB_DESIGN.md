@@ -1,5 +1,7 @@
 # 아이돌 굿즈샵 DB 설계 (Supabase)
 
+> **프로젝트1 인수 자료입니다.** 아래 Supabase·Vercel·옛 역할/브랜치·RPC 설명은 당시 기준으로 보존합니다. 현재 프로젝트2의 실행·개발 계약은 [README](../README.md)·[PROJECT2](PROJECT2.md), 최종 구현/운영은 [FINAL_STATUS](FINAL_STATUS.md)를 따릅니다. 이 문서의 초기 SQL·Supabase db push를 현재 공용 DB에 실행하지 않습니다.
+
 ## 1. 개요
 
 - 대상: 아이돌 그룹 3개 ORBIT:ON(오르빗온), DAYLOG(데이로그), SODAFM(소다에프엠)의 굿즈샵

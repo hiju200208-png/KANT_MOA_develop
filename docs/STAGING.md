@@ -1,6 +1,8 @@
 # KANT-MOA 공용 DB·학원 서버 실행 기록
 
-> **2026-10-27 최신 운영 상태:** 홈페이지·API를 같은 서버의 Nginx로 공개 전환했다.
+> **현재 운영(2026-10-28):** [최종 현황](FINAL_STATUS.md) 기준 API·프론트 e0c7ad8 배포 완료, PostgreSQL 서버 설치본 내부 연결, 배송 head 4c726d1a91ab입니다. 아래 10/26 Docker DB·health 전용 구성은 초기 구축 이력입니다. 과거 API 전용 Compose를 현재 서버에 재실행하지 않습니다.
+
+> **2026-10-27 최초 홈페이지 공개 전환 기록:** 홈페이지·API를 같은 서버의 Nginx로 공개 전환했다.
 > 홈페이지는 기존 ngrok 주소 `/`, API는 `/api/`, Swagger는 `/api/docs`다.
 > DB는 외부 `kant-moa`를 사용하며 이번 배포 전후 내용 동일을 확인했다. 아래 10/26 기록의 Docker `kant_moa`와 구분한다.
 > 현재 실행·관리·복구 경로와 검증은 [최신 배포 기록](../deploy/staging/SITE.md)을 따른다.
