@@ -35,6 +35,8 @@ services:
         NEXT_PUBLIC_API_URL: ${SITE_PUBLIC_ORIGIN:?Set the public site origin}/api
     environment:
       API_INTERNAL_URL: http://api:8000
+      # 칸트봇(/api/chat) 서버 전용 키. 값은 site.env에만 둔다. 비어 있으면 화면이 키워드 답변으로 대체한다
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     depends_on:
       api:
         condition: service_healthy

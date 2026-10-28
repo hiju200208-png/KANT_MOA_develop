@@ -2,6 +2,7 @@
 
 import os
 import json
+import runpy
 from pathlib import Path
 import secrets
 import subprocess
@@ -53,9 +54,8 @@ def postgres_url():
         sql = Path(__file__).resolve().parents[2] / "sql" / "001_create_tables.sql"
         docker("exec", "-i", container, "psql", "-X", "-U", "p2_test", "-d", "p2_test",
                "-v", "ON_ERROR_STOP=1", input=sql.read_bytes())
-        # 주문 조회(P3)가 배송 테이블을 함께 읽으므로 배송 후속 migration도 같은 일회용 DB에 적용한다.
-        import runpy
-        migration = Path(__file__).resolve().parents[2] / "migrations/versions/4c726d1a91ab_add_order_shipments.py"
+        # P3 취소·배송 계약을 검증할 수 있도록 새 테스트 DB에만 후속 DDL을 적용한다.
+        migration = sql.parent.parent / "migrations/versions/4c726d1a91ab_add_order_shipments.py"
         shipping_sql = runpy.run_path(str(migration))["UPGRADE_SQL"]
         docker("exec", "-i", container, "psql", "-X", "-U", "p2_test", "-d", "p2_test",
                "-v", "ON_ERROR_STOP=1", input=shipping_sql.encode())
