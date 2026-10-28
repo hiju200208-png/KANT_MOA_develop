@@ -46,6 +46,9 @@
 2026-10-28 배너 개선 web 커밋 `cf82ef7` 단독 배포 완료. API 컨테이너·DB 내용 동일 확인.
 web release는 `~/kant-moa/web-releases/web-20261027T231624Z-cf82ef7`이며,
 측정 범위·소스 식별·백업 정보는 [배너 배포 기록](../../docs/products/P2_HERO_LOADING.md)을 참조한다.
+이후 2026-10-28 경량 영상 web 커밋 `28e695e`를 단독 배포했다. 현재 web release는
+`~/kant-moa/web-releases/web-20261027T234206Z-28e695e`다. API 컨테이너·DB 내용 동일을 확인했다.
+새 영상 URL·파일 크기·해시·다운로드 측정은 [경량 영상 배포 기록](../../docs/products/P2_HERO_VIDEO_ENCODING.md)을 따른다.
 과거 `compose.backend.yml up`을 실행하면 8022를 두 서비스가 차지하려 하므로 기존 API용 명령을 재사용하지 않는다.
 
 ## 학원 서버 후보 검증 (사용자 실행 결과)

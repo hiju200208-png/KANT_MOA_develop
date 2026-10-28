@@ -20,6 +20,10 @@ def scenario(fail):
         active = {'release': str(base_release), 'env_file': str(env), 'project': 'fake-site'}
         (root / 'active-site.json').write_text(json.dumps(active))
         (release / 'web-release.json').write_text(json.dumps({'files': [], 'commit': 'fake-commit', 'source_sha256': 'fake-digest'}))
+        config = release / 'src/components/home/heroVideos.ts'
+        config.parent.mkdir(parents=True)
+        video_path = 'https://example.com/tws-original.mp4' if fail else '/sources/tws.versioned.mp4'
+        config.write_text('tws: { src: "' + video_path + '" }')
         calls = []
         def command(args, **kwargs):
             calls.append(args)
@@ -33,7 +37,8 @@ def scenario(fail):
                     'Config': {'Env': ['API_INTERNAL_URL=http://api:8000']},
                     'NetworkSettings': {'Networks': {'fake-site_default': {}}},
                     'HostConfig': {'PortBindings': {'8080/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '8022'}]}}}
-        def verify(base):
+        def verify(base, video_path):
+            assert video_path == ('https://example.com/tws-original.mp4' if fail else '/sources/tws.versioned.mp4')
             if fail and base == deploy.PUBLIC: raise RuntimeError('simulated failure')
             return {'homepage': 200}
         dummy_spec = SimpleNamespace(loader=SimpleNamespace(exec_module=lambda _: None))

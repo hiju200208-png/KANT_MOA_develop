@@ -1,5 +1,5 @@
 // Regression check: a pending product API must not delay the first video banner.
-// Only a local fake API is used; no database or deployed server is contacted.
+// Product data uses a local fake API. The configured public video is checked read-only; no database is used.
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -8,9 +8,10 @@ import { once } from 'node:events';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { HERO_VIDEOS } from '../src/components/home/heroVideos.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const artists = ['tws', 'bts'].map((slug, i) => ({ id: i + 1, slug, name: slug.toUpperCase(),
+const artists = ['tws', 'cortis', 'le-sserafim', 'bts'].map((slug, i) => ({ id: i + 1, slug, name: slug.toUpperCase(),
   name_ko: slug.toUpperCase(), logo_path: null, hero_image_path: null, theme_color: '#111111', tagline: null }));
 const requests = [];
 const pending = [];
@@ -70,16 +71,23 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
   assert(ready, `Next did not start; inspect ${logPath}`);
-  const response = await fetch(site, { signal: AbortSignal.timeout(120000) });
+  const response = await fetch(site, { signal: AbortSignal.timeout(process.argv.includes('--hold') ? 660000 : 120000) });
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let html = '';
-  while (!/<video\b[^>]*src="\/sources\/tws\.mp4"/.test(html)) {
+  while (!html.includes(`src="${HERO_VIDEOS.tws.src}"`)) {
     const chunk = await reader.read();
     assert(!chunk.done, 'Homepage ended without the initial video');
     html += decoder.decode(chunk.value, { stream: true });
   }
   assert.equal(released, false, 'Video must arrive while all product responses are held');
+  const videoTags = html.match(/<video\b[^>]*>/gi) ?? [];
+  const initialVideo = videoTags.find((tag) => tag.includes(`src="${HERO_VIDEOS.tws.src}"`));
+  assert(initialVideo && /\bautoplay\b/i.test(initialVideo), 'Initial video must start without waiting for hydration');
+  assert.equal(videoTags.filter((tag) => /\bautoplay\b/i.test(tag)).length, 1, 'Only the active video may autoplay');
+  const video = await fetch(new URL(HERO_VIDEOS.tws.src, site), { headers: { Range: 'bytes=0-1023' } });
+  assert.equal(video.status, 206, 'Versioned video must support partial download');
+  assert.equal((await video.arrayBuffer()).byteLength, 1024);
   assert(!html.includes('data-precedence="default"'), 'Font stylesheet must not suspend the banner');
   assert(requests.every((url) => !(url.pathname === '/products/best' && url.searchParams.get('artist') === 'tws')),
     'Video slides must not request best-product selection');
