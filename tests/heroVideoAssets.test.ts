@@ -60,6 +60,6 @@ for (const asset of manifest.assets) {
     });
     assert(formats.includes('avc1') && formats.includes('mp4a'), 'Video and audio must both survive');
     const slug = asset.original.replace('.mp4', '');
-    assert.equal(HERO_VIDEOS[slug].src, '/sources/' + asset.file);
+    assert.equal(HERO_VIDEOS[slug].src, asset.active_src ?? '/sources/' + asset.file);
   });
 }

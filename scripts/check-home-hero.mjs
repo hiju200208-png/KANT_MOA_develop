@@ -1,5 +1,5 @@
 // Regression check: a pending product API must not delay the first video banner.
-// Only a local fake API is used; no database or deployed server is contacted.
+// Product data uses a local fake API. The configured public video is checked read-only; no database is used.
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -81,7 +81,7 @@ try {
     html += decoder.decode(chunk.value, { stream: true });
   }
   assert.equal(released, false, 'Video must arrive while all product responses are held');
-  const video = await fetch(site + HERO_VIDEOS.tws.src, { headers: { Range: 'bytes=0-1023' } });
+  const video = await fetch(new URL(HERO_VIDEOS.tws.src, site), { headers: { Range: 'bytes=0-1023' } });
   assert.equal(video.status, 206, 'Versioned video must support partial download');
   assert.equal((await video.arrayBuffer()).byteLength, 1024);
   assert(!html.includes('data-precedence="default"'), 'Font stylesheet must not suspend the banner');

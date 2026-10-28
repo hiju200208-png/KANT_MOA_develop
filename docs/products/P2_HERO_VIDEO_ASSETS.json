@@ -3,6 +3,7 @@
   "assets": [
     {
       "original": "tws.mp4",
+      "active_src": "https://zpottidevwoeasihhbxl.supabase.co/storage/v1/object/public/hero-videos/tws-original-4d8cdc268c.mp4",
       "original_sha256": "4d8cdc268cb3a293eeeab751042fcb8bc3c6cd73016fabce9e08b27f3a4a8772",
       "file": "tws.hero-540p-v1-79ec81ce1c.mp4",
       "sha256": "79ec81ce1cb5b7bb0f01d9dba0c6f1b9e5fa3e52c2713eba7268a3956ee1071b",

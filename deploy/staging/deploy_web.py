@@ -55,7 +55,7 @@ def main():
         assert hashlib.sha256((RELEASE / name).read_bytes()).hexdigest() == expected
     hero_config = (RELEASE / 'src/components/home/heroVideos.ts').read_text(encoding='utf-8')
     initial_video = re.search(r'\btws:\s*\{\s*src:\s*"([^"]+)"', hero_config).group(1)
-    assert initial_video.startswith('/sources/') and initial_video.endswith('.mp4')
+    assert initial_video.startswith(('/sources/', 'https://')) and initial_video.endswith('.mp4')
     # Reuse the deployed candidate's read-only DB snapshot. Importing does not run its main().
     spec = importlib.util.spec_from_file_location('snapshot', base_release / 'deploy/staging/site_candidate.py')
     snapshot = importlib.util.module_from_spec(spec)
