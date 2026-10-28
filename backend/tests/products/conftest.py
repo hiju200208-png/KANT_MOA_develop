@@ -53,6 +53,12 @@ def postgres_url():
         sql = Path(__file__).resolve().parents[2] / "sql" / "001_create_tables.sql"
         docker("exec", "-i", container, "psql", "-X", "-U", "p2_test", "-d", "p2_test",
                "-v", "ON_ERROR_STOP=1", input=sql.read_bytes())
+        # 주문 조회(P3)가 배송 테이블을 함께 읽으므로 배송 후속 migration도 같은 일회용 DB에 적용한다.
+        import runpy
+        migration = Path(__file__).resolve().parents[2] / "migrations/versions/4c726d1a91ab_add_order_shipments.py"
+        shipping_sql = runpy.run_path(str(migration))["UPGRADE_SQL"]
+        docker("exec", "-i", container, "psql", "-X", "-U", "p2_test", "-d", "p2_test",
+               "-v", "ON_ERROR_STOP=1", input=shipping_sql.encode())
         port = docker("port", container, "5432/tcp").stdout.decode().strip().rsplit(":", 1)[1]
         yield f"postgresql+asyncpg://p2_test:{password}@127.0.0.1:{port}/p2_test"
     finally:
