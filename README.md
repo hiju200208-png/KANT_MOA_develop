@@ -48,6 +48,34 @@
 
 **미완료·주의**: 회원가입·내 정보 수정 화면은 아직 Supabase(P1). 상품 상세 화면(P2)이 FastAPI로 바뀌기 전에는 화면에서 상품을 담는 경로 대신 비회원 장바구니·바로 구매 주소(`/checkout?variant=&qty=`)로 확인합니다. 결제는 모의 결제입니다.
 
+### P4 관리자 (충만)
+
+**FastAPI 담당 범위** — `backend/src/admin/` 4계층 (presentation → application → domain ← infrastructure). 라우터 전체에 P1 `require_admin`이 걸려 있습니다(토큰 없음 401, 일반 회원 403).
+
+| Use Case | API | 주요 규칙 |
+| --- | --- | --- |
+| 대시보드 | `GET /admin/dashboard` | 전체·판매중·품절·숨김·재고 없음·재고 부족(옵션 5개 이하) 집계, 목록 필터와 같은 기준 |
+| 상품 조회 | `GET /admin/products`, `GET /admin/products/{id}` | 숨김 상품 포함, 검색·필터·정렬(최신/재고 적은 순/이름)·페이지, 옵션별 재고 |
+| 판매 상태 | `PATCH /admin/products/{id}`, `POST /admin/products/bulk-status` | on_sale·sold_out·hidden. 일괄은 1~100개, 없는 상품이 섞이면 404 + 전부 rollback |
+| 재고 조정 | `POST /admin/products/{pid}/variants/{vid}/stock-adjustments` | 증감 방식(-10000~10000), 재고 규칙·잠금은 P2 함수 한 곳(부족 409, 잘못된 값 422) |
+| 대표 이미지 | `PUT /admin/products/{id}/thumbnail` | jpeg·png·webp, 5MB, 파일 시그니처 검사 |
+| 공지 | `GET·POST /admin/notices`, `GET·PATCH·DELETE /admin/notices/{id}` | 등록 201, 삭제 204, 없는 아티스트 422 |
+
+**관리자 화면** — `/admin/login`(P1 `/auth/login`·`/auth/me`, ADMIN만 입장) · `/admin`(대시보드) · `/admin/products`(목록·필터·일괄 상태 변경) · `/admin/products/[id]`(상태·재고·이미지) · `/admin/notices`. 호출부는 `src/services/admin/`, 토큰은 공용 `src/services/session.ts`(localStorage `kantmoa.accessToken`)를 씁니다.
+
+**사용 방법**
+
+1. 관리자 계정: `backend/.env`에 `JWT_SECRET`을 넣고 `cd backend && uv run --no-sync python scripts/create_admin.py` (비밀번호는 입력창에 직접 입력)
+2. 서버: `uv run --no-sync uvicorn main:app --app-dir src --host 127.0.0.1 --port 8000`, 프론트: `npm run dev`
+3. `http://localhost:3000/admin/login`에서 로그인 → 대시보드 카드로 상품 목록 이동
+
+**검증** — 설계·규칙·검증표: [P4 설계 문서](docs/admin/P4_ADMIN.md) · 시연 순서: [P4 발표자료](docs/presentation/P4_CHUNGMAN.md) · 기록: [충만 작업일지](docs/worklog/CHUNGMAN.md)
+
+- 실제 P1 토큰으로 확인(로컬 DB, DB 전→후): 토큰 없음 401 / 일반 회원 403 / 관리자 200, 일괄 숨김 on_sale 2 → hidden 2, 없는 상품 포함 일괄 변경 404 후 상태 그대로, 재고 12 → 17 · -1000 요청 409 후 17 그대로, 공지 0 → 1 → 0, 로그아웃 후 같은 토큰 401(블랙리스트 1행)
+- 자동 테스트: 백엔드 pytest(관리자 도메인·서비스·API·로컬 DB 통합 포함), 프론트 typecheck·lint·test, GitHub CI `backend`·`frontend` 통과 (PR #50, #62)
+
+**미완료·주의**: 사용자 화면 공지 노출은 P2 공개 공지 API 전환 후 확인합니다(이슈 #40 마지막 항목). 재고 변경 이력 조회는 미구현(선택 기능)입니다.
+
 아래 본문과 기존 `docs/SETUP.md`, `docs/BACKEND.md`, `docs/DB_DESIGN.md`는 프로젝트1 인수 자료입니다. 프로젝트2의 역할·DB·브랜치·재고 규칙은 위 문서를 우선합니다. 기존 저작권 고지는 유지합니다.
 
 > 아이돌 11팀의 굿즈를 한곳에서 모아 보는 온라인 굿즈샵입니다. 가상 그룹 3팀 **ORBIT:ON(오르빗온) · DAYLOG(데이로그) · SODA FM(소다에프엠)** 과, 시연용으로 넣은 실제 아티스트 8팀(CORTIS · ZICO · BTS · SEVENTEEN · LE SSERAFIM · TOMORROW X TOGETHER · TWS · BOYNEXTDOOR)의 상품을 다룹니다.

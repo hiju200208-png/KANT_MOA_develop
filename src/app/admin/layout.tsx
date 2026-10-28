@@ -17,10 +17,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <Header />
       <PageMain>
         <div className="content-shell py-6 md:py-10">
-          <nav aria-label="관리자 메뉴" className="mb-6 flex items-center gap-2 border-b border-line pb-3">
-            <span className="mr-2 text-xs font-black tracking-widest text-muted">ADMIN</span>
+          <nav aria-label="관리자 메뉴" className="mb-6 flex items-center gap-2 overflow-x-auto whitespace-nowrap border-b border-line pb-3">
+            <span className="mr-2 shrink-0 text-xs font-black tracking-widest text-muted">ADMIN</span>
             {MENU.map((item) => (
-              <Link key={item.href} href={item.href} className="rounded-full px-4 py-2 text-sm font-bold hover:bg-neutral-100">
+              <Link key={item.href} href={item.href} className="shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold hover:bg-neutral-100">
                 {item.label}
               </Link>
             ))}
