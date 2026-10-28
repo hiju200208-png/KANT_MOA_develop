@@ -42,6 +42,20 @@ export async function signIn({ email, password }: SignInInput): Promise<void> {
   await mergeGuestCart();
 }
 
+// 비밀번호 찾기: 메일 발송 없이 시연 모드에서만 reset_token을 화면용으로 받는다.
+export async function requestPasswordReset(email: string): Promise<{ message: string; resetToken: string | null }> {
+  const body = await apiFetch<{ message: string; reset_token: string | null }>('/auth/password-reset/request', {
+    method: 'POST', ...jsonBody({ email }),
+  });
+  return { message: body.message, resetToken: body.reset_token };
+}
+
+export async function confirmPasswordReset(token: string, newPassword: string): Promise<void> {
+  await apiFetch<void>('/auth/password-reset/confirm', {
+    method: 'POST', ...jsonBody({ token, new_password: newPassword }),
+  });
+}
+
 export async function signOut(): Promise<void> {
   const token = getAccessToken();
   if (token) {

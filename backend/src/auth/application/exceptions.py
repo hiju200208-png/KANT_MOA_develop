@@ -31,6 +31,14 @@ class NotAuthenticatedError(AuthError):
         )
 
 
+class InvalidResetTokenError(AuthError):
+    def __init__(self):
+        super().__init__(
+            "UNKNOWN",
+            "재설정 링크가 만료되었거나 이미 사용되었어요. 다시 요청해주세요.",
+        )
+
+
 class ForbiddenError(AuthError):
     def __init__(self):
         super().__init__(
