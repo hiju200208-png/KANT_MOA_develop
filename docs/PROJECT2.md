@@ -1,10 +1,10 @@
 # 프로젝트2 개발 기준과 P1 공통 기반
 
-기준일: 2026-10-26. GitHub가 원본이며 Notion·Redmine에는 요약과 이 문서 링크를 연결합니다.
+기준일: 2026-10-28. 최종 구현·배포 결과는 [FINAL_STATUS.md](FINAL_STATUS.md)를 먼저 확인합니다. 날짜가 붙은 과거 검증/대기 항목은 당시 기록입니다. GitHub가 원본이며 Notion·Redmine에는 요약과 이 문서 링크를 연결합니다.
 
-## 10/28 Google 로그인 추가 작업
+## 10/28 Google 로그인 구현·배포
 
-- 기존 일반 인증에 Google ID 토큰 검증·USER 가입·sub 기반 재로그인과 일반 로그인 화면 버튼을 추가하는 로컬 작업입니다. [설정·계정 정책·검증 기준](GOOGLE_LOGIN.md)을 확인합니다.
+- 기존 일반 인증에 Google ID 토큰 검증·USER 가입·sub 기반 재로그인과 일반 로그인 화면 버튼을 추가해 팀 main에 병합·배포한 작업입니다. [설정·계정 정책·검증 기준](GOOGLE_LOGIN.md)을 확인합니다.
 - 같은 이메일의 기존 회원과 자동 연결하지 않으며, 기존 JWT·Repository·장바구니 병합을 재사용합니다. 스키마 변경은 없습니다.
 - 로컬 설정 연결 후 실제 Google 로그인 200·새로고침 복원·마이페이지 조회·로그아웃 204와 보호 화면의 로그인 요구까지 확인했습니다.
 - PR #80 병합 후 공용 API·웹 배포와 Google 버튼 표시를 확인했습니다. 실행 중이던 P2 웹 개선 커밋도 보존했고 DB 지문·JWT·이미지 동일을 확인했습니다. [배포 기록](GOOGLE_LOGIN.md)을 기준으로 봅니다. 공용 실제 Google 계정 로그인과 비회원 장바구니 병합 화면 검증은 남아 있습니다.
@@ -53,13 +53,13 @@
 | 담당 | 기능과 추가 책임 |
 |---|---|
 | 희주 P1 | 공통 환경, Docker DB, 이미지 서빙, auth 4계층, 회원가입·로그인·JWT·블랙리스트 로그아웃·내 정보·USER/ADMIN, CORS·로깅 |
-| 상재 P2 | 상품·카탈로그·좋아요 4계층, 검색·필터·페이지네이션, 아티스트·배너·공지·카테고리·인기 순위, 시드·이미지 이관, 재고 규칙 |
-| 여름 P3 | 장바구니·비회원 병합·배송지·주문·모의 결제·취소 4계층, 재고 차감·복구의 트랜잭션·rollback |
-| 충만 P4 | 관리자 상품 목록·재고 수정 4계층, 관리자 화면·403 검증. 업로드·공지 관리는 선택 |
+| 상재 P2 | 상품·카탈로그·좋아요 4계층, 검색·필터·페이지네이션, 아티스트·배너·공지·카테고리·인기 순위, 시드·이미지 이관, 재고 규칙, 통합 검증·배포·성능 개선 |
+| 여름 P3 | 장바구니·비회원 병합·배송지·주문·모의 결제·취소 4계층, 재고 차감·복구의 트랜잭션·rollback, 관리자 주문·배송 |
+| 충만 P4 | 관리자 상품·상태/일괄 변경·재고·이미지·공지·대시보드 4계층, 관리자 화면·403 검증, 비밀번호 재설정 지원 |
 
 - 재고 규칙은 P2 상품 도메인의 `decrease_stock` / `increase_stock` 한 곳에 둡니다. P3·P4가 재사용합니다. 0 미만 불가, 잘못된 수량과 재고 부족 거부.
-- P3는 주문과 재고의 원자적 저장을 조율합니다. 순수 도메인 계산만으로 동시성 문제가 해결되지는 않으므로 DB 잠금/조건부 갱신 방식은 P2·P3·P4가 합의합니다.
-- 공통 파일 `main.py`, `database.py`, `core/`, `compose.yaml` 변경은 P1과 먼저 협의하고 PR로 통합합니다. PR 대상 브랜치는 팀 최종 확인이 필요합니다.
+- P3는 주문과 재고의 원자적 저장을 조율합니다. 순수 도메인 계산만으로 동시성 문제가 해결되지는 않으므로 P2의 ID 오름차순 FOR UPDATE 잠금 조회·save_variant(flush)를 P3·P4가 같은 세션에서 재사용합니다.
+- 공통 파일 `main.py`, `database.py`, `core/`, `compose.yaml` 변경은 P1과 먼저 협의하고 PR로 통합합니다. PR 대상은 팀 저장소의 main입니다.
 - 담당자별 화면 → API → Domain → Repository → PostgreSQL E2E를 직접 구현·검증합니다.
 
 ## 구조와 트랜잭션 계약
@@ -71,25 +71,25 @@ Next.js → presentation/router.py + schemas.py
         → infrastructure/models.py + repositories.py → PostgreSQL
 ```
 
-FastAPI 루트는 `backend/src/`입니다. 각 기능은 `auth/`, `products/`, `orders/`, `admin/` 아래 4계층과 각 `__init__.py`를 구성합니다. P1 인증 구현과 main의 P2 상품·P4 관리자 코드가 heeju에 통합됐으며, 기능별 구현·배포·검증 상태는 구분합니다.
+FastAPI 루트는 `backend/src/`입니다. 각 기능은 `auth/`, `products/`, `orders/`, `admin/` 아래 4계층과 각 `__init__.py`를 구성합니다. P1~P4 기능은 팀 main에 통합됐습니다. 기능 구현·개별 검증·운영 배포는 최종 현황의 근거와 범위를 구분합니다.
 
 `database.Base`를 모든 ORM 모델이 공유합니다. `get_session`은 요청당 AsyncSession을 제공하며 자동 commit하지 않습니다. 응용 서비스가 하나의 업무 단위에서 commit/rollback을 소유합니다. Repository는 commit하지 않고 필요 시 flush하며 ORM↔도메인 변환을 담당합니다. 실패 시 get_session에서도 미완료 트랜잭션을 rollback합니다.
 
-lifespan에서 DB 연결을 검사하고 종료 시 engine을 dispose합니다. 연결 실패 시 서버 시작에 실패합니다. 테이블 생성·시드 자동 덮어쓰기는 하지 않습니다. 10/26 공용 DB에는 초기 SQL로 테이블 18개를 적용했습니다. ORM 모델·후속 마이그레이션·시드는 각 담당자의 후속 작업이며 적용 상태는 [STAGING.md](STAGING.md)를 확인합니다.
+lifespan에서 DB 연결을 검사하고 종료 시 engine을 dispose합니다. 연결 실패 시 서버 시작에 실패합니다. 테이블 생성·시드 자동 덮어쓰기는 하지 않습니다. 10/26 공용 DB에는 초기 SQL로 테이블 18개를 적용했습니다. 현재는 최초 이력 도입과 배송 후속 migration 적용을 완료했습니다. 업무 테이블 19개와 이력 테이블은 구분하며, 초기 SQL을 재실행하지 않습니다. 적용 결과는 [최종 현황](FINAL_STATUS.md)을 확인합니다.
 
 ## 공통 API 계약
 
-- 기본 주소 `http://localhost:8000`, 경로에 `/api` 접두사는 붙이지 않는 초안입니다.
-- 목록: `{ "items": [], "total": 0, "page": 1, "size": 20 }`. page 1 이상, size 1~100(초안), total은 필터 후 페이지 적용 전 개수입니다.
+- 로컬 기본 주소는 `http://localhost:8000`이며 `/api` 접두사가 없습니다. 공개 gateway는 `/api`를 붙이므로 Swagger는 `/api/docs`입니다.
+- 목록: `{ "items": [], "total": 0, "page": 1, "size": 20 }`. page 1 이상, size 1~100, total은 필터 후 페이지 적용 전 개수입니다.
 - 오류: `{ "code": "OUT_OF_STOCK", "message": "재고가 부족해요" }`.
 - 상태: 422 입력 오류, 401 미인증/토큰 거부, 403 권한 부족, 404 리소스 없음, 409 업무 규칙 위반.
 - 서버 내부 실패 500·DB 준비 실패 503은 업무 오류와 별도로 같은 본문 구조를 사용합니다.
 - 코드명 기준은 기존 `src/constants/error-messages.ts` / `src/services/errors.ts`입니다. 현재 `FORBIDDEN`, `NOT_FOUND`, `VALIDATION_ERROR`는 없으므로 공통 처리에서는 임의 추가하지 않고 `UNKNOWN`과 의미 있는 메시지를 사용합니다. 신규 코드가 필요하면 프론트 코드·명세를 함께 합의해 변경합니다.
 - 도메인은 FastAPI·SQLAlchemy·Pydantic을 import하지 않습니다. 표현 계층이 도메인 예외를 `core.errors.ApiError` 또는 별도 핸들러로 HTTP에 매핑합니다.
 
-## 인증 계약 (P1 로컬 구현·검증 완료, 공용 배포 대기)
+## 인증 계약 (P1 구현·팀 main 병합·배포 완료)
 
-일반 로그인 기반의 아래 API와 인증 의존성을 로컬에서 구현했습니다. [PR #49](https://github.com/hiju200208-png/KANT_MOA_develop/pull/49)에 최초 인증 커밋 `6644edd`를 공유했으며, 이후 마이그레이션·테스트 설정 정리는 추가 검토 대상입니다. 로컬 성공을 공용 서버 배포 완료로 보지 않습니다.
+일반 로그인 API·인증 의존성은 [PR #49](https://github.com/hiju200208-png/KANT_MOA_develop/pull/49), 최초 이력 보정은 #63, Google 로그인은 #80으로 병합·배포했습니다. 실제 Google 전체 화면 E2E와 메일 발송 같은 미완료 범위는 [최종 현황](FINAL_STATUS.md)에 구분합니다.
 
 | 메서드·경로 | 요청 | 응답·규칙 |
 |---|---|---|
@@ -99,14 +99,14 @@ lifespan에서 DB 연결을 검사하고 종료 시 engine을 dispose합니다. 
 | POST `/auth/logout` | Bearer 토큰 | 204, jti를 DB 블랙리스트에 저장 |
 
 - 사용자 ID: 공용 DB에 UUID로 적용했습니다. P2·P3·P4의 사용자 FK는 `users.id`를 참조합니다.
-- `users`: id UUID PK, google_sub unique(nullable), email unique, password_hash(nullable), nickname, phone(nullable), role(USER/ADMIN), created_at. 일반 회원가입은 Python UUID v4와 USER 역할을 사용하며 이메일 공백 제거·소문자 정규화를 적용합니다. 로그인 수단 필수·이메일 정규화 CHECK는 로컬에 존재하나 공용에는 아직 없습니다. Google 로그인·계정 연결은 후속입니다.
+- `users`: id UUID PK, google_sub unique(nullable), email unique, password_hash(nullable), nickname, phone(nullable), role(USER/ADMIN), created_at. 일반 회원가입은 Python UUID v4와 USER 역할을 사용하며 이메일 공백 제거·소문자 정규화를 적용합니다. 로그인 수단 필수·이메일 정규화 CHECK는 공용 최초 이력 도입 시 적용했습니다. Google 로그인은 구현됐으며 같은 이메일의 기존 계정 자동 연결은 거부합니다.
 - `token_blacklist`: jti PK, expires_at(timezone-aware). 서버 재시작에도 로그아웃 차단 유지.
 - JWT: HS256·30분 만료를 기본으로 sub(사용자 UUID), jti, iat, exp, iss를 사용합니다. 비밀번호는 Argon2로 해싱합니다. `JWT_SECRET`, `JWT_ALGORITHM`, `JWT_EXPIRE_MINUTES`, `JWT_ISSUER`는 환경변수로 설정하며 실제 비밀키는 Git·문서에 기록하지 않습니다.
 - 구현 의존성: `auth.presentation.dependencies`의 `get_current_user`, `require_admin`. 반환 클래스는 같은 모듈의 `CurrentUser`이며 `id: uuid.UUID`, `email: str`, `nickname: str`, `role: str`로 구성됩니다. role은 `USER`/`ADMIN` 문자열이고 JSON의 id는 UUID 문자열입니다. 비밀번호 해시는 반환하지 않습니다.
 - 토큰 누락·서명 실패·만료·블랙리스트·없는 사용자 모두 401. ADMIN 검사는 검증된 서버 사용자 정보 기준입니다.
 - 관리자 생성은 공개 API로 허용하지 않습니다. backend에서 `uv run python scripts/create_admin.py`로 이메일·닉네임·숨김 비밀번호를 입력합니다. 현재 환경변수가 가리키는 DB에 생성되므로 로컬/공용 대상을 먼저 확인해야 합니다. 기존 이메일은 생성 거부하며 자동 승격·비밀번호 덮어쓰기는 하지 않습니다. 서버에서는 리뷰·배포·적용 절차를 거친 뒤 사용합니다.
 - 회원가입 스키마는 이메일 형식, 닉네임 1~50자, 비밀번호 8~128자를 검증하며 role 등 추가 필드는 거부합니다.
-- 브라우저 토큰 저장·복원, 기존 Supabase 세션 교체, 회원 정보 수정·Google 로그인 API는 후속입니다.
+- 브라우저 공통 session 모듈의 토큰 저장·복원 및 Google 로그인은 연결됐습니다. 회원 정보 수정 API는 미연결입니다. 비밀번호 재설정 API·화면은 #85로 추가됐지만 운영 시연 모드는 false이며 메일 발송은 미구현입니다.
 
 팀원 사용 예시:
 
@@ -123,7 +123,7 @@ from auth.presentation.dependencies import CurrentUser, get_current_user, requir
 
 소유자 ID는 검증된 `user.id`를 사용합니다. 프론트 요청의 user_id나 검증하지 않은 JWT payload를 신뢰하지 않습니다. 로그인은 OAuth2 form의 username에 이메일을 전달하고 이후 요청에 `Authorization: Bearer <access_token>`을 사용합니다. Swagger에서는 Authorize로 인증을 설정합니다. 로그아웃은 204, 동일 토큰 재요청은 401이며 반복 로그아웃도 401입니다.
 
-## 10/26 로컬 마이그레이션 및 공용 DB 적용 대기
+## 10/26 로컬 마이그레이션 및 당시 공용 적용 대기 기록
 
 로컬에서 다음 단일 revision 계보를 적용했습니다.
 
@@ -171,8 +171,8 @@ P2의 별도 PostgreSQL 테스트는 기존 `P2_RUN_POSTGRES_TESTS` 계약을 �
 - 고정 이미지: `backend/assets/` → `/static/`; 업로드: `backend/uploads/` → `/uploads/`.
 - DB에는 `/static/products/example.webp`처럼 상대 경로를 저장하고 프론트에서 API origin과 조합합니다.
 - 두 경로는 공개 파일입니다. 개인정보·키·문서 저장 금지. uploads 내용은 Git 제외이며 별도 백업이 필요합니다.
-- 현재는 서빙만 구현했습니다. 관리자 업로드·용량/형식 검사·서버 생성 파일명·쓰기 권한 검증은 미구현입니다.
-- 이전 팀 Storage 원본 확보·사용 권한 확인과 실제 이관은 P2 담당입니다. 실제 아티스트 저작물은 기존 학습·시연 조건을 유지합니다.
+- 대표 이미지 교체는 P4 #50에서 JPG/PNG/WebP·5MB·매직 바이트 검사와 서버 생성 파일명을 구현했습니다. DB 실패 시 이번 요청의 파일만 정리하며 기존 이미지·commit 후 참조 파일은 보존합니다.
+- P2는 실제 카탈로그와 원본 이미지 이관을 완료했습니다. 원본 파일은 별도 준비 자산이며 Git clone만으로 전부 복원되지 않습니다. 실제 아티스트 저작물은 기존 학습·시연 조건을 유지합니다.
 
 ## 로컬 실행 (PowerShell)
 
@@ -200,7 +200,7 @@ uv run uvicorn main:app --app-dir src --reload --host 127.0.0.1 --port 8000
 
 종료: 서버 터미널 Ctrl+C, 루트에서 `docker compose stop`. DB는 named volume에 남습니다. `docker compose down -v`는 DB를 삭제하므로 일반 종료에 사용하지 않습니다.
 
-프론트는 별도 `npm run dev`가 필요하며 현재 Supabase 의존성이 남아 있어 새 백엔드만으로 동작하지 않습니다. NEXT_PUBLIC_API_URL 연결·기존 인증/서비스/이미지 설정 교체·미이전 화면 숨김은 후속 작업입니다.
+프론트는 별도 `npm run dev`가 필요합니다. `.env.local`의 NEXT_PUBLIC_API_URL·API_INTERNAL_URL을 로컬 API로 지정하면 주요 쇼핑·인증 화면이 FastAPI를 사용합니다. Supabase SDK·과거 자료는 남아 있지만 현재 주요 흐름의 Supabase 키는 필수가 아닙니다. Google·칸트봇은 별도 설정이 필요하며 내 정보 수정·메일 발송은 미구현입니다.
 
 ## 10/23 목표와 현재 상태
 
@@ -230,5 +230,5 @@ KANT MOA 대화의 16:09 관리자 연동 문의를 확인한 뒤, 여름이 이
 - 발송 이후 고객의 일반 취소는 409 INVALID_ORDER로 막아 출고 재고가 복구되지 않게 한다. 반품·환불·택배사/운송장 연동은 범위 밖이다.
 - 발송·취소 모두 사용자 행 → 주문 행 잠금. 배송 기록·처리 관리자·시각은 같은 세션에서 저장하고 서비스가 한 번 commit/실패 시 rollback한다. 배송 처리 자체는 상품·재고·결제 상태를 변경하지 않는다.
 - 후속 revision `4c726d1a91ab`(부모 `3f21520f9615`)은 `order_shipments` 테이블만 추가한다. 기존 주문·회원·상품·재고는 수정하지 않는다.
-- **배포 순서 필수:** 최신 백업·팀 적용 공지 → 최초 baseline 이력(3f21520f9615) 대조·채택 → 승인된 후속 배송 migration → 새 API 배포 → 관리자 화면 배포/검증. 새 취소 코드는 배송 테이블을 읽으므로 migration 전에 코드를 배포하지 않는다. 공용 DB에는 아직 실행하지 않았다.
+- **배포 순서 필수:** 최신 백업·팀 적용 공지 → 최초 baseline 이력(3f21520f9615) 대조·채택 → 승인된 후속 배송 migration → 새 API 배포 → 관리자 화면 배포/검증. 새 취소 코드는 배송 테이블을 읽으므로 migration 전에 코드를 배포하지 않는다. 이 순서는 이후 공용 baseline 도입·배송 migration·최신 API/프론트 배포로 완료했습니다. 당시 계획과 최종 적용 결과는 [최종 현황](FINAL_STATUS.md)을 대조합니다.
 - 최초 이력 도구의 비교 DB는 전용 로컬 DB를 `alembic upgrade 3f21520f9615`로 준비한다. 저장소에는 알려진 단일 배송 head와 정확한 부모만 추가 허용하고 미검토·복수 head 거부는 유지한다. 최초 채택이 기록하는 revision은 계속 3f21520f9615다.

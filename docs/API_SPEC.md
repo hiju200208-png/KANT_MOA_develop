@@ -1,5 +1,7 @@
 # API 명세 (services 레이어)
 
+> **프로젝트1 인수 자료입니다.** 아래 Supabase·Vercel·옛 역할/브랜치·RPC 설명은 당시 기준으로 보존합니다. 현재 프로젝트2의 실행·개발 계약은 [README](../README.md)·[PROJECT2](PROJECT2.md), 최종 구현/운영은 [FINAL_STATUS](FINAL_STATUS.md)를 따릅니다. 이 문서의 초기 SQL·Supabase db push를 현재 공용 DB에 실행하지 않습니다.
+
 > 프론트가 호출하는 유일한 데이터 인터페이스는 `src/services/`입니다. 이 문서는 그 함수들의 입력·출력·에러를 정의합니다.
 > 별도 REST API는 없습니다. 내부적으로는 Supabase(`from().select()`, `rpc()`)를 호출합니다.
 > 스키마·RPC 원본은 `docs/DB_DESIGN.md`, 백엔드 규칙은 `docs/BACKEND.md`를 따릅니다.

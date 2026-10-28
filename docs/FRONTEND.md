@@ -1,5 +1,7 @@
 # 프론트엔드 작업 가이드 (에이전트용)
 
+> **프로젝트1 인수 자료입니다.** 아래 Supabase·Vercel·옛 역할/브랜치·RPC 설명은 당시 기준으로 보존합니다. 현재 프로젝트2의 실행·개발 계약은 [README](../README.md)·[PROJECT2](PROJECT2.md), 최종 구현/운영은 [FINAL_STATUS](FINAL_STATUS.md)를 따릅니다. 이 문서의 초기 SQL·Supabase db push를 현재 공용 DB에 실행하지 않습니다.
+
 > 프론트엔드 작업 시 사람과 코딩 에이전트가 따라야 할 규칙입니다.
 > 공통 규칙(브랜치, 커밋, PR, 작업 기록)은 `docs/SETUP.md`, 데이터 구조는 `docs/DB_DESIGN.md`를 따릅니다.
 > 이 문서의 **멈춤 규칙(3장)** 에 해당하면 에이전트는 즉시 작업을 멈추고 사람에게 보고합니다.

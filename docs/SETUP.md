@@ -1,5 +1,7 @@
 # 굿즈샵 프로젝트 초기 세팅 & 협업 가이드
 
+> **프로젝트1 인수 자료입니다.** 아래 Supabase·Vercel·옛 역할/브랜치·RPC 설명은 당시 기준으로 보존합니다. 현재 프로젝트2의 실행·개발 계약은 [README](../README.md)·[PROJECT2](PROJECT2.md), 최종 구현/운영은 [FINAL_STATUS](FINAL_STATUS.md)를 따릅니다. 이 문서의 초기 SQL·Supabase db push를 현재 공용 DB에 실행하지 않습니다.
+
 > 이 문서는 팀원과 코딩 에이전트가 함께 참고하는 기준 문서입니다.
 > 에이전트는 작업 전에 이 문서와 담당 영역 문서(`docs/FRONTEND.md` 또는 `docs/BACKEND.md`), 필요 시 `docs/DB_DESIGN.md`를 먼저 읽고 규칙을 따릅니다.
 

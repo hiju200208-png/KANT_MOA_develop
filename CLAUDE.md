@@ -11,6 +11,11 @@
 - 재고를 바꾸는 코드를 새로 만들지 않는다. P2 상품 도메인의 `decrease_stock` / `increase_stock`과 P2 Repository의 잠금 조회 함수를 호출한다.
 - 테이블 자동 생성·시드 덮어쓰기를 하지 않는다. 스키마·시드 변경은 책임자 승인 후 PR.
 
+## 최종 상태 (2026-10-28)
+- 기능 기준 main e0c7ad8까지 API·프론트 배포 완료. 결과·검증 조건·미구현 범위는 `docs/FINAL_STATUS.md`를 먼저 읽는다.
+- 운영은 Docker 프론트/API + 서버 설치 PostgreSQL 내부 연결. Supabase Storage는 배너 영상 전달에만 사용한다.
+- 과거 날짜의 계획·미배포 기록을 현재 지시로 재실행하지 않는다.
+
 ## 프로젝트 개요
 - 이전 3조 KANT_MOA(아이돌 굿즈샵, Next.js + Supabase)를 인수해 Supabase를 FastAPI 백엔드로 대체한다.
 - 하나의 FastAPI 서버에서 P1~P4가 각자 담당 기능의 4계층을 직접 구현하고 화면 → API → 도메인 → PostgreSQL까지 검증한다.
@@ -20,12 +25,12 @@
 | 담당 | 이름 | 범위 | 폴더 |
 | --- | --- | --- | --- |
 | P1 | 희주 | 공통 환경, 이미지 서빙, 회원가입·로그인·JWT·블랙리스트·내 정보·USER/ADMIN, CORS·로깅 | `auth/` |
-| P2 | 상재 | 상품·카탈로그·좋아요, 검색·필터·페이지네이션, 시드·이미지 이관, 재고 규칙 소유 | `products/` |
-| P3 | 여름 | 장바구니·비회원 병합·배송지·주문·모의 결제·취소, 재고 차감·복구 트랜잭션·rollback | `orders/` |
-| P4 | 충만 | 관리자 상품 목록·재고 수정, 관리자 화면, 403 검증 | `admin/` |
+| P2 | 상재 | 상품·카탈로그·좋아요, 검색·필터·페이지네이션, 시드·이미지 이관, 재고 규칙 소유·통합 검증/배포·성능 | `products/` |
+| P3 | 여름 | 장바구니·비회원 병합·배송지·주문·모의 결제·취소, 재고 차감·복구 트랜잭션·rollback, 관리자 주문·배송 | `orders/` |
+| P4 | 충만 | 관리자 상품·상태·재고·이미지·공지·대시보드, 관리자 화면·403 검증, 재설정 지원 | `admin/` |
 
 ## Tech Stack
-- 백엔드: Python 3.13+, uv, FastAPI, PostgreSQL(Docker), SQLAlchemy 2 비동기 + asyncpg, Pydantic
+- 백엔드: Python 3.13+, uv, FastAPI, PostgreSQL(로컬/CI Docker·운영 서버 설치본), SQLAlchemy 2 비동기 + asyncpg, Pydantic
 - 프론트: Next.js 16 (기존 3조 코드), Node 24, npm, 포트 3000
 - 인증: OAuth2 password, JWT(sub=사용자 UUID, jti, HS256), Argon2 해싱, DB 블랙리스트
 
@@ -42,12 +47,12 @@ Next.js → presentation/router.py + schemas.py → application/service.py → d
 - 재고 변경 시 `SELECT ... FOR UPDATE`로 잠그고, 여러 옵션은 id 오름차순으로 잠근다(데드락 방지).
 
 ## 공통 API 계약
-- 기본 주소 `http://localhost:8000`, `/api` 접두사 없음.
+- 로컬 기본 주소 `http://localhost:8000`, `/api` 접두사 없음. 공개 gateway API는 `/api`, Swagger는 `/api/docs`.
 - 목록 응답: `{ "items": [], "total": 0, "page": 1, "size": 20 }`
 - 오류 응답: `{ "code": "OUT_OF_STOCK", "message": "재고가 부족해요" }`
 - 상태 코드: 422 입력 오류 / 401 미인증·토큰 거부 / 403 권한 부족 / 404 없음 / 409 업무 규칙 위반 / 500·503 서버·DB
 - 오류 code 이름은 프론트 `src/constants/error-messages.ts`, `src/services/errors.ts` 기준. 없는 코드는 `UNKNOWN` + 의미 있는 메시지.
-- 인증 의존성: `from auth.presentation.dependencies import get_current_user, require_admin` (P1 구현 전에는 임시 의존성)
+- 인증 의존성: `from auth.presentation.dependencies import get_current_user, require_admin` (현재 P1 실제 인증 의존성 사용)
 
 ## Build / Test Commands (PowerShell)
 - DB: 루트에서 `docker compose up -d db`, `docker compose ps`

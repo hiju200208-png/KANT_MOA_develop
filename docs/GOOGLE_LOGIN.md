@@ -1,5 +1,7 @@
 # Google 로그인 구현·설정
 
+> **후속 배포 반영:** 아래는 Google 도입 당시의 코드·웹 보존 기록입니다. 이후 API·웹 모두 e0c7ad8로 배포했고 인증 설정을 유지했습니다. 실제 공용 Google 전체 E2E 미확인 범위는 [최종 현황](FINAL_STATUS.md)과 구분합니다.
+
 2026-10-28. **로컬 구현·자동 검사·실제 Google 로그인과 공용 배포 완료. 실제 공용 Google 계정 로그인은 사용자 확인 대기입니다.**
 
 ## 공용 배포 결과 (10/28 KST)
@@ -11,7 +13,7 @@
 - 배포 전후 DB 행 내용 지문·행 수·시퀀스 값이 같고, JWT_SECRET·DATABASE_URL 동일 여부를 내부 비교했습니다. 상품 이미지 1,800개·아티스트 이미지 47개와 기존 업로드 마운트를 유지했습니다. SQL·migration·seed는 실행하지 않았습니다.
 - 공용 Google 설정의 클라이언트 ID 일치·nonce·Secure/HttpOnly/SameSite 쿠키·no-store를 확인했습니다. 브라우저에서 [공용 로그인](https://letdown-kilometer-nutcase.ngrok-free.dev/login)의 Google 버튼 표시도 확인했습니다.
 - release: `/home/kant/kant-moa/site-releases/google-20261028T013909Z-f5b11c9`. 복구 정보: `/home/kant/kant-moa/backups/before-google-20261028T013909Z-f5b11c9`. 과거 스택은 복구용으로 보존했습니다.
-- 현재 `/home/kant/kant-moa/active-site.json`이 새 Compose 프로젝트·release·env 경로를 가리킵니다. 후속 배포는 이 파일을 기준으로 하며 과거 compose.backend.yml로 서비스를 중복 실행하지 않습니다. 실제 env·DB 지문 파일은 서버에서만 관리합니다.
+- 이 Google 배포 당시 `/home/kant/kant-moa/active-site.json`이 새 Compose 프로젝트·release·env 경로를 가리켰습니다. 후속 배포는 이 파일을 기준으로 하며 과거 compose.backend.yml로 서비스를 중복 실행하지 않습니다. 실제 env·DB 지문 파일은 서버에서만 관리합니다.
 - 공용 실제 Google 계정 선택·로그인·새로고침·로그아웃은 사용자 확인 대기입니다. 배포 스모크 검증 중 테스트 회원 생성·주문·재고 쓰기는 하지 않았습니다.
 
 ## 실제 로컬 확인 결과

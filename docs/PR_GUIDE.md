@@ -1,6 +1,6 @@
 # PR 가이드 · 2조 공통
 
-> 4명 모두 PR을 만들고 머지할 수 있다. 그래서 "누가 확인했나"가 아니라 **GitHub가 검사를 강제**하고, 각자 PC에서도 **CI와 같은 조건**으로 미리 검사한다.
+> 4명 모두 PR을 만들고 머지할 수 있다. 그래서 "누가 확인했나"가 아니라 **로컬 hook·CI·설정된 브랜치 보호로 검사를 연결**하고, 각자 PC에서도 **CI와 같은 조건**으로 미리 검사한다.
 > 팀 규칙 원본은 `CLAUDE.md` · `docs/PROJECT2.md`. 충돌하면 그쪽을 따른다.
 
 ## 1. 처음 한 번만 (clone마다)
@@ -64,7 +64,7 @@ git config core.hooksPath .githooks
    - **Do not allow bypassing the above settings** (관리자도 예외 없음)
 4. 끌 것: Allow force pushes, Allow deletions
 
-설정 후에는 CI가 빨간색이거나 승인이 없으면 머지 버튼이 잠긴다.
+위 조건이 실제로 활성화되고 해당 계정에도 적용될 때 CI·승인 조건이 병합을 제한합니다. 이 문서는 권장 설정이며 현재 저장소의 적용 상태를 증명하지 않습니다. PR 체크박스는 본문 텍스트라 비어 있어도 자체로 병합을 막지 않습니다. 초록 병합 버튼만으로 명세 작성·리뷰·검증 완료를 판단하지 않습니다.
 
 ## 5. 자주 막히는 곳
 
@@ -74,7 +74,7 @@ git config core.hooksPath .githooks
 | `node_modules가 없어요` | 루트에서 `npm ci` |
 | hook이 안 돈다 | 1장 명령을 이 clone에서 실행했는지 확인: `git config core.hooksPath` → `.githooks` |
 | 로컬은 통과, CI는 실패 | `git merge origin/main` 후 다시 검사. 그래도 다르면 팀 채널에 CI 로그 공유 |
-| 급해서 검사를 건너뛰고 싶다 | `--no-verify`는 쓰지 않는다. 건너뛰어도 브랜치 보호의 CI가 머지를 막는다 |
+| 급해서 검사를 건너뛰고 싶다 | `--no-verify`는 쓰지 않는다. 로컬 hook을 건너뛰어도 되는 뜻이 아니며, 원격 차단 여부는 실제 브랜치 보호 설정을 확인한다 |
 
 ## 6. AI와 함께 검사하는 방식 (10/27 테스트부터)
 

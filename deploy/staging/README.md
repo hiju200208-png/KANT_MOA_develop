@@ -1,5 +1,7 @@
 # 학원 서버 FastAPI 실행
 
+> **초기 API 전용 구성 보관 문서입니다.** 현재는 Next.js·FastAPI·Nginx와 서버 설치 PostgreSQL 내부 연결로 전환했습니다. 아래 Docker DB·health 전용 준비 명령을 운영에 재실행하지 않습니다. [현재 배포 안내](SITE.md)·[최종 현황](../../docs/FINAL_STATUS.md).
+
 **10/26 서버 적용·DB 연결·외부 Swagger 검증을 완료했습니다.** 현재 상태와 팀원/에이전트
 인계 사항은 [docs/STAGING.md](../../docs/STAGING.md)를 먼저 확인합니다.
 아래 비밀 환경 파일 생성 명령은 새 환경 최초 준비용이며, 현재 서버에는 이미 파일이 있습니다.
