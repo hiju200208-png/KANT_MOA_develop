@@ -43,7 +43,7 @@ export function productDetail(row: ApiProductDetail, origin: string): ProductDet
   };
 }
 
-// 기존 화면의 limit/offset(최대 500)을 API의 고정 size=100 페이지로 변환한다.
+// 화면에서 필요한 수만 요청하고, 100개를 넘는 범위는 API 페이지로 나눠 조회한다.
 export async function productRange(
   load: (page: number, size: number) => Promise<ApiPage<ApiProduct>>,
   origin: string, offset = 0, limit = 20,
@@ -51,7 +51,7 @@ export async function productRange(
   if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 500) {
     throw new RangeError('상품 조회 범위를 확인해주세요.');
   }
-  const size = 100;
+  const size = Math.min(100, limit);
   const firstPage = Math.floor(offset / size) + 1;
   const first = await load(firstPage, size);
   const rows = [...first.items];

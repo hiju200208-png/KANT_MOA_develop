@@ -34,19 +34,19 @@ test('상세: 옵션의 추가금·최종 가격·무제한 구매 제한과 이
   assert.deepEqual(result.variants[0], { id: 2, optionName: 'A', extraPrice: 25, price: 125, stock: 0, maxPerUser: null, isSoldOut: true });
 });
 
-for (const [offset, limit] of [[0, 20], [0, 500], [95, 25], [200, 100], [380, 25], [500, 20]]) {
+for (const [offset, limit, pageSize, firstPage] of [[0, 20, 20, 1], [0, 500, 100, 1], [95, 25, 25, 4], [200, 100, 100, 3], [380, 25, 25, 16], [500, 20, 20, 26]]) {
   test(`더 보기와 비정렬 구간: offset=${offset}, limit=${limit}`, async () => {
     const rows = Array.from({ length: 387 }, (_, index) => ({ ...row, id: index + 1 }));
     const calls: number[] = [];
     const result = await productRange(async (page, size) => {
-      assert.equal(size, 100);
+      assert.equal(size, pageSize);
       calls.push(page);
       return { items: rows.slice((page - 1) * size, page * size), total: rows.length, page, size };
     }, origin, offset, limit);
     assert.equal(result.total, 387);
     assert.deepEqual(result.items.map((p) => p.id), rows.slice(offset, offset + limit).map((p) => p.id));
     assert.equal(new Set(result.items.map((p) => p.id)).size, result.items.length);
-    assert.equal(calls[0], Math.floor(offset / 100) + 1);
+    assert.equal(calls[0], firstPage);
     assert.ok(calls.length <= 5);
   });
 }
