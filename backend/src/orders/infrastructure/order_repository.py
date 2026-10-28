@@ -1,12 +1,14 @@
 # [infrastructure] 주문 저장소: orders + order_items를 읽고 써서 도메인 Order로 바꾼다. commit하지 않는다.
 from uuid import UUID
 
-from sqlalchemy import func, insert, select, text, update
+from sqlalchemy import func, insert, select, text, update, or_, cast, Text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from orders.domain.checkout import OrderDraft, ShippingPolicy
 from orders.domain.order import Order, OrderItem
 from orders.infrastructure.locks import lock_user
+from orders.infrastructure.shipping_model import ShipmentModel
+from orders.domain.shipping import Shipment
 from orders.infrastructure.models import OrderItemModel, OrderModel
 
 
@@ -113,5 +115,48 @@ class OrderRepository:
             select(OrderModel).where(*conditions)
             .order_by(OrderModel.created_at.desc(), OrderModel.id.desc())
             .offset((page - 1) * size).limit(size))).all()
+        items = await self._items([row.id for row in rows])
+        return [_to_order(row, items[row.id]) for row in rows], total
+
+
+    async def shipment(self, order_id):
+        """기록이 없으면 아직 준비 중이다. 결제 전 주문은 표현 계층에서 배송 대상 아님으로 표시한다."""
+        row = await self._session.scalar(select(ShipmentModel).where(ShipmentModel.order_id == order_id)
+                                         .execution_options(populate_existing=True))
+        return Shipment(row.status, row.shipped_at, row.delivered_at) if row else Shipment()
+
+    async def has_dispatched(self, order_id):
+        return (await self.shipment(order_id)).status in {"shipped", "delivered"}
+
+    async def save_shipment(self, order_id, shipment, actor_id):
+        # 호출자가 주문 행을 잠근 같은 세션에서만 저장하며 Repository는 commit하지 않는다.
+        from sqlalchemy.dialects.postgresql import insert as pg_insert
+        values = dict(order_id=order_id, status=shipment.status, shipped_at=shipment.shipped_at,
+                      delivered_at=shipment.delivered_at, updated_by=actor_id)
+        statement = pg_insert(ShipmentModel).values(**values)
+        await self._session.execute(statement.on_conflict_do_update(
+            index_elements=[ShipmentModel.order_id], set_={k: v for k, v in values.items() if k != "order_id"}))
+
+    async def list_admin(self, status, shipping_status, keyword, page, size):
+        """관리자 전체 주문 목록. 검색·필터 이후 개수를 세고 최신순 페이지를 읽는다."""
+        conditions = []
+        if status:
+            conditions.append(OrderModel.status == status)
+        if shipping_status:
+            conditions.append(OrderModel.status == "paid")
+            if shipping_status == "preparing":
+                conditions.append(ShipmentModel.order_id.is_(None))
+            else:
+                conditions.append(ShipmentModel.status == shipping_status)
+        if keyword:
+            pattern = f"%{_escape_like(keyword)}%"
+            conditions.append(or_(OrderModel.recipient_name.ilike(pattern, escape="\\"),
+                                  cast(OrderModel.id, Text).ilike(pattern, escape="\\"),
+                                  OrderModel.id.in_(select(OrderItemModel.order_id).where(
+                                      OrderItemModel.product_name.ilike(pattern, escape="\\")))))
+        base = select(OrderModel).outerjoin(ShipmentModel, ShipmentModel.order_id == OrderModel.id).where(*conditions)
+        total = (await self._session.execute(select(func.count()).select_from(base.subquery()))).scalar_one()
+        rows = (await self._session.scalars(base.order_by(OrderModel.created_at.desc(), OrderModel.id.desc())
+                                            .offset((page - 1) * size).limit(size))).all()
         items = await self._items([row.id for row in rows])
         return [_to_order(row, items[row.id]) for row in rows], total

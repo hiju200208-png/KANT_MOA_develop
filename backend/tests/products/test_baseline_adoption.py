@@ -40,7 +40,7 @@ def test_baseline_adoption_preserves_data_and_rolls_back(postgres_url, monkeypat
             reference_url = parsed.set(database=reference_name).render_as_string(hide_password=False)
             target_url = parsed.set(database=target_name).render_as_string(hide_password=False)
             env = {**os.environ, "DATABASE_URL": reference_url, "JWT_SECRET": "baseline-test-only-secret-00000000000000000000"}
-            result = subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"],
+            result = subprocess.run([sys.executable, "-m", "alembic", "upgrade", "3f21520f9615"],
                                     cwd=ROOT, env=env, capture_output=True)
             assert result.returncode == 0, "검증 기준 DB 마이그레이션 실패"
             target = await connect(target_url)

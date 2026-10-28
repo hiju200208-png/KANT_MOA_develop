@@ -72,6 +72,9 @@ class FakeOrderRepository(_Pending):
         self.locked_orders.append(order_id)
         return await self.get(order_id)
 
+    async def has_dispatched(self, order_id):
+        return False
+
     async def save_status(self, order):
         self.data[order.id] = copy.deepcopy(order)
 

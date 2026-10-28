@@ -8,6 +8,7 @@ from orders.application.ports import CartRepositoryPort, OrderRepositoryPort, St
 from orders.domain.checkout import Recipient, ShippingPolicy, draft_direct, draft_from_cart, ensure_payable
 from orders.domain.exceptions import OrderNotFound
 from orders.domain.order import Order
+from orders.domain.shipping import ensure_cancellable
 
 
 def _utc_now() -> datetime:
@@ -96,6 +97,7 @@ class OrderService:
         try:
             await self._orders.lock_owner(user_id)
             order = await self._get_owned(user_id, order_id, lock=True)
+            ensure_cancellable(await self._orders.has_dispatched(order_id))
             needs_restore = order.cancel(self._now())
             if needs_restore:
                 quantities = order.quantities

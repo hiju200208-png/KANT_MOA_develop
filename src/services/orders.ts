@@ -1,6 +1,7 @@
 import type { CreateOrderInput, Order, OrderStatus, OrderSummary } from '@/types/app';
 import { ApiError, apiFetch, isLoggedIn, jsonBody } from './api';
 import { AppError } from './errors';
+import { readOrderHistory } from './orderHistory';
 
 // 주문·바로 구매·모의 결제·취소: FastAPI /orders (P3). 서버가 소유권(403)·재고·구매 제한을 검사한다
 
@@ -73,11 +74,13 @@ const toSummary = (o: OrderResponse): OrderSummary => ({
   createdAt: o.created_at,
 });
 
-// 최신순. 마이페이지 목록은 한 번에 최대 100건 (API 페이지 크기 상한)
+// 최신순 전체 내역. 100건 이후 주문도 가져와 상태 탭의 목록과 개수에서 빠지지 않게 한다.
 export async function getOrders(): Promise<OrderSummary[]> {
   requireAuth();
-  const page = await apiFetch<{ items: OrderResponse[] }>('/orders?page=1&size=100');
-  return page.items.map(toSummary);
+  const orders = await readOrderHistory((page, size) =>
+    apiFetch<{ items: OrderResponse[]; total: number }>(`/orders?page=${page}&size=${size}`),
+  );
+  return orders.map(toSummary);
 }
 
 export async function getOrder(orderId: string): Promise<Order | null> {
