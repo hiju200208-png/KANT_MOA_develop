@@ -1,10 +1,32 @@
 import type { Profile, SignInInput, SignUpInput, UpdateProfileInput } from '@/types/app';
 import { mergeGuestCart } from './cart';
-import { apiFetch, jsonBody } from './api';
+import { apiFetch, jsonBody, ApiError } from './api';
 import { AppError } from './errors';
 import { ACCESS_TOKEN_STORAGE_KEY, AUTH_CHANGE_EVENT, clearAccessToken, getAccessToken, setAccessToken } from './session';
 
 type CurrentUser = { id: string; email: string; nickname: string; role: string };
+
+export type GoogleLoginConfig = { client_id: string | null; nonce: string | null };
+
+export async function getGoogleLoginConfig(signal?: AbortSignal): Promise<GoogleLoginConfig> {
+  return apiFetch<GoogleLoginConfig>('/auth/google/config', { credentials: 'include', signal });
+}
+
+export async function signInWithGoogle(credential: string, nonce: string): Promise<void> {
+  let body: { access_token: string };
+  try {
+    body = await apiFetch<{ access_token: string }>('/auth/google', {
+      method: 'POST', credentials: 'include', ...jsonBody({ credential, nonce }),
+    });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 409) {
+      throw new Error('같은 이메일의 기존 계정이 있거나 Google 설정이 준비되지 않았어요. 기존 로그인 방법을 확인해주세요.');
+    }
+    throw error;
+  }
+  setAccessToken(body.access_token);
+  await mergeGuestCart();
+}
 
 export async function signUp(input: SignUpInput): Promise<void> {
   await apiFetch<CurrentUser>('/auth/signup', { method: 'POST', ...jsonBody(input) });
