@@ -1,6 +1,18 @@
 # Google 로그인 구현·설정
 
-2026-10-28. **로컬 구현·자동 검사·실제 Google 로그인 검증 완료. 공용 배포는 아직 하지 않았습니다.**
+2026-10-28. **로컬 구현·자동 검사·실제 Google 로그인과 공용 배포 완료. 실제 공용 Google 계정 로그인은 사용자 확인 대기입니다.**
+
+## 공용 배포 결과 (10/28 KST)
+
+- [PR #80](https://github.com/hiju200208-png/KANT_MOA_develop/pull/80) CI 성공·변경 최종 확인 후 main에 병합했습니다. Google 코드 기준은 `f5b11c99b3ddd4ae4da863db2b5bafcdab87fe4a`입니다.
+- 당시 실행 중인 웹은 상재님 커밋 `2f1b772d28121c3a7a14cc98809aa334cc393a03`이었습니다. main보다 앞서 배포된 배너·상품 로딩 개선 18개 파일을 새 release에도 보존했습니다. 따라서 실행 소스는 main 단독과 같다고 표현하지 않습니다. 서버 `google-source.json`에 두 커밋과 보존 파일 SHA256을 남겼습니다.
+- 기존 API·웹·게이트웨이를 읽기 전용 점검하고, 별도 후보 스택에서 빌드·health·페이지·카탈로그·Google 설정을 검증한 뒤 공개 포트를 전환했습니다. 기존 서버 app 체크아웃을 덮어쓰지 않았습니다.
+- 최종 결과 `GOOGLE_SITE_DEPLOYED`, rollback 없음. 홈페이지·로그인·health·API 명세·상품 목록·Google 설정 모두 200이며 공개 상품은 387개입니다(숨김 포함 DB 상품 389개와 구분).
+- 배포 전후 DB 행 내용 지문·행 수·시퀀스 값이 같고, JWT_SECRET·DATABASE_URL 동일 여부를 내부 비교했습니다. 상품 이미지 1,800개·아티스트 이미지 47개와 기존 업로드 마운트를 유지했습니다. SQL·migration·seed는 실행하지 않았습니다.
+- 공용 Google 설정의 클라이언트 ID 일치·nonce·Secure/HttpOnly/SameSite 쿠키·no-store를 확인했습니다. 브라우저에서 [공용 로그인](https://letdown-kilometer-nutcase.ngrok-free.dev/login)의 Google 버튼 표시도 확인했습니다.
+- release: `/home/kant/kant-moa/site-releases/google-20261028T013909Z-f5b11c9`. 복구 정보: `/home/kant/kant-moa/backups/before-google-20261028T013909Z-f5b11c9`. 과거 스택은 복구용으로 보존했습니다.
+- 현재 `/home/kant/kant-moa/active-site.json`이 새 Compose 프로젝트·release·env 경로를 가리킵니다. 후속 배포는 이 파일을 기준으로 하며 과거 compose.backend.yml로 서비스를 중복 실행하지 않습니다. 실제 env·DB 지문 파일은 서버에서만 관리합니다.
+- 공용 실제 Google 계정 선택·로그인·새로고침·로그아웃은 사용자 확인 대기입니다. 배포 스모크 검증 중 테스트 회원 생성·주문·재고 쓰기는 하지 않았습니다.
 
 ## 실제 로컬 확인 결과
 
@@ -56,4 +68,4 @@ GOOGLE_COOKIE_SECURE=false
 
 실제 Google 계정으로 최초 USER 가입 → 두 번째 로그인 동일 사용자 → 새로고침 복원 → 비회원 장바구니 병합 → 로그아웃을 확인합니다. 기존 이메일 충돌은 로컬 테스트 계정으로 검증합니다. Google 계정·토큰을 기록하지 않고 결과만 남깁니다. 브라우저 팝업·FedCM 정책은 실제 배포 원본에서 확인해야 합니다.
 
-공용 서버·DB에는 이번 구현을 배포하거나 테스트 데이터를 넣지 않았습니다. 자동 테스트의 Google 토큰은 테스트 RSA 키로 서명한 값이고 실제 Google 로그인을 대체하지 않습니다.
+자동 검사·로컬 검증 단계에서는 공용 서버·DB에 접근하지 않았으며, 이후 공용 배포 결과는 이 문서 상단에 별도로 기록했습니다. 자동 테스트의 Google 토큰은 테스트 RSA 키로 서명한 값이고 실제 Google 로그인을 대체하지 않습니다.
