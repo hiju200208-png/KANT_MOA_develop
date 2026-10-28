@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { HERO_VIDEOS } from '../src/components/home/heroVideos.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const artists = ['tws', 'bts'].map((slug, i) => ({ id: i + 1, slug, name: slug.toUpperCase(),
+const artists = ['tws', 'cortis', 'le-sserafim', 'bts'].map((slug, i) => ({ id: i + 1, slug, name: slug.toUpperCase(),
   name_ko: slug.toUpperCase(), logo_path: null, hero_image_path: null, theme_color: '#111111', tagline: null }));
 const requests = [];
 const pending = [];
@@ -81,6 +81,10 @@ try {
     html += decoder.decode(chunk.value, { stream: true });
   }
   assert.equal(released, false, 'Video must arrive while all product responses are held');
+  const videoTags = html.match(/<video\b[^>]*>/gi) ?? [];
+  const initialVideo = videoTags.find((tag) => tag.includes(`src="${HERO_VIDEOS.tws.src}"`));
+  assert(initialVideo && /\bautoplay\b/i.test(initialVideo), 'Initial video must start without waiting for hydration');
+  assert.equal(videoTags.filter((tag) => /\bautoplay\b/i.test(tag)).length, 1, 'Only the active video may autoplay');
   const video = await fetch(new URL(HERO_VIDEOS.tws.src, site), { headers: { Range: 'bytes=0-1023' } });
   assert.equal(video.status, 206, 'Versioned video must support partial download');
   assert.equal((await video.arrayBuffer()).byteLength, 1024);

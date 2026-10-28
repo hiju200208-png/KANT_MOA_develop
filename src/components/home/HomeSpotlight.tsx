@@ -228,7 +228,8 @@ function Slide({ artist, active, video }: { artist: SpotlightArtist; active: boo
     <li aria-roledescription="slide" aria-label={artist.name} aria-hidden={!active} inert={!active} style={artistThemeStyle(artist.themeColor)} className="w-full shrink-0">
       <div className="content-shell relative">
         {kind && <KindBadge kind={kind} />}
-        <div className="grid items-center gap-4 pt-4 pb-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-6 md:pt-2 md:pb-6">
+        {/* 상품 슬라이드가 늦게 추가돼도 영상 배경이 커지지 않도록 상품 이미지 영역까지 미리 확보한다. */}
+        <div className="grid min-h-[540px] items-center gap-4 pt-4 pb-6 md:min-h-[472px] md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-6 md:pt-2 md:pb-6">
           <div className={`flex flex-col gap-3 md:gap-4 ${video ? "text-white text-shadow-[0_1px_10px_rgb(0_0_0/0.5)]" : ""}`}>
             <span style={video ? { color: video.accent } : undefined} className={`text-[11px] font-semibold tracking-[0.22em] md:text-xs ${video ? "" : "text-neutral-500"}`}>
               {artist.name} · OFFICIAL GOODS
@@ -358,7 +359,8 @@ function VideoBackdrop({
     }
     onStart(); // 다시 돌아왔을 때 이전에 끝난·막힌 기록을 지운다
     video.muted = !soundRef.current;
-    video.currentTime = 0;
+    // HTML autoplay로 이미 시작한 첫 영상은 React 준비 시 처음으로 되감지 않는다.
+    if (video.paused || video.ended) video.currentTime = 0;
     const play = () => {
       video.muted = !soundRef.current; // 소리를 켜 두지 않았으면 항상 음소거 (자동재생 허용 조건)
       video.play().catch((error: DOMException) => {
@@ -377,7 +379,7 @@ function VideoBackdrop({
     <div aria-hidden="true" className={`pointer-events-none absolute inset-0 flex justify-center overflow-hidden transition-opacity duration-700 motion-reduce:transition-none ${active ? "opacity-100" : "opacity-0"}`}>
       {config.ambient && <canvas ref={ambientRef} width={32} height={18} className="absolute inset-0 size-full scale-125 blur-[56px] saturate-150" />}
       <div className="relative aspect-video h-full flex-none" style={config.ambient ? ambientMaskStyle : undefined}>
-        <video ref={ref} src={load ? config.src : undefined} muted playsInline preload={active ? "auto" : load ? "metadata" : "none"} onPlaying={onPlaying} onEnded={onEnded} onError={onError} className="absolute inset-0 size-full object-cover" />
+        <video ref={ref} src={load ? config.src : undefined} autoPlay={active && playing} muted playsInline preload={active ? "auto" : load ? "metadata" : "none"} onPlaying={onPlaying} onEnded={onEnded} onError={onError} className="absolute inset-0 size-full object-cover" />
         {!config.ambient && <div className="absolute inset-0" style={{ background: videoEdgeFade(config) }} />}
       </div>
       <div className="absolute inset-0" style={{ background: videoTextShade(config) }} />
