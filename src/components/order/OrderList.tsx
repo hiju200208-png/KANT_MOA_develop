@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { StatusView } from "@/components/feedback/StatusView";
 import { LoginRequired } from "@/components/order/LoginRequired";
 import { OrderStatusBadge } from "@/components/order/OrderStatusBadge";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Button, Card, EmptyState, Skeleton } from "@/components/ui";
+import { Card, Skeleton } from "@/components/ui";
 import { getErrorMessage } from "@/constants/error-messages";
 import { getOrders } from "@/services/orders";
 import type { OrderStatus, OrderSummary } from "@/types/app";
@@ -99,11 +100,7 @@ export function OrderList() {
       </nav>
 
       {visible.length === 0 ? (
-        <EmptyState
-          title={emptyTitle}
-          description={tab === "all" ? "첫 굿즈를 주문해보세요." : undefined}
-          action={tab === "all" ? <Link href="/"><Button>상품 보러가기</Button></Link> : undefined}
-        />
+        <StatusView variant="empty-orders" title={tab === "all" ? undefined : emptyTitle} description={tab === "all" ? undefined : "다른 주문 상태도 확인해보세요."} actions={tab === "all" ? undefined : []} compact />
       ) : (
         <ul className="space-y-4">
           {visible.map((order) => {
