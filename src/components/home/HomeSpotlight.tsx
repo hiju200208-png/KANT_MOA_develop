@@ -11,8 +11,7 @@ import { heroSubtitle } from "./heroCopy";
 import { HERO_VIDEOS, type HeroVideo } from "./heroVideos";
 import { useSwipe } from "@/components/product/useSwipe";
 
-// 배너 글꼴(배너 전체): 위버스샵과 같은 Pretendard (오픈 폰트, OFL). 사이트 글꼴 목록에 이름은 있지만 불러오지는 않아서
-// 배너에서 웹폰트(쓰인 글자만 내려받는 dynamic subset)를 불러온다. React 19가 <link>를 <head>로 올려 준다
+// 글꼴은 첫 화면을 막지 않도록 마운트 후 불러온다. 준비 전에는 기존 대체 글꼴을 사용한다.
 const PRETENDARD_CSS = "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css";
 const displayFont = "font-['Pretendard_Variable',Pretendard,sans-serif]";
 
@@ -195,7 +194,7 @@ function HeroProduct({ product, kind, active }: { product: ProductSummary; kind:
         {product.thumbnailUrl && (
           // 합성(multiply)은 감싼 상자에, 밝기 필터는 이미지에 따로 건다 (한 요소에 같이 걸면 Chrome이 합성을 무시함)
           <span className="absolute inset-0 overflow-hidden mix-blend-multiply" style={EDGE_FEATHER}>
-            <Image
+            <Image unoptimized
               src={product.thumbnailUrl}
               alt={`${product.artist.name} ${product.name}`}
               fill
@@ -299,16 +298,18 @@ function VideoBackdrop({
   onEnded,
   onBlocked,
   onError,
+  onPlaying,
 }: {
   video: HeroVideo;
   active: boolean;
-  load: boolean; // 지금·다음 슬라이드만 영상을 받는다 (첫 로딩 때 영상 3개가 동시에 받아져 상품 이미지를 밀어내던 문제)
+  load: boolean; // 현재 영상 우선. 재생이 시작된 후에만 다음 영상의 메타데이터를 준비한다.
   playing: boolean;
   sound: boolean; // 사용자가 소리 버튼을 눌렀을 때만 true
   onStart: () => void;
   onEnded: () => void;
   onBlocked: () => void;
   onError: () => void;
+  onPlaying: () => void;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
   const ambientRef = useRef<HTMLCanvasElement>(null);
@@ -376,7 +377,7 @@ function VideoBackdrop({
     <div aria-hidden="true" className={`pointer-events-none absolute inset-0 flex justify-center overflow-hidden transition-opacity duration-700 motion-reduce:transition-none ${active ? "opacity-100" : "opacity-0"}`}>
       {config.ambient && <canvas ref={ambientRef} width={32} height={18} className="absolute inset-0 size-full scale-125 blur-[56px] saturate-150" />}
       <div className="relative aspect-video h-full flex-none" style={config.ambient ? ambientMaskStyle : undefined}>
-        <video ref={ref} src={load ? config.src : undefined} muted playsInline preload={active ? "auto" : load ? "metadata" : "none"} onEnded={onEnded} onError={onError} className="absolute inset-0 size-full object-cover" />
+        <video ref={ref} src={load ? config.src : undefined} muted playsInline preload={active ? "auto" : load ? "metadata" : "none"} onPlaying={onPlaying} onEnded={onEnded} onError={onError} className="absolute inset-0 size-full object-cover" />
         {!config.ambient && <div className="absolute inset-0" style={{ background: videoEdgeFade(config) }} />}
       </div>
       <div className="absolute inset-0" style={{ background: videoTextShade(config) }} />
@@ -386,7 +387,19 @@ function VideoBackdrop({
 
 // 메인 배너 (시안 C · 파스텔 스포트라이트) 슬라이드: 아티스트마다 한 장 (문구 + 겹친 인기 상품 3개).
 // 4초마다 자동으로 넘어가고, 마우스로 끌거나 손가락으로 밀어서·위 버튼으로 넘김. 배경 톤도 아티스트 색으로 바뀜
-export function HomeSpotlight({ artists: allArtists }: { artists: SpotlightArtist[] }) {
+export function HomeSpotlight({ artists: initialArtists, productSlides }: {
+  artists: SpotlightArtist[];
+  productSlides?: Promise<SpotlightArtist[]>;
+}) {
+  const [products, setProducts] = useState<SpotlightArtist[]>([]);
+  const allArtists = [...initialArtists, ...products];
+  useEffect(() => {
+    const stylesheet = document.createElement("link");
+    stylesheet.rel = "stylesheet";
+    stylesheet.href = PRETENDARD_CSS;
+    document.head.appendChild(stylesheet);
+    return () => stylesheet.remove();
+  }, []);
   // 순서: COMEBACK 영상(heroVideos.ts 순서)이 맨 앞, 그 뒤로 NEW·BEST 상품 슬라이드(page.tsx에서 번갈아 배정한 순서 그대로)
   const artists = [
     ...Object.keys(HERO_VIDEOS).flatMap((slug) => allArtists.filter((artist) => artist.slug === slug)),
@@ -408,10 +421,26 @@ export function HomeSpotlight({ artists: allArtists }: { artists: SpotlightArtis
   const [blockedPos, setBlockedPos] = useState<number | null>(null); // 브라우저가 자동재생을 막은 슬라이드 위치
   const [sound, setSound] = useState(false); // 영상 소리 (처음엔 꺼짐, 버튼으로 켜면 다른 영상 슬라이드에도 유지)
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [playingSlug, setPlayingSlug] = useState<string | null>(null);
   const videoOf = (item: SpotlightArtist | undefined) => (item && !failedVideos.includes(item.slug) ? HERO_VIDEOS[item.slug] : undefined);
   const artist = artists[index];
   const activeVideo = videoOf(artist);
   const videoActive = Boolean(activeVideo);
+
+  useEffect(() => {
+    if (!productSlides) return;
+    let mounted = true;
+    productSlides.then((slides) => {
+      if (!mounted) return;
+      // 복제 칸에서 상품이 추가돼도 현재 영상이 바뀌거나 슬라이드 이동 효과가 나지 않게 한다.
+      setInstant(true);
+      setPos((current) => initialArtists.length === 1
+        ? (slides.length > 0 ? 1 : current)
+        : current === 0 ? initialArtists.length : current === initialArtists.length + 1 ? 1 : current);
+      setProducts(slides);
+    }, () => {});
+    return () => { mounted = false; };
+  }, [productSlides, initialArtists.length]);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -470,7 +499,7 @@ export function HomeSpotlight({ artists: allArtists }: { artists: SpotlightArtis
             key={item.id}
             video={video}
             active={i === index}
-            load={i === index || i === (index + 1) % artists.length}
+            load={i === index || (playingSlug === artist?.slug && i === (index + 1) % artists.length)}
             playing={!reducedMotion}
             sound={sound}
             onStart={() => {
@@ -480,11 +509,10 @@ export function HomeSpotlight({ artists: allArtists }: { artists: SpotlightArtis
             onEnded={() => setEndedPos(pos)}
             onBlocked={() => setBlockedPos(pos)}
             onError={() => setFailedVideos((list) => [...list, item.slug])}
+            onPlaying={() => setPlayingSlug(item.slug)}
           />
         ) : null;
       })}
-
-      <link rel="stylesheet" href={PRETENDARD_CSS} precedence="default" />
 
       {/* 영상 위에서는 헤더 로고·아이콘·로그인 버튼을 흰색으로. 모바일 메뉴(흰 패널 dialog)는 원래 색 유지 */}
       <div className={`relative ${videoActive ? "text-white [&_.border-line]:border-white/45 [&_.border-line]:bg-white/10 [&_.border-line]:backdrop-blur-sm [&_a]:text-white [&_button]:text-white [&_img]:brightness-0 [&_img]:invert [&_dialog]:text-foreground [&_dialog_a]:text-foreground [&_dialog_button]:text-foreground [&_dialog_.border-line]:border-line [&_dialog_.border-line]:bg-transparent [&_dialog_.border-line]:backdrop-blur-none" : ""}`}>

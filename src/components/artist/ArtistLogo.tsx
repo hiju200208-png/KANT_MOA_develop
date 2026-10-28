@@ -14,7 +14,7 @@ export function ArtistLogo({ artist, size = "md" }: { artist: Artist; size?: key
   return (
     <span style={artistThemeStyle(artist.themeColor)} className={`relative grid shrink-0 place-items-center overflow-hidden border border-line bg-(--artist-color) font-black ${box}`}>
       {artist.logoUrl ? (
-        <Image src={artist.logoUrl} alt="" fill sizes="72px" className="object-cover" />
+        <Image unoptimized src={artist.logoUrl} alt="" fill sizes="72px" className="object-cover" />
       ) : (
         <span className="text-white" aria-hidden="true">{artist.name.charAt(0)}</span>
       )}

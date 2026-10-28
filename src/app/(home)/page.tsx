@@ -53,20 +53,25 @@ function newCandidate(products: ProductSummary[]): Pick | undefined {
   return latest && now - Date.parse(latest.createdAt) <= NEW_REGISTERED_DAYS * DAY_MS ? { kind: "NEW", product: latest } : undefined;
 }
 
-// 메인 배너: 아티스트마다 한 장. 영상이 있는 아티스트는 HomeSpotlight에서 COMEBACK 영상 슬라이드(맨 앞)로 바뀌고,
-// 나머지 상품 슬라이드는 NEW(신상품)와 BEST(최근 7일 판매 1위)가 번갈아 나오도록 배정한다. 대표 상품이 없는 아티스트는 빠짐
+// 영상 배너는 아티스트 정보만 준비되면 표시한다. 상품 선정·좋아요 순위는 뒤에서 준비한다.
 async function MainHero() {
   await io();
   let artists: Artist[];
-  let likeCounts: Record<number, number>;
   try {
-    // 아티스트와 좋아요 수는 서로 기다릴 필요가 없어 동시에 조회 (좋아요 수를 못 불러오면 원래 순서)
-    [artists, likeCounts] = await Promise.all([getArtists(), getLikeCounts()]);
+    artists = (await getArtists()).filter((artist) => !BANNER_EXCLUDED.includes(artist.slug));
   } catch {
     return null; // 배너는 부가 영역이라 실패 시 숨기고, 아래 상품 영역에서 에러를 안내합니다.
   }
-  // 좋아요 많은 아티스트부터
-  artists = sortByLikes(artists.filter((artist) => !BANNER_EXCLUDED.includes(artist.slug)), likeCounts);
+  const videos = artists.filter((artist) => artist.slug in HERO_VIDEOS);
+  const products = productSlides(artists.filter((artist) => !(artist.slug in HERO_VIDEOS)));
+  if (videos.length > 0) return <HomeSpotlight artists={videos} productSlides={products} />;
+  const slides = await products;
+  return slides.length > 0 ? <HomeSpotlight artists={slides} /> : null;
+}
+
+// 영상 슬라이드에는 필요 없는 상품 API를 호출하지 않는다. 상품 슬라이드의 기존 선정 규칙은 유지한다.
+async function productSlides(eligible: Artist[]): Promise<SpotlightArtist[]> {
+  const artists = sortByLikes(eligible, await getLikeCounts());
   const [bests, catalogs] = await Promise.all([
     Promise.all(artists.map((artist) => getBestProducts({ limit: 1, artistSlug: artist.slug }).catch((): BestProduct[] => []))),
     Promise.all(
@@ -78,18 +83,14 @@ async function MainHero() {
     ),
   ]);
 
-  let productSlot = 0; // 영상이 아닌 슬라이드 순번: 짝수 NEW 우선, 홀수 BEST 우선
-  const slides: SpotlightArtist[] = artists
+  return artists
     .map(({ id, slug, name, nameKo, tagline, themeColor }, i) => {
       const best: Pick | undefined = bests[i][0] ? { kind: "BEST", product: bests[i][0] } : undefined;
       const fresh = newCandidate(catalogs[i]);
-      let pick = best ?? fresh;
-      if (!(slug in HERO_VIDEOS)) pick = productSlot++ % 2 === 0 ? (fresh ?? best) : (best ?? fresh);
+      const pick = i % 2 === 0 ? (fresh ?? best) : (best ?? fresh);
       return { id, slug, name, nameKo, tagline, themeColor, pick };
     })
     .filter((artist) => artist.pick !== undefined);
-  if (slides.length === 0) return null;
-  return <HomeSpotlight artists={slides} />;
 }
 
 async function RecommendedArtists() {

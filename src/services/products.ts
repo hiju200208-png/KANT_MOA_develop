@@ -39,7 +39,7 @@ export async function searchProducts({ q, limit = 20, offset = 0 }: SearchQuery)
   return list(new URLSearchParams({ q: keyword }), offset, limit);
 }
 
-// 인기순·배너는 8단계 범위다. 기존 모듈은 호출 시에만 로드해 상품 API와 분리한다.
+// 기존 내보내기를 유지하며 인기순·배너도 공개 FastAPI를 사용한다.
 export async function getBestProducts(query: { days?: number; limit?: number; artistSlug?: string } = {}) {
   return (await import('./legacyCatalog')).getBestProducts(query);
 }

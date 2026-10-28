@@ -52,7 +52,7 @@ function ArtistCard({ artist, priority }: { artist: Artist; priority: boolean })
       className="group relative isolate flex aspect-[4/3] items-end overflow-hidden rounded-2xl bg-linear-to-br from-(--artist-color) to-foreground p-6 shadow-card"
     >
       {artist.heroImageUrl && (
-        <Image
+        <Image unoptimized
           src={artist.heroImageUrl}
           alt=""
           fill

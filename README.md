@@ -38,13 +38,13 @@
 | `addresses` 테이블, `set_default_address` RPC | `src/services/addresses.ts` → `/addresses/...` |
 | 배송비 표시용 `shop_settings` 조회 | `useShippingFee` → `/orders/shipping-policy` (푸터 회사 정보는 아직 `settings.ts`) |
 
-공통 호출부는 `src/services/api.ts`이고, 토큰은 localStorage `kantmoa.accessToken`(관리자 화면과 같은 키)에서 읽습니다. 프론트 로그인이 이 키에 저장하는 변경은 [PR #64](https://github.com/hiju200208-png/KANT_MOA_develop/pull/64)(P1 리뷰 중)입니다.
+공통 호출부는 `src/services/api.ts`이고, 토큰은 localStorage `kantmoa.accessToken`(관리자 화면과 같은 키)에서 읽습니다. 프론트 로그인은 `src/services/session.ts`로 이 키에 토큰을 저장합니다 ([#66](https://github.com/hiju200208-png/KANT_MOA_develop/pull/66)).
 
 **검증** — 실행 방법과 안전 수칙: [P3 테스트 전략](docs/TEST_STRATEGY_P3.md) · 결과 기록: [여름 작업일지](docs/worklog/YEOREUM.md)
 
 - 자동 테스트: `tests/orders` 221 passed (실제 PostgreSQL 동시 결제·rollback 포함), GitHub CI `backend`·`frontend` 통과
 - 실제 토큰 API E2E 25/25, 프론트 서비스 ↔ FastAPI 31/31
-- 화면 E2E (#64 적용 상태): 로그인 → 비회원 장바구니 병합 → 수량 변경 → 주문서 결제 → 새로고침 → 취소(재고 복구) → 구매 제한 오류 표시 → 로그아웃 후 같은 토큰 401. DB 전 → 후 값은 작업일지에 기록
+- 화면 E2E (로그인 전환 적용 상태, main은 #66): 로그인 → 비회원 장바구니 병합 → 수량 변경 → 주문서 결제 → 새로고침 → 취소(재고 복구) → 구매 제한 오류 표시 → 로그아웃 후 같은 토큰 401. DB 전 → 후 값은 작업일지에 기록
 
 **미완료·주의**: 회원가입·내 정보 수정 화면은 아직 Supabase(P1). 상품 상세 화면(P2)이 FastAPI로 바뀌기 전에는 화면에서 상품을 담는 경로 대신 비회원 장바구니·바로 구매 주소(`/checkout?variant=&qty=`)로 확인합니다. 결제는 모의 결제입니다.
 

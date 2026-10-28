@@ -39,7 +39,7 @@ export function MemberGallery({ members, artistName }: { members: ArtistMember[]
             >
               <span className="relative block aspect-1/2 w-full overflow-hidden bg-neutral-100">
                 {member.imageUrl ? (
-                  <Image
+                  <Image unoptimized
                     src={member.imageUrl}
                     alt=""
                     fill
@@ -72,7 +72,7 @@ export function MemberGallery({ members, artistName }: { members: ArtistMember[]
             className="grid md:grid-cols-[1fr_1.1fr]"
           >
             <span className="relative block aspect-square bg-neutral-100 md:aspect-3/4">
-              {selected.imageUrl && <Image src={selected.imageUrl} alt={`${artistName} ${selected.name} 프로필 사진`} fill sizes="(min-width: 768px) 420px, 100vw" className="object-cover" />}
+              {selected.imageUrl && <Image unoptimized src={selected.imageUrl} alt={`${artistName} ${selected.name} 프로필 사진`} fill sizes="(min-width: 768px) 420px, 100vw" className="object-cover" />}
             </span>
             <div className="relative p-6 md:p-9">
               <button
