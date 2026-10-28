@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 30
     jwt_issuer: str = "kant-moa"
+    google_client_id: str = ""
+    google_cookie_secure: bool = True
 
 
 @lru_cache

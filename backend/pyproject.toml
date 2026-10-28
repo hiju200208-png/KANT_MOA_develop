@@ -13,6 +13,7 @@ dependencies = [
   "pyjwt>=2.15.1",
   "python-multipart>=0.0.32",
   "email-validator>=2.3.0",
+  "google-auth[requests]>=2.40,<3",
 ]
 
 [dependency-groups]

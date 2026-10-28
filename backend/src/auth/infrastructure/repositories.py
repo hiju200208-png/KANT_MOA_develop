@@ -54,6 +54,11 @@ class UserRepository:
 
         return self._to_domain(model)
 
+    async def get_by_google_sub(self, sub: str) -> User | None:
+        result = await self.session.execute(select(UserModel).where(UserModel.google_sub == sub))
+        model = result.scalar_one_or_none()
+        return self._to_domain(model) if model is not None else None
+
 
 class TokenBlacklistRepository:
     def __init__(self, session: AsyncSession):
