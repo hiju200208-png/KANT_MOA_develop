@@ -12,6 +12,7 @@
     },
     {
       "original": "cortis.mp4",
+      "active_src": "https://zpottidevwoeasihhbxl.supabase.co/storage/v1/object/public/hero-videos/cortis-original-54720ef263.mp4",
       "original_sha256": "54720ef2639e6643b63f77c9ba80a1baf322e48b3633a83c3216a5ed1f9f76ff",
       "file": "cortis.hero-540p-v1-88b2b14570.mp4",
       "sha256": "88b2b1457071af12ba28660938c9a805f104a4dfb7217686df6abb0e129f2338",
@@ -20,6 +21,7 @@
     },
     {
       "original": "le-sserafim.mp4",
+      "active_src": "https://zpottidevwoeasihhbxl.supabase.co/storage/v1/object/public/hero-videos/le-sserafim-original-880fa157aa.mp4",
       "original_sha256": "880fa157aa68d9dafdbf8bb73d27149f06f0d7f178f79245e6bac0e164e8792f",
       "file": "le-sserafim.hero-540p-v1-0f621be923.mp4",
       "sha256": "0f621be92346202fa0dfcfa9315b987f33c174e0f75cbcfe7d9b59504e83a53a",

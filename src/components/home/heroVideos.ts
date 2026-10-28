@@ -2,7 +2,7 @@
 // 영상이 있는 슬라이드는 상품 카드 대신 영상을 배너 전체(헤더 포함) 배경으로 깔고 "앨범 보러가기" 버튼을 보여준다.
 // 영상을 불러오지 못하면 기존 파스텔 배너로 돌아간다.
 // 영상 파일은 public/sources/에 있다. ⚠ 공식 뮤비 티저를 내려받은 파일이라 저작권이 소속사에 있다 (팀 시연용).
-// TWS는 외부 Storage의 원본으로 시험하고, 나머지는 540p 경량본을 사용한다. 로컬 원본과 경량본은 보존한다.
+// 세 영상 모두 외부 Storage의 원본을 사용한다. 로컬 원본과 경량본은 보존한다.
 export interface HeroVideo {
   src: string;
   base: string; // 배너 바탕색 (rgb 채널, 예: "0 0 0"). ambient가 아니면 영상 가장자리도 이 색으로 녹인다
@@ -25,7 +25,7 @@ export const HERO_VIDEOS: Record<string, HeroVideo> = {
   },
   // REDRED 트레일러: 낡은 주방·뒷골목의 따뜻한 톤, 달력에 빨간 동그라미 → 검정 그라데이션에 빨간 글자, 아이보리 버튼에 빨간 글씨
   cortis: {
-    src: "/sources/cortis.hero-540p-v1-88b2b14570.mp4",
+    src: "https://zpottidevwoeasihhbxl.supabase.co/storage/v1/object/public/hero-videos/cortis-original-54720ef263.mp4",
     base: "0 0 0",
     description: "직접 만들고 직접 무대에 서는 코르티스, 달력에 동그라미 친 그날을 굿즈로 먼저 만나보세요.",
     accent: "#ff5a4e",
@@ -33,7 +33,7 @@ export const HERO_VIDEOS: Record<string, HeroVideo> = {
   },
   // SPAGHETTI 티저: 빨간 의상, 핑크 네온, 다이너 → 검정 그라데이션에 핑크 글자, 레드 버튼
   "le-sserafim": {
-    src: "/sources/le-sserafim.hero-540p-v1-0f621be923.mp4",
+    src: "https://zpottidevwoeasihhbxl.supabase.co/storage/v1/object/public/hero-videos/le-sserafim-original-880fa157aa.mp4",
     base: "0 0 0",
     description: "빨간 무대 위로 거침없이, 르세라핌의 새로운 장면을 앨범과 굿즈로 함께하세요.",
     accent: "#ffb3c1",
