@@ -54,6 +54,13 @@ class UserRepository:
 
         return self._to_domain(model)
 
+    async def update_password_hash(self, user_id: UUID, password_hash: str) -> None:
+        model = await self.session.get(UserModel, user_id)
+
+        if model is not None:
+            model.password_hash = password_hash
+            await self.session.flush()
+
     async def get_by_google_sub(self, sub: str) -> User | None:
         result = await self.session.execute(select(UserModel).where(UserModel.google_sub == sub))
         model = result.scalar_one_or_none()

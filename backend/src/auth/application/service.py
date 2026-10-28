@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from auth.application.exceptions import (
     EmailAlreadyExistsError,
     InvalidCredentialsError,
+    InvalidResetTokenError,
     NotAuthenticatedError,
 )
 from auth.domain.user import User, UserRole
@@ -18,7 +19,10 @@ from auth.infrastructure.security import (
     InvalidTokenError,
     TokenClaims,
     create_access_token,
+    create_password_reset_token,
     decode_access_token,
+    decode_password_reset_token,
+    password_fingerprint,
     hash_password,
     verify_password,
 )
@@ -163,6 +167,49 @@ class AuthService:
                 raise NotAuthenticatedError() from exc
 
             raise
+
+        except Exception:
+            await self.session.rollback()
+            raise
+
+    async def request_password_reset(self, email: str) -> str | None:
+        """재설정 토큰을 만듭니다. 없는 이메일·구글 전용 계정이면 None.
+
+        토큰을 어떻게 전달할지(메일/화면)는 호출하는 쪽(presentation)이 정합니다.
+        """
+        user = await self.users.get_by_email(email)
+
+        if user is None or user.password_hash is None:
+            return None
+
+        return create_password_reset_token(user.id, user.password_hash)
+
+    async def confirm_password_reset(
+        self,
+        token: str,
+        new_password: str,
+    ) -> None:
+        try:
+            claims = decode_password_reset_token(token)
+        except InvalidTokenError as exc:
+            raise InvalidResetTokenError() from exc
+
+        try:
+            user = await self.users.get_by_id(claims.user_id)
+
+            # 비밀번호가 이미 바뀌었다면 지문이 달라 같은 링크를 다시 쓸 수 없습니다.
+            if (
+                user is None
+                or user.password_hash is None
+                or password_fingerprint(user.password_hash) != claims.fingerprint
+            ):
+                raise InvalidResetTokenError()
+
+            await self.users.update_password_hash(
+                user.id,
+                hash_password(new_password),
+            )
+            await self.session.commit()
 
         except Exception:
             await self.session.rollback()

@@ -12,6 +12,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from auth.application.exceptions import (
     EmailAlreadyExistsError,
     InvalidCredentialsError,
+    InvalidResetTokenError,
     NotAuthenticatedError,
 )
 from auth.application.service import AuthService
@@ -23,6 +24,9 @@ from auth.presentation.dependencies import (
     oauth2_scheme,
 )
 from auth.presentation.schemas import (
+    PasswordResetConfirm,
+    PasswordResetRequest,
+    PasswordResetRequestResponse,
     SignupRequest,
     TokenResponse,
     UserResponse,
@@ -145,5 +149,39 @@ async def logout(
         await AuthService(session).logout(token)
     except NotAuthenticatedError as exc:
         raise ApiError(401, exc.code, exc.message) from exc
+
+    return Response(status_code=204)
+
+
+@router.post(
+    "/password-reset/request",
+    response_model=PasswordResetRequestResponse,
+)
+async def request_password_reset(
+    body: PasswordResetRequest,
+    session: SessionDep,
+) -> PasswordResetRequestResponse:
+    token = await AuthService(session).request_password_reset(str(body.email))
+
+    # 가입 여부가 드러나지 않도록 항상 같은 안내를 돌려줍니다.
+    # 시연 모드(PASSWORD_RESET_DEMO=true)에서만 토큰을 화면용으로 내려줍니다.
+    return PasswordResetRequestResponse(
+        message="입력하신 이메일로 가입된 계정이 있다면 재설정 안내를 보냈어요.",
+        reset_token=token if get_settings().password_reset_demo else None,
+    )
+
+
+@router.post("/password-reset/confirm", status_code=204)
+async def confirm_password_reset(
+    body: PasswordResetConfirm,
+    session: SessionDep,
+) -> Response:
+    try:
+        await AuthService(session).confirm_password_reset(
+            token=body.token,
+            new_password=body.new_password,
+        )
+    except InvalidResetTokenError as exc:
+        raise ApiError(400, exc.code, exc.message) from exc
 
     return Response(status_code=204)

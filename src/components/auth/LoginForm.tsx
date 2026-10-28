@@ -41,6 +41,9 @@ export function LoginForm() {
       {error && <p role="alert" aria-live="polite" className="rounded-md bg-red-50 px-4 py-3 text-sm font-medium text-danger">{error}</p>}
       <Button type="submit" size="lg" fullWidth loading={loading}>로그인</Button>
       <p className="text-center text-sm text-muted">
+        <Link href="/forgot-password" className="font-bold text-brand-strong">비밀번호를 잊으셨나요?</Link>
+      </p>
+      <p className="text-center text-sm text-muted">
         아직 회원이 아니신가요?{" "}
         <Link href="/signup" className="brand-gradient-text-hover font-bold text-brand-strong">회원가입</Link>
       </p>

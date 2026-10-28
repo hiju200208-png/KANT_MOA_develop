@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     jwt_issuer: str = "kant-moa"
     google_client_id: str = ""
     google_cookie_secure: bool = True
+    # 비밀번호 재설정: 메일 발송 없이 화면에 링크를 보여주는 시연 모드(기본 꺼짐)
+    password_reset_demo: bool = False
+    password_reset_expire_minutes: int = 15
 
 
 @lru_cache
