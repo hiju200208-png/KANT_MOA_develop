@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import StrEnum
 from uuid import UUID, uuid4
+import re
 
 from .exceptions import InvalidUserError
 
@@ -58,3 +59,27 @@ class User:
 
     def is_admin(self) -> bool:
         return self.role == UserRole.ADMIN
+
+    def update_profile(self, changes: dict) -> dict:
+        """닉네임·연락처만 검증하고 전체 입력이 유효할 때 함께 반영합니다."""
+        if not changes or set(changes) - {"nickname", "phone"}:
+            raise InvalidUserError("변경할 닉네임 또는 연락처를 입력해주세요.")
+        normalized = {}
+        if "nickname" in changes:
+            nickname = changes["nickname"]
+            if not isinstance(nickname, str) or not 1 <= len(nickname.strip()) <= 50:
+                raise InvalidUserError("닉네임은 1~50자로 입력해주세요.")
+            normalized["nickname"] = nickname.strip()
+        if "phone" in changes:
+            phone = changes["phone"]
+            if phone is not None:
+                if not isinstance(phone, str):
+                    raise InvalidUserError("연락처 형식을 확인해주세요.")
+                phone = phone.strip() or None
+            if phone is not None and (len(phone) > 20 or not re.fullmatch(r"[0-9 -]+", phone)
+                    or not re.fullmatch(r"01[0-9]{8,9}", re.sub(r"[ -]", "", phone))):
+                raise InvalidUserError("휴대폰 번호를 정확히 입력해주세요.")
+            normalized["phone"] = phone
+        for field, value in normalized.items():
+            setattr(self, field, value)
+        return normalized

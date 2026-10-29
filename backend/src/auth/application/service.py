@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,6 +33,21 @@ class AuthService:
         self.session = session
         self.users = UserRepository(session)
         self.blacklist = TokenBlacklistRepository(session)
+
+    async def update_profile(self, user_id: UUID, changes: dict) -> User:
+        try:
+            user = await self.users.get_by_id(user_id)
+            if user is None:
+                raise NotAuthenticatedError()
+            normalized = user.update_profile(changes)
+            saved = await self.users.update_profile(user_id, normalized)
+            if saved is None:
+                raise NotAuthenticatedError()
+            await self.session.commit()
+            return saved
+        except Exception:
+            await self.session.rollback()
+            raise
 
     async def signup(
         self,

@@ -25,6 +25,7 @@ class CurrentUser(BaseModel):
     email: str
     nickname: str
     role: str
+    phone: str | None = None
 
 
 async def get_current_user(
@@ -48,6 +49,7 @@ async def get_current_user(
         email=user.email,
         nickname=user.nickname,
         role=user.role.value,
+        phone=user.phone,
     )
 
 

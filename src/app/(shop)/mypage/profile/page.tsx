@@ -7,6 +7,7 @@ import { Button, Card, Input, PageTitle, Skeleton } from "@/components/ui";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { getErrorMessage } from "@/constants/error-messages";
 import { updateProfile } from "@/services/auth";
+import { profileValidationError } from "@/services/profileMapping";
 import type { Profile } from "@/types/app";
 
 export default function ProfileEditPage() {
@@ -25,7 +26,8 @@ export default function ProfileEditPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!form.nickname.trim()) return setMessage({ type: "error", text: "닉네임을 입력해주세요." });
+    const validation = profileValidationError(form);
+    if (validation) return setMessage({ type: "error", text: validation });
 
     setSaving(true);
     setMessage(null);
@@ -65,8 +67,8 @@ export default function ProfileEditPage() {
       <Card className="p-6">
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
           <Input label="이메일" name="email" value={profile.email} disabled hint="이메일은 변경할 수 없어요." />
-          <Input label="닉네임" name="nickname" value={form.nickname} onChange={(e) => setEdited((prev) => ({ ...prev, nickname: e.target.value }))} />
-          <Input label="연락처" name="phone" type="tel" inputMode="tel" placeholder="01012345678" hint="주문서의 연락처 기본값으로 쓰여요." value={form.phone} onChange={(e) => setEdited((prev) => ({ ...prev, phone: e.target.value }))} />
+          <Input label="닉네임" name="nickname" maxLength={50} value={form.nickname} onChange={(e) => setEdited((prev) => ({ ...prev, nickname: e.target.value }))} />
+          <Input label="연락처" name="phone" type="tel" inputMode="tel" maxLength={20} placeholder="01012345678" hint="휴대폰 번호를 입력해주세요. 비워두고 저장하면 연락처가 삭제돼요." value={form.phone} onChange={(e) => setEdited((prev) => ({ ...prev, phone: e.target.value }))} />
           {message && (
             <p role={message.type === "error" ? "alert" : "status"} className={`text-sm ${message.type === "error" ? "text-danger" : "text-brand-strong"}`}>
               {message.text}

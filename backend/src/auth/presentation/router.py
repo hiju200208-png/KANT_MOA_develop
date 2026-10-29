@@ -30,6 +30,7 @@ from auth.presentation.schemas import (
     SignupRequest,
     TokenResponse,
     UserResponse,
+    ProfileUpdateRequest,
 )
 from core.errors import ApiError
 
@@ -130,7 +131,23 @@ async def me(
         email=user.email,
         nickname=user.nickname,
         role=user.role,
+        phone=user.phone,
     )
+
+
+@router.patch("/me", response_model=UserResponse)
+async def update_me(body: ProfileUpdateRequest, session: SessionDep,
+                    current: Annotated[CurrentUser, Depends(get_current_user)]) -> UserResponse:
+    try:
+        user = await AuthService(session).update_profile(
+            current.id, body.model_dump(exclude_unset=True),
+        )
+    except InvalidUserError as exc:
+        raise ApiError(422, "UNKNOWN", str(exc)) from exc
+    except NotAuthenticatedError as exc:
+        raise ApiError(401, exc.code, exc.message) from exc
+    return UserResponse(id=user.id, email=user.email, nickname=user.nickname,
+                        role=user.role.value, phone=user.phone)
 
 
 @router.post("/logout", status_code=204)
