@@ -2,9 +2,10 @@ import type { Profile, SignInInput, SignUpInput, UpdateProfileInput } from '@/ty
 import { mergeGuestCart } from './cart';
 import { apiFetch, jsonBody, ApiError } from './api';
 import { AppError } from './errors';
+import { toProfile, type ProfileUser } from './profileMapping';
 import { ACCESS_TOKEN_STORAGE_KEY, AUTH_CHANGE_EVENT, clearAccessToken, getAccessToken, setAccessToken } from './session';
 
-type CurrentUser = { id: string; email: string; nickname: string; role: string };
+type CurrentUser = ProfileUser;
 
 export type GoogleLoginConfig = { client_id: string | null; nonce: string | null };
 
@@ -72,17 +73,17 @@ export async function getProfile(): Promise<Profile | null> {
   if (!getAccessToken()) return null;
   try {
     const user = await apiFetch<CurrentUser>('/auth/me');
-    return { id: user.id, email: user.email, nickname: user.nickname, phone: null };
+    return toProfile(user);
   } catch (error) {
     if (error instanceof AppError && error.code === 'NOT_AUTHENTICATED') return null;
     throw error;
   }
 }
 
-// P1에 아직 수정 API가 없다. FastAPI 회원 정보를 Supabase에 잘못 저장하지 않는다.
-export async function updateProfile(_input: UpdateProfileInput): Promise<Profile> {
-  void _input;
-  throw new AppError('UNKNOWN', '회원 정보 수정 API는 아직 연결되지 않았어요.');
+export async function updateProfile(input: UpdateProfileInput): Promise<Profile> {
+  const user = await apiFetch<CurrentUser>('/auth/me', { method: 'PATCH', ...jsonBody(input) });
+  window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+  return toProfile(user);
 }
 
 export function onAuthChange(cb: (profile: Profile | null) => void): () => void {

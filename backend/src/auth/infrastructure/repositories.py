@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.domain.user import User
@@ -63,6 +63,14 @@ class UserRepository:
 
     async def get_by_google_sub(self, sub: str) -> User | None:
         result = await self.session.execute(select(UserModel).where(UserModel.google_sub == sub))
+        model = result.scalar_one_or_none()
+        return self._to_domain(model) if model is not None else None
+
+    async def update_profile(self, user_id: UUID, changes: dict) -> User | None:
+        result = await self.session.execute(
+            update(UserModel).where(UserModel.id == user_id).values(**changes)
+            .returning(UserModel).execution_options(populate_existing=True)
+        )
         model = result.scalar_one_or_none()
         return self._to_domain(model) if model is not None else None
 

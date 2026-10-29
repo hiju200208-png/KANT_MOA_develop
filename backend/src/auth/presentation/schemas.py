@@ -32,6 +32,20 @@ class UserResponse(BaseModel):
     email: str
     nickname: str
     role: Literal["USER", "ADMIN"]
+    phone: str | None = None
+
+
+class ProfileUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    nickname: str | None = Field(default=None, max_length=50)
+    phone: str | None = Field(default=None, max_length=20)
+
+    @field_validator("nickname")
+    @classmethod
+    def require_nickname(cls, value):
+        if value is None or not value.strip():
+            raise ValueError("닉네임을 입력해주세요.")
+        return value.strip()
 
 
 class TokenResponse(BaseModel):
